@@ -7,6 +7,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
+
+        window.firebase = { db, auth, appId, collection, addDoc, onSnapshot };
+
+        // 認証フロー
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth Error:", e);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user } }));
+            }
+        });
+
+        initAuth();
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&family=Noto+Sans+JP:wght@300;400;700&display=swap');
 
@@ -26,7 +63,7 @@
 
         .full-screen-section {
             height: 100vh;
-            height: 100svh; /* モバイルブラウザのアドレスバー対策 */
+            height: 100svh;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -54,10 +91,8 @@
 
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
-        /* 画像を黒にするためのフィルタ */
         header.is-dark img { filter: brightness(0); }
         
-        /* ロゴ画像が見つからない時の代替スタイル（白い円） */
         .logo-fallback {
             display: none;
             border-radius: 9999px;
@@ -79,7 +114,6 @@
             pointer-events: none;
         }
 
-        /* SPでフッターが被りすぎないよう調整 */
         @media (max-width: 768px) {
             .marquee-container { padding: 1.5rem 0; bottom: 10px; }
         }
@@ -103,7 +137,7 @@
             display: flex;
             align-items: baseline;
             gap: 1rem; 
-            padding: 0 1.5rem; /* SPでの余白を少し詰める */
+            padding: 0 1.5rem; 
         }
         
         @media (min-width: 768px) {
@@ -111,7 +145,7 @@
         }
 
         .stats-label, .stats-value {
-            font-size: 0.7rem; /* SPで少し小さく */
+            font-size: 0.7rem;
             font-weight: 800;
             text-transform: uppercase;
             color: #ffffff;
@@ -202,7 +236,7 @@
             font-family: 'Inter', sans-serif;
             font-weight: 800;
             font-style: normal;
-            font-size: 20px; /* SPで少しサイズダウン */
+            font-size: 20px;
             letter-spacing: 0.3em;
             text-transform: uppercase;
             transition: opacity 0.4s ease;
@@ -239,7 +273,7 @@
 
         .logo-main-text {
             font-family: 'Inter', sans-serif;
-            font-size: 16px; /* SPで少し小さく */
+            font-size: 16px;
             font-weight: 800;
             letter-spacing: 0.2em;
             color: #ffffff;
@@ -249,39 +283,8 @@
 
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
 
-        /* カスタムスクロールバー */
-        ::-webkit-scrollbar {
-            width: 6px;
-            background: rgba(0, 0, 0, 0.05);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(128, 128, 128, 0.3);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(128, 128, 128, 0.5);
-        }
-
-        /* フォーム入力時のスタイル */
-        input::placeholder, textarea::placeholder {
-            color: #ccc; 
-            font-weight: 400;
-            opacity: 1;
-        }
-        
-        .input-error {
-            border-bottom-color: #FF003C !important; 
-            transition: border-color 0.3s ease;
-        }
-
-        .vivid-cycle-btn {
-            color: #000 !important; 
-            transition: transform 0.2s ease;
-        }
-
-        /* ABOUT / DASHBOARD Typography */
         .page-section-label {
-            font-size: 10px; /* SPでの可読性のため9pxから10pxへ変更 */
+            font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.4em;
@@ -306,9 +309,8 @@
             padding-left: 1.25rem;
         }
 
-        /* Footer */
         .app-footer {
-            padding: 4rem 0 3rem; /* SPでのパディング調整 */
+            padding: 4rem 0 3rem;
             text-align: center;
         }
         @media (min-width: 768px) { .app-footer { padding: 6rem 0 4rem; } }
@@ -324,7 +326,6 @@
         
         .footer-nav-link:hover { opacity: 0.4; }
 
-        /* Dashboard Specific */
         .stat-card-value {
             font-size: 1.5rem;
             font-weight: 900;
@@ -345,11 +346,11 @@
             background: transparent;
             cursor: pointer;
             outline: none;
-            min-width: 140px; /* タップ領域確保 */
+            min-width: 140px;
         }
 
         .csv-btn {
-            font-size: 10px; /* 9px -> 10px */
+            font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.2em;
@@ -364,11 +365,11 @@
         }
         
         .sim-btn {
-            font-size: 10px; /* 9px -> 10px */
+            font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            padding: 8px 12px; /* タップ領域拡大 */
+            padding: 8px 12px;
             border: 1px solid #ddd;
             transition: all 0.3s ease;
         }
@@ -376,13 +377,31 @@
             border-color: #000;
             background: #f8f8f8;
         }
+
+        /* 起動時ローダー */
+        #app-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #000807;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease;
+        }
     </style>
 </head>
 <body style="overflow: hidden;">
 
+    <!-- Boot Loader -->
+    <div id="app-loader">
+        <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em]">Connecting to Soil...</span>
+    </div>
+
     <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper flex-shrink-0" onclick="window.showPage('top')">
-            <!-- index.htmlがACTIONTREEフォルダ直下にあるため、相対パスを images/ に修正 -->
             <img src="images/ACTION_TREE_LOGO_white.svg" 
                  alt="Action Tree Logo" 
                  class="w-6 h-6 md:w-8 md:h-8 object-contain"
@@ -431,7 +450,7 @@
                         </div>
                         <p>リアルに実行できるのは人の役目であり、実行し、決断することに価値があります。日々の業務の中で生まれる、こうした小さな気づきを、頭の中だけで終わらせないでほしい。</p>
                         <p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「ACTION TREE」を構築しました。</p>
-                        <p>すぐには結果が出ないかもしれません. それでも、みんなで種をまき、水をやり、枝を伸ばしていく。そのプロセスこそが、私たちの新しいスキルを養い、何よりこの会社の文化を強く、豊かにしていくと信じています。</p>
+                        <p>すぐには結果が出ないかもしれません。それでも、みんなで種をまき、水をやり、枝を伸ばしていく。そのプロセスこそが、私たちの新しいスキルを養い、何よりこの会社の文化を強く、豊かにしていくと信じています。</p>
                     </div>
                 </div>
                 <div class="mb-20 md:mb-24">
@@ -516,7 +535,7 @@
                 <!-- Simulation Tools -->
                 <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black">
                     <div>
-                        <span class="page-section-label">Tree Growth Verification</span>
+                        <span class="page-section-label">Tree Growth Verification (Local)</span>
                         <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
                             <button onclick="window.setTestLevel(0)" class="sim-btn">Reset</button>
                             <button onclick="window.setTestLevel(15)" class="sim-btn">15 Posts (LV0)</button>
@@ -624,7 +643,6 @@
 
     <script>
         // --- Globals & State ---
-        const INITIAL_ACTIONS_SIM = 0; 
         const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         const TIME_COLORS = [
             { hour: 0, color: "#000807" }, { hour: 6, color: "#43736a" }, { hour: 12, color: "#43736a" }, { hour: 18, color: "#004036" }, { hour: 24, color: "#000807" }  
@@ -639,7 +657,6 @@
             driftFactor: 0.1, simulatedHour: 12 
         };
 
-        let timeOffset = 0; 
         let scene, camera, renderer, treeGroup, particles, hoveredFlower = null;
         const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
 
@@ -791,7 +808,7 @@
                         </td>
                         <td class="py-4 px-2 opacity-40 uppercase tracking-widest truncate max-w-[80px] md:max-w-[150px]">${f.userData.client || "---"}</td>
                         <td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${f.userData.project || "---"}</td>
-                        <td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">¥${f.userData.amount.toLocaleString()}</td>
+                        <td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">¥${(parseInt(f.userData.amount) || 0).toLocaleString()}</td>
                     `;
                     list.appendChild(row);
                 });
@@ -801,12 +818,14 @@
         window.setTestLevel = function(v) { 
             state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; 
             state.actions = v; 
-            state.amount = v * 1200; // シミュレーション用の金額計算
+            state.amount = v * 1200; 
+            // シミュレーション時のランダム色ロジックもそのまま維持
             for(let i=0; i<v; i++) {
-                addFlowerToTree("Simulated User", "Demo Client", "Growth Sim " + (i+1), 1200, "Simulated data for tree growth verification."); 
+                const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
+                addFlowerFromData({ name: "Sim User", client: "Sim Client", project: "Growth Sim " + (i+1), amount: 1200, colorHex, timestamp: i });
             }
             updateGrowthState(); 
-            updateStatsUI(); // UIのACTION数と金額を更新
+            updateStatsUI(); 
             refreshDashboard();
         };
 
@@ -818,63 +837,45 @@
             const count = state.actions;
             let targetLevel = count >= 100 ? 3 : count >= 60 ? 2 : count >= 30 ? 1 : 0;
             let targetMultiplier = targetLevel === 3 ? 1.8 : targetLevel === 2 ? 1.5 : targetLevel === 1 ? 1.25 : 1.0;
-            // レスポンシブ対応：画面幅に合わせてカメラ位置を動的に計算
             let targetCamZ;
             if (window.innerWidth < 768) {
-                // SP: 少し遠くに配置して全体が見えるように
                 targetCamZ = targetLevel === 3 ? 48 : targetLevel === 2 ? 36 : targetLevel === 1 ? 26 : 22;
             } else {
-                // PC: 適度な距離
                 targetCamZ = targetLevel === 3 ? 40 : targetLevel === 2 ? 28 : 20;
             }
 
             state.currentLevel = targetLevel; state.growthMultiplier = targetMultiplier;
             document.querySelectorAll('.level-val').forEach(el => el.textContent = state.currentLevel);
             if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" });
-            if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); // Duration短縮でレスポンシブ反応良く
+            if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); 
         }
 
-        function getGuaranteedVisibleTarget() {
-            const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
-            while (attempts < 50) {
-                const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2;
-                const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier);
-                const posX = Math.cos(a) * r, posZ = Math.sin(a) * r;
-                vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); const worldPos = vector.clone(); vector.project(camera);
-                if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: worldPos };
-                attempts++;
-            }
-            return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0).applyMatrix4(treeGroup.matrixWorld) };
-        }
-
-        function addFlowerWithConvergence(name, client, project, amount, notes) {
-            const target = getGuaranteedVisibleTarget(); const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
-            const trails = [];
-            for (let i = 0; i < 15; i++) {
-                const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 15, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 0.0 }));
-                const startR = 60, startTheta = Math.random()*Math.PI*2, startPhi = Math.random()*Math.PI;
-                trail.position.set(startR * Math.sin(startPhi) * Math.cos(startTheta), startR * Math.sin(startPhi) * Math.sin(startTheta), startR * Math.cos(startPhi));
-                trail.lookAt(target.world); trail.rotateX(Math.PI/2); scene.add(trail); trails.push(trail);
-                gsap.to(trail.position, { x: target.world.x, y: target.world.y, z: target.world.z, duration: 1.2, ease: "power3.in", onStart: () => trail.material.opacity = 1.0 });
-                gsap.to(trail.scale, { y: 0.01, duration: 1.2, ease: "power3.in" });
-            }
-            if (particles) gsap.to(particles.material, { opacity: 1.0, duration: 0.2, yoyo: true, repeat: 1 });
-            setTimeout(() => { trails.forEach(t => scene.remove(t)); addFlowerToTreeAt(name, client, project, amount, notes, target.local.x, target.local.y, target.local.z, colorHex, true); }, 1200);
-        }
-
-        function addFlowerToTreeAt(name, client, project, amount, notes, posX, y, posZ, colorHex, isNew = false) {
+        // 新規：保存データから花を復元する（位置決定に乱数シードを使用）
+        function addFlowerFromData(data) {
+            const colorHex = data.colorHex || DESIGN_PALETTE[0];
             const f = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
-            f.position.set(posX, y, posZ); f.scale.set(0, 0, 0);
-            f.userData = { name, client, project, amount, notes, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
+            
+            // 既存の配置計算ロジック（そのまま） + シード付き乱数
+            // これにより誰が見ても同じ位置に花が配置される
+            const seed = data.timestamp || 1;
+            const seededRandom = (s) => {
+                const x = Math.sin(s) * 10000;
+                return x - Math.floor(x);
+            };
+
+            const y = (seededRandom(seed * 0.1) - 0.2) * 20 * state.growthMultiplier + 4;
+            const branchFactor = (y + 6) / 22;
+            const a = seededRandom(seed * 0.2) * Math.PI * 2;
+            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 8 * state.baseSpreadFactor * state.growthMultiplier);
+            
+            const posX = Math.cos(a) * r;
+            const posZ = Math.sin(a) * r;
+
+            f.position.set(posX, y, posZ);
+            f.scale.set(0, 0, 0);
+            f.userData = { ...data, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
             treeGroup.add(f); state.flowers.push(f);
             gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
-        }
-
-        function addFlowerToTree(name, client, project, amount, notes) {
-            const y = (Math.random() - 0.2) * 20 * state.growthMultiplier + 4; const branchFactor = (y + 6) / 22; const a = Math.random() * Math.PI * 2;
-            const r = 0.8 + Math.random() * (branchFactor * 8 * state.baseSpreadFactor * state.growthMultiplier);
-            const posX = Math.cos(a) * r, posZ = Math.sin(a) * r; const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
-            addFlowerToTreeAt(name, client, project, amount, notes, posX, y, posZ, colorHex);
         }
 
         function addBudsInstanced(count) {
@@ -944,8 +945,9 @@
             buttons.forEach(btn => { const tl = gsap.timeline({ repeat: -1 }); DESIGN_PALETTE.forEach(color => { tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }); }); });
         }
 
+        // Main Application Logic
         window.addEventListener('load', async () => {
-            initThree();
+            initThree(); // ここでparticles, budsの生成ロジックはそのまま実行
             const slider = document.getElementById('stats-slider');
             const item = `
                 <div class="marquee-item text-white">
@@ -956,44 +958,78 @@
                 </div>`;
             if (slider) slider.innerHTML = item.repeat(2);
 
-            document.getElementById('action-form').onsubmit = (e) => {
-                e.preventDefault();
-                const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }, { id: 'post-amount' }];
-                let isValid = true;
-                fields.forEach(f => {
-                    const el = document.getElementById(f.id);
-                    if (!el.value.trim()) { el.classList.add('input-error'); el.placeholder = "入力してください"; isValid = false; }
-                    else { el.classList.remove('input-error'); }
-                });
-                if (!isValid) return;
-                const n = document.getElementById('post-name').value, c = document.getElementById('post-client').value, p = document.getElementById('post-project').value, a = parseInt(document.getElementById('post-amount').value) || 0, notes = document.getElementById('post-notes').value;
-                setTimeout(() => {
-                    state.actions++; state.amount += a;
-                    addFlowerWithConvergence(n, c, p, a, notes); 
+            // Firebase連携イベント
+            window.addEventListener('firebase-ready', (e) => {
+                const { db, appId, collection, addDoc, onSnapshot } = window.firebase;
+                const actionsCol = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+
+                // データ同期
+                onSnapshot(actionsCol, (snapshot) => {
+                    // 全再描画（一貫性のため）
+                    state.flowers.forEach(f => treeGroup.remove(f));
+                    state.flowers = [];
+                    state.actions = 0;
+                    state.amount = 0;
+
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        addFlowerFromData(data); // シード付き乱数による配置
+                        state.actions++;
+                        state.amount += (parseInt(data.amount) || 0);
+                    });
+
                     updateGrowthState();
                     updateStatsUI();
-                }, 400);
-                window.closeModal();
-            };
+                    if (!document.getElementById('page-dashboard').classList.contains('hidden')) refreshDashboard();
+                    
+                    // ローダー非表示
+                    document.getElementById('app-loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('app-loader').style.display = 'none', 800);
+                });
+
+                // フォーム送信処理
+                document.getElementById('action-form').onsubmit = async (evt) => {
+                    evt.preventDefault();
+                    const btn = document.getElementById('submit-action-btn');
+                    btn.disabled = true;
+                    btn.textContent = "Planting Seed...";
+
+                    const data = {
+                        name: document.getElementById('post-name').value,
+                        client: document.getElementById('post-client').value,
+                        project: document.getElementById('post-project').value,
+                        amount: parseInt(document.getElementById('post-amount').value) || 0,
+                        notes: document.getElementById('post-notes').value || "",
+                        // ランダムカラーロジックを維持して保存
+                        colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)],
+                        timestamp: Date.now()
+                    };
+
+                    try {
+                        await addDoc(actionsCol, data);
+                        window.closeModal();
+                        document.getElementById('action-form').reset();
+                    } catch (err) {
+                        console.error("Save Error:", err);
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = "ACTION / 投稿する";
+                    }
+                };
+            });
 
             await syncServerTime(); updateBackgroundColor(); animateActionButton(); addBudsInstanced(2000); 
             setInterval(updateTargetCountdown, 1000); 
 
-            // 初期表示
-            updateGrowthState(); // 初期ロード時にも呼んでカメラ位置を確定
-            updateStatsUI();
-
             window.addEventListener('click', (e) => { if (state.isModalOpen) return; if (hoveredFlower) window.showDetail(hoveredFlower.userData); });
             window.addEventListener('mousemove', (e) => { mouse.x = (e.clientX/window.innerWidth)*2-1; mouse.y = -(e.clientY/window.innerHeight)*2+1; state.mouseTargetX = mouse.x*0.1; state.mouseTargetY = mouse.y*0.08; });
             
-            // リサイズイベントの強化
             window.addEventListener('resize', () => { 
                 if(camera && renderer) { 
                     camera.aspect = window.innerWidth/window.innerHeight; 
                     camera.updateProjectionMatrix(); 
                     renderer.setSize(window.innerWidth, window.innerHeight); 
                     
-                    // リサイズ時にパラメータを再計算して更新
                     state.baseSpreadFactor = (window.innerWidth >= 1440) ? 1.8 : 1.5;
                     updateGrowthState();
                 } 
