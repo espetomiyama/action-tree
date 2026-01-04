@@ -8,91 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- Firebase Configuration Handling ---
-        let firebaseConfig;
-        let appId;
-
-        try {
-            // 1. Canvasプレビュー環境かどうかをチェック
-            if (typeof __firebase_config !== 'undefined') {
-                firebaseConfig = JSON.parse(__firebase_config);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
-            } else {
-                throw new Error("Local/External environment detected");
-            }
-        } catch (e) {
-            // 2. GitHub Pages等、外部環境用の設定
-            // --- STEP 1: 以下の設定をご自身のFirebaseコンソールの内容に書き換えてください ---
-            // (Firebase Console > Project Settings > General > Your apps > SDK setup/configuration)
-            firebaseConfig = {
-                apiKey: "YOUR_API_KEY",
-                authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-                projectId: "YOUR_PROJECT_ID",
-                storageBucket: "YOUR_PROJECT_ID.appspot.com",
-                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-                appId: "YOUR_APP_ID"
-            };
-            appId = 'action-tree-platform'; // 任意のIDでOK
-        }
-
-        // 初期化プロセス
-        const initApp = async () => {
-            // 設定未記入チェック
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                console.warn("Firebase config is missing.");
-                // ローディングを強制解除して、オフラインモード（見た目だけ）で起動
-                setTimeout(() => {
-                    const loader = document.getElementById('app-loader');
-                    if(loader) {
-                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html</div>';
-                        // クリックで消せるようにする
-                        loader.onclick = () => loader.style.display = 'none';
-                    }
-                }, 1000);
-                return;
-            }
-
-            try {
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
-
-                window.firebase = { db, auth, appId, collection, addDoc, onSnapshot };
-
-                // 認証フロー
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // 認証状態の監視
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user } }));
-                    }
-                });
-
-            } catch (err) {
-                console.error("Firebase Init Error:", err);
-                // エラー時もローディングを消してコンテンツを表示させる（重要）
-                const loader = document.getElementById('app-loader');
-                if(loader) {
-                    loader.innerHTML = `<div class="text-red-500 text-xs font-bold">Connection Failed: ${err.message}</div>`;
-                    setTimeout(() => loader.style.display = 'none', 3000);
-                }
-            }
-        };
-
-        initApp();
-    </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&family=Noto+Sans+JP:wght@300;400;700&display=swap');
 
@@ -426,19 +341,6 @@
             border-color: #000;
             background: #f8f8f8;
         }
-
-        /* 起動時ローダー */
-        #app-loader {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: #000807;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            transition: opacity 0.8s ease;
-        }
     </style>
 </head>
 <body style="overflow: hidden;">
@@ -446,7 +348,7 @@
     <!-- Boot Loader -->
     <div id="app-loader">
         <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-        <span class="text-[10px] font-bold uppercase tracking-[0.4em]">Connecting to Soil...</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em]">Preparing Soil...</span>
     </div>
 
     <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
@@ -584,7 +486,7 @@
                 <!-- Simulation Tools -->
                 <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black">
                     <div>
-                        <span class="page-section-label">Tree Growth Verification (Local)</span>
+                        <span class="page-section-label">Tree Growth Verification</span>
                         <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
                             <button onclick="window.setTestLevel(0)" class="sim-btn">Reset</button>
                             <button onclick="window.setTestLevel(15)" class="sim-btn">15 Posts (LV0)</button>
@@ -868,10 +770,10 @@
             state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; 
             state.actions = v; 
             state.amount = v * 1200; 
-            // シミュレーション時のランダム色ロジックもそのまま維持
             for(let i=0; i<v; i++) {
                 const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
-                addFlowerFromData({ name: "Sim User", client: "Sim Client", project: "Growth Sim " + (i+1), amount: 1200, colorHex, timestamp: i });
+                // シミュレーション時はアニメーションなしで即座に配置
+                addFlowerWithConvergence("Sim User", "Sim Client", "Growth Sim " + (i+1), 1200, "Simulated data", true); 
             }
             updateGrowthState(); 
             updateStatsUI(); 
@@ -899,18 +801,62 @@
             if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); 
         }
 
-        // 新規：保存データから花を復元する（位置決定に乱数シードを使用）
+        function getGuaranteedVisibleTarget() {
+            const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
+            while (attempts < 50) {
+                const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2;
+                const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier);
+                const posX = Math.cos(a) * r, posZ = Math.sin(a) * r;
+                vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); const worldPos = vector.clone(); vector.project(camera);
+                if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: worldPos };
+                attempts++;
+            }
+            return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0).applyMatrix4(treeGroup.matrixWorld) };
+        }
+
+        // 演出用：光が集まるアニメーション（引数 isInstant=true ならアニメーションスキップ）
+        function addFlowerWithConvergence(name, client, project, amount, notes, isInstant = false) {
+            const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
+            const target = getGuaranteedVisibleTarget(); // ターゲット位置（ランダム）を決定
+
+            if (isInstant) {
+                // シミュレーション等で即座に追加する場合
+                addFlowerToTreeAt(name, client, project, amount, notes, target.local.x, target.local.y, target.local.z, colorHex);
+                return;
+            }
+
+            const trails = [];
+            for (let i = 0; i < 15; i++) {
+                const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 15, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 0.0 }));
+                const startR = 60, startTheta = Math.random()*Math.PI*2, startPhi = Math.random()*Math.PI;
+                trail.position.set(startR * Math.sin(startPhi) * Math.cos(startTheta), startR * Math.sin(startPhi) * Math.sin(startTheta), startR * Math.cos(startPhi));
+                trail.lookAt(target.world); trail.rotateX(Math.PI/2); scene.add(trail); trails.push(trail);
+                gsap.to(trail.position, { x: target.world.x, y: target.world.y, z: target.world.z, duration: 1.2, ease: "power3.in", onStart: () => trail.material.opacity = 1.0 });
+                gsap.to(trail.scale, { y: 0.01, duration: 1.2, ease: "power3.in" });
+            }
+            if (particles) gsap.to(particles.material, { opacity: 1.0, duration: 0.2, yoyo: true, repeat: 1 });
+            
+            setTimeout(() => { 
+                trails.forEach(t => scene.remove(t)); 
+                addFlowerToTreeAt(name, client, project, amount, notes, target.local.x, target.local.y, target.local.z, colorHex, true); 
+            }, 1200);
+        }
+
+        // 決定した座標に花を追加する関数
+        function addFlowerToTreeAt(name, client, project, amount, notes, posX, y, posZ, colorHex, isNew = false) {
+            const f = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
+            f.position.set(posX, y, posZ); f.scale.set(0, 0, 0);
+            f.userData = { name, client, project, amount, notes, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
+            treeGroup.add(f); state.flowers.push(f);
+            gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
+        }
+
+        // 初期表示用のデータから復元する（位置決定に乱数シードを使用）
+        // ローカル版ではデータ保存されないが、シミュレーション用に関数は残す
         function addFlowerFromData(data) {
             const colorHex = data.colorHex || DESIGN_PALETTE[0];
-            const f = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
-            
-            // 既存の配置計算ロジック（そのまま） + シード付き乱数
-            // これにより誰が見ても同じ位置に花が配置される
             const seed = data.timestamp || 1;
-            const seededRandom = (s) => {
-                const x = Math.sin(s) * 10000;
-                return x - Math.floor(x);
-            };
+            const seededRandom = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
 
             const y = (seededRandom(seed * 0.1) - 0.2) * 20 * state.growthMultiplier + 4;
             const branchFactor = (y + 6) / 22;
@@ -919,12 +865,8 @@
             
             const posX = Math.cos(a) * r;
             const posZ = Math.sin(a) * r;
-
-            f.position.set(posX, y, posZ);
-            f.scale.set(0, 0, 0);
-            f.userData = { ...data, colorHex: colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
-            treeGroup.add(f); state.flowers.push(f);
-            gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
+            
+            addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, posX, y, posZ, colorHex);
         }
 
         function addBudsInstanced(count) {
@@ -994,9 +936,12 @@
             buttons.forEach(btn => { const tl = gsap.timeline({ repeat: -1 }); DESIGN_PALETTE.forEach(color => { tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }); }); });
         }
 
-        // Main Application Logic
         window.addEventListener('load', async () => {
-            initThree(); // ここでparticles, budsの生成ロジックはそのまま実行
+            // 初期ローダーを消す（Firebaseを使わないため即座に）
+            const loader = document.getElementById('app-loader');
+            if(loader) loader.style.display = 'none';
+
+            initThree();
             const slider = document.getElementById('stats-slider');
             const item = `
                 <div class="marquee-item text-white">
@@ -1007,65 +952,40 @@
                 </div>`;
             if (slider) slider.innerHTML = item.repeat(2);
 
-            // Firebase連携イベント
-            window.addEventListener('firebase-ready', (e) => {
-                const { db, appId, collection, addDoc, onSnapshot } = window.firebase;
-                const actionsCol = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
-
-                // データ同期
-                onSnapshot(actionsCol, (snapshot) => {
-                    // 全再描画（一貫性のため）
-                    state.flowers.forEach(f => treeGroup.remove(f));
-                    state.flowers = [];
-                    state.actions = 0;
-                    state.amount = 0;
-
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        addFlowerFromData(data); // シード付き乱数による配置
-                        state.actions++;
-                        state.amount += (parseInt(data.amount) || 0);
-                    });
-
-                    updateGrowthState();
-                    updateStatsUI();
-                    if (!document.getElementById('page-dashboard').classList.contains('hidden')) refreshDashboard();
-                    
-                    // ローダー非表示
-                    document.getElementById('app-loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('app-loader').style.display = 'none', 800);
+            document.getElementById('action-form').onsubmit = (e) => {
+                e.preventDefault();
+                const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }, { id: 'post-amount' }];
+                let isValid = true;
+                fields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (!el.value.trim()) { el.classList.add('input-error'); el.placeholder = "入力してください"; isValid = false; }
+                    else { el.classList.remove('input-error'); }
                 });
+                if (!isValid) return;
+                
+                const btn = document.getElementById('submit-action-btn');
+                btn.disabled = true;
+                btn.textContent = "Processing...";
 
-                // フォーム送信処理
-                document.getElementById('action-form').onsubmit = async (evt) => {
-                    evt.preventDefault();
-                    const btn = document.getElementById('submit-action-btn');
-                    btn.disabled = true;
-                    btn.textContent = "Planting Seed...";
+                const n = document.getElementById('post-name').value;
+                const c = document.getElementById('post-client').value;
+                const p = document.getElementById('post-project').value;
+                const a = parseInt(document.getElementById('post-amount').value) || 0;
+                const notes = document.getElementById('post-notes').value;
+                
+                // 演出：光が集まるアニメーションを実行
+                addFlowerWithConvergence(n, c, p, a, notes);
 
-                    const data = {
-                        name: document.getElementById('post-name').value,
-                        client: document.getElementById('post-client').value,
-                        project: document.getElementById('post-project').value,
-                        amount: parseInt(document.getElementById('post-amount').value) || 0,
-                        notes: document.getElementById('post-notes').value || "",
-                        // ランダムカラーロジックを維持して保存
-                        colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)],
-                        timestamp: Date.now()
-                    };
+                // 集計更新（アニメーションと非同期でOKだが、今回は演出完了を待たずにUI更新）
+                state.actions++; state.amount += a;
+                updateStatsUI();
+                if(!document.getElementById('page-dashboard').classList.contains('hidden')) refreshDashboard();
 
-                    try {
-                        await addDoc(actionsCol, data);
-                        window.closeModal();
-                        document.getElementById('action-form').reset();
-                    } catch (err) {
-                        console.error("Save Error:", err);
-                    } finally {
-                        btn.disabled = false;
-                        btn.textContent = "ACTION / 投稿する";
-                    }
-                };
-            });
+                window.closeModal();
+                document.getElementById('action-form').reset();
+                btn.disabled = false;
+                btn.textContent = "ACTION / 投稿する";
+            };
 
             await syncServerTime(); updateBackgroundColor(); animateActionButton(); addBudsInstanced(2000); 
             setInterval(updateTargetCountdown, 1000); 
