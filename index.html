@@ -14,34 +14,83 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
+        // --- Firebase Configuration Handling ---
+        let firebaseConfig;
+        let appId;
 
-        window.firebase = { db, auth, appId, collection, addDoc, onSnapshot };
+        try {
+            // 1. Canvasプレビュー環境かどうかをチェック
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
+            } else {
+                throw new Error("Local/External environment detected");
+            }
+        } catch (e) {
+            // 2. GitHub Pages等、外部環境用の設定
+            // --- STEP 1: 以下の設定をご自身のFirebaseコンソールの内容に書き換えてください ---
+            // (Firebase Console > Project Settings > General > Your apps > SDK setup/configuration)
+            firebaseConfig = {
+                apiKey: "YOUR_API_KEY",
+                authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+                projectId: "YOUR_PROJECT_ID",
+                storageBucket: "YOUR_PROJECT_ID.appspot.com",
+                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                appId: "YOUR_APP_ID"
+            };
+            appId = 'action-tree-platform'; // 任意のIDでOK
+        }
 
-        // 認証フロー
-        const initAuth = async () => {
+        // 初期化プロセス
+        const initApp = async () => {
+            // 設定未記入チェック
+            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                console.warn("Firebase config is missing.");
+                // ローディングを強制解除して、オフラインモード（見た目だけ）で起動
+                setTimeout(() => {
+                    const loader = document.getElementById('app-loader');
+                    if(loader) {
+                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html</div>';
+                        // クリックで消せるようにする
+                        loader.onclick = () => loader.style.display = 'none';
+                    }
+                }, 1000);
+                return;
+            }
+
             try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+
+                window.firebase = { db, auth, appId, collection, addDoc, onSnapshot };
+
+                // 認証フロー
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (e) {
-                console.error("Auth Error:", e);
+
+                // 認証状態の監視
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user } }));
+                    }
+                });
+
+            } catch (err) {
+                console.error("Firebase Init Error:", err);
+                // エラー時もローディングを消してコンテンツを表示させる（重要）
+                const loader = document.getElementById('app-loader');
+                if(loader) {
+                    loader.innerHTML = `<div class="text-red-500 text-xs font-bold">Connection Failed: ${err.message}</div>`;
+                    setTimeout(() => loader.style.display = 'none', 3000);
+                }
             }
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user } }));
-            }
-        });
-
-        initAuth();
+        initApp();
     </script>
 
     <style>
@@ -873,7 +922,7 @@
 
             f.position.set(posX, y, posZ);
             f.scale.set(0, 0, 0);
-            f.userData = { ...data, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
+            f.userData = { ...data, colorHex: colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
             treeGroup.add(f); state.flowers.push(f);
             gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
         }
