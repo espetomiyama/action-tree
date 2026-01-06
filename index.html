@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ACTION TREE</title>
+    <title>100 ACTION TREE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&family=Noto+Sans+JP:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
 
         /* 全体設定 */
         body {
@@ -18,7 +18,7 @@
             overflow-x: hidden;
             background-color: #000807; 
             color: #fff;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
             transition: background-color 2.0s ease; 
         }
@@ -219,7 +219,6 @@
             width: 74px;
             height: 74px;
             z-index: 50;
-            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
             border-radius: 9999px;
             background-color: #fff;
             color: #000;
@@ -229,6 +228,7 @@
             justify-content: center;
             text-transform: uppercase;
             font-weight: 800;
+            will-change: transform, background-color;
         }
 
         @media (min-width: 768px) {
@@ -336,10 +336,61 @@
             padding: 8px 12px;
             border: 1px solid #ddd;
             transition: all 0.3s ease;
+            background: #fff;
         }
         .sim-btn:hover {
             border-color: #000;
             background: #f8f8f8;
+        }
+        
+        /* ラジオボタンのカスタムスタイル（シンプルドット版） */
+        .status-radio:checked + div {
+            color: #000;
+            opacity: 1;
+        }
+        .status-radio:checked + div .status-dot {
+            background-color: #000;
+            border-color: #000;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+            background-color: transparent;
+        }
+        .status-option {
+            color: #ccc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+        }
+        .status-radio:not(:checked) + div:hover {
+            color: #999;
+        }
+        .status-radio:not(:checked) + div:hover .status-dot {
+            border-color: #999;
+        }
+        
+        /* 起動時ローダー */
+        #app-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #000807;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease;
         }
     </style>
 </head>
@@ -360,7 +411,7 @@
             <div class="logo-fallback w-6 h-6 md:w-8 md:h-8"></div>
         </div>
         <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span class="logo-main-text" onclick="window.showPage('top')">Action Tree</span>
+            <span class="logo-main-text" onclick="window.showPage('top')">100 Action Tree</span>
         </div>
         <div class="ml-auto">
             <div id="menu-toggle" class="nav-icon"><span></span><span></span></div>
@@ -368,11 +419,14 @@
     </header>
 
     <div id="nav-menu" class="menu-overlay">
-        <nav class="flex flex-col gap-8 md:gap-12 text-center">
+        <div class="flex-grow flex flex-col justify-center items-center gap-8 md:gap-12">
             <a href="#" onclick="window.showPage('top')" class="menu-link">Top</a>
             <a href="#" onclick="window.showPage('about')" class="menu-link">About</a>
             <a href="#" onclick="window.showPage('dashboard')" class="menu-link">Dashboard</a>
-        </nav>
+        </div>
+        <div class="pb-10 text-center">
+            <p class="text-[9px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. ALL RIGHTS RESERVED.</p>
+        </div>
     </div>
 
     <main id="app-content">
@@ -382,7 +436,8 @@
             <div class="marquee-container">
                 <div class="marquee-content" id="stats-slider"></div>
             </div>
-            <button id="main-action-button" onclick="window.openModal()" class="action-button vivid-cycle-btn shadow-2xl hover:scale-105 active:scale-95 text-[10px] md:text-xs text-black">
+            <!-- vivid-cycle-btn: 色変化, breath-animation: 呼吸アニメ -->
+            <button id="main-action-button" onclick="window.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
@@ -391,17 +446,17 @@
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
-                    <span class="page-section-label">About ACTION TREE</span>
-                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">ステートメント文章考案中</h2>
+                    <span class="page-section-label">About 100 ACTION TREE</span>
+                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">100アクションを目指して</h2>
                     <div class="statement-text-container space-y-6 md:space-y-8 text-black">
-                        <p>ACTION TREEは、個人の「自発的なアクション」を養分にして、組織全体の文化を大きく育てていくためのプラットフォームです。</p>
-                        <p>私たちは、プロフェッショナルとしてデザインを突き詰めることを何より大切にしています。その職人魂は、私たちのアイデンティティであり、永遠に変わることはありません。しかし、AIが多くのことを代替していくこれからの時代. 私たち人間にしかできないこと、それは「問いを立て、対話をし、未来への決断を下すこと」ではないでしょうか。</p>
+                        <p>100 ACTION TREEは、個人の「自発的なアクション」を養分にして、組織全体の文化を大きく育てていくためのプラットフォームです。</p>
+                        <p>私たちは、プロフェッショナルとしてデザインを突き詰めることを何より大切にしています。その職人魂は、私たちのアイデンティティであり、永遠に変わることはありません。しかし、AIが多くのことを代替していくこれからの時代、私たち人間にしかできないこと、それは「問いを立て、対話をし、未来への決断を下すこと」ではないでしょうか。</p>
                         <div class="py-2 md:py-4">
-                            <p class="leading-relaxed font-bold text-black text-black">「こうしたらもっと良くなるかも」<br>「これは新しい価値になりそうだ」<br>「あの案件にも活かせるかもしれない」</p>
+                            <p class="leading-relaxed font-bold text-black text-black">「まずは100個のアクションを」<br>小さな種まきが、やがて大きな森になる。</p>
                         </div>
                         <p>リアルに実行できるのは人の役目であり、実行し、決断することに価値があります。日々の業務の中で生まれる、こうした小さな気づきを、頭の中だけで終わらせないでほしい。</p>
-                        <p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「ACTION TREE」を構築しました。</p>
-                        <p>すぐには結果が出ないかもしれません。それでも、みんなで種をまき、水をやり、枝を伸ばしていく。そのプロセスこそが、私たちの新しいスキルを養い、何よりこの会社の文化を強く、豊かにしていくと信じています。</p>
+                        <p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「100 ACTION TREE」を構築しました。</p>
+                        <p>すぐには結果が出ないかもしれません。それでも、みんなで種をまき、水をやり、枝を伸ばしていく。100本のアクションが集まったとき、私たちの景色はきっと変わっているはずです。</p>
                     </div>
                 </div>
                 <div class="mb-20 md:mb-24">
@@ -449,8 +504,11 @@
                     <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Dashboard.</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
                         <div>
-                            <span class="page-section-label">Total Actions</span>
-                            <div class="stat-card-value tabular actions-val text-black">0</div>
+                            <span class="page-section-label">Total Actions / Goal</span>
+                            <div class="stat-card-value tabular text-black flex items-baseline">
+                                <span class="actions-val">0</span>
+                                <span class="text-lg ml-2 text-gray-400 font-bold">/ 100</span>
+                            </div>
                         </div>
                         <div>
                             <span class="page-section-label">Total Amount</span>
@@ -461,11 +519,11 @@
                             <div class="stat-card-value target-countdown-val tabular text-black">---</div>
                         </div>
                     </div>
-                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20 text-black">
-                        <div class="flex flex-col gap-2">
-                            <span class="page-section-label text-black">Target Date Setting</span>
-                            <input type="date" id="target-date-input" class="date-input-custom text-black" onchange="window.handleDateChange(this.value)">
-                        </div>
+                    <div class="flex flex-col md:flex-row md:items-end justify-end gap-4 mb-20 text-black">
+                        <!-- ALL RESETボタン -->
+                        <button onclick="window.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                            ALL RESET
+                        </button>
                         <button onclick="window.downloadLogCSV()" class="csv-btn self-start md:self-end text-black">Download Log (CSV)</button>
                     </div>
                 </div>
@@ -490,8 +548,8 @@
                         <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
                             <button onclick="window.setTestLevel(0)" class="sim-btn">Reset</button>
                             <button onclick="window.setTestLevel(15)" class="sim-btn">15 Posts (LV0)</button>
-                            <button onclick="window.setTestLevel(30)" class="sim-btn">Level 1 (30)</button>
-                            <button onclick="window.setTestLevel(60)" class="sim-btn">Level 2 (60)</button>
+                            <button onclick="window.setTestLevel(30)" class="sim-btn">30 Posts (LV1)</button>
+                            <button onclick="window.setTestLevel(60)" class="sim-btn">60 Posts (LV2)</button>
                             <button onclick="window.setTestLevel(100)" class="sim-btn">Level 3 (100)</button>
                         </div>
                     </div>
@@ -527,36 +585,60 @@
 
     <!-- Post Modal -->
     <div id="post-modal" class="modal-overlay" onclick="if(event.target === this) window.closeModal()">
-        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[90vh] relative">
-            <button onclick="window.closeModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black">&times;</button>
-            <div class="mb-6 md:mb-8 pr-8">
+        <div class="bg-white text-black w-full max-w-lg p-5 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[95vh] relative">
+            <button onclick="window.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black">&times;</button>
+            <div class="mb-4 md:mb-6 pr-8">
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
                 <p class="text-[10px] text-gray-400 font-bold mt-1.5 leading-relaxed text-black">
-                    自発的なアクションや、あなたならではの提案で、ACTION TREEは実ります。どんどん投稿してください。
+                    ACTIONを投稿して、100の木を育てましょう。
                 </p>
             </div>
-            <form id="action-form" class="space-y-5 md:space-y-6 text-black" novalidate>
+            <form id="action-form" class="space-y-4 md:space-y-5 text-black" novalidate>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label>
-                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label>
-                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 案件名</label>
-                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label>
+                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
                 </div>
+
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">CONTRACT AMOUNT / 受注額 (0円でもOK)</label>
-                    <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Status / ステータス</label>
+                    <div class="flex gap-8 mt-2 h-8 items-center">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked>
+                            <div class="status-option">
+                                <span class="status-dot"></span>提案
+                            </div>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="post-status" value="order" class="status-radio hidden">
+                            <div class="status-option">
+                                <span class="status-dot"></span>受注
+                            </div>
+                        </label>
+                    </div>
                 </div>
+
+                <!-- 金額入力欄（レイアウト固定） -->
+                <div class="h-20 relative overflow-hidden flex flex-col justify-end">
+                    <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-2 transition-all duration-300">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">CONTRACT AMOUNT / 受注額</label>
+                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none">
+                    </div>
+                </div>
+
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black text-black">ACTION NOTES / 備考欄</label>
-                    <textarea id="post-notes" maxlength="300" placeholder="" class="w-full border-b py-2 h-20 resize-none text-black font-bold text-sm rounded-none"></textarea>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black text-black">ACTION NOTES / ノート</label>
+                    <textarea id="post-notes" maxlength="300" placeholder="" class="w-full border-b py-2 h-20 md:h-24 resize-none text-black font-bold text-sm rounded-none"></textarea>
                 </div>
-                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-4 md:py-5 font-bold uppercase mt-4 rounded-full shadow-md active:scale-[0.98] text-xs text-black">
+                
+                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-4 md:py-5 font-bold uppercase mt-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none">
                     ACTION / 投稿する
                 </button>
             </form>
@@ -577,6 +659,10 @@
                     <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
                 </div>
                 <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status</span>
+                    <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
+                </div>
+                <div>
                     <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client</span>
                     <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
                 </div>
@@ -592,41 +678,100 @@
         </div>
     </div>
 
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let firebaseConfig;
+        let appId;
+
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
+            } else {
+                throw new Error("Local environment detected");
+            }
+        } catch (e) {
+            firebaseConfig = {
+                apiKey: "YOUR_API_KEY",
+                authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+                projectId: "YOUR_PROJECT_ID",
+                storageBucket: "YOUR_PROJECT_ID.appspot.com",
+                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                appId: "YOUR_APP_ID"
+            };
+            appId = 'action-tree-platform';
+        }
+
+        const initApp = async () => {
+            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                setTimeout(() => {
+                    const loader = document.getElementById('app-loader');
+                    if(loader) loader.style.display = 'none';
+                }, 1000);
+                return;
+            }
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+                // 修正: 必要な関数をすべてwindow.firebaseに公開
+                window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user, db, appId, collection, addDoc, onSnapshot } }));
+                    }
+                });
+            } catch (err) {
+                console.error("Firebase Init Error:", err);
+                const loader = document.getElementById('app-loader');
+                if(loader) loader.style.display = 'none';
+            }
+        };
+        initApp();
+    </script>
+
+    <!-- Main Logic Script -->
     <script>
-        // --- Globals & State ---
+        // --- 0. Core State & Constants ---
         const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         const TIME_COLORS = [
             { hour: 0, color: "#000807" }, { hour: 6, color: "#43736a" }, { hour: 12, color: "#43736a" }, { hour: 18, color: "#004036" }, { hour: 24, color: "#000807" }  
         ];
 
         let state = {
-            actions: 0, amount: 0, targetDate: "2026-12-31", 
+            actions: 0, amount: 0, targetDate: "2025-12-31", 
             flowers: [], isMenuOpen: false, isModalOpen: false, 
             mouseTargetX: 0, mouseTargetY: 0, currentMouseX: 0, currentMouseY: 0,
             baseSpreadFactor: 1.0, growthMultiplier: 1.0, currentLevel: 0,
             instancedBuds: null, budCount: 0, maxBuds: 15000,
-            driftFactor: 0.1, simulatedHour: 12 
+            driftFactor: 0.1, simulatedHour: null 
         };
 
         let scene, camera, renderer, treeGroup, particles, hoveredFlower = null;
         const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+        let timeOffset = 0;
 
-        // --- Utility ---
-        function hexToRgb(hex) {
+        // --- 1. Utility Functions (Attached to window) ---
+        
+        window.hexToRgb = function(hex) {
             const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
             return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
-        }
-        function rgbToHex(r, g, b) { return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
+        };
 
-        async function syncServerTime() {
-            try {
-                const response = await fetch('https://worldtimeapi.org/api/ip');
-                const data = await response.json();
-                timeOffset = new Date(data.datetime).getTime() - Date.now();
-            } catch (e) { timeOffset = 0; }
-        }
+        window.rgbToHex = function(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        };
 
-        function getDynamicColor() {
+        window.getDynamicColor = function() {
             const now = new Date();
             const totalHours = state.simulatedHour !== null ? state.simulatedHour : (now.getHours() + now.getMinutes() / 60);
             let start = TIME_COLORS[0], end = TIME_COLORS[1];
@@ -636,36 +781,29 @@
                 }
             }
             const t = (totalHours - start.hour) / (end.hour - start.hour);
-            const c1 = hexToRgb(start.color), c2 = hexToRgb(end.color);
-            return rgbToHex(Math.round(c1.r+(c2.r-c1.r)*t), Math.round(c1.g+(c2.g-c1.g)*t), Math.round(c1.b+(c2.b-c1.b)*t));
-        }
+            const c1 = window.hexToRgb(start.color), c2 = window.hexToRgb(end.color);
+            return window.rgbToHex(
+                Math.round(c1.r + (c2.r - c1.r) * t),
+                Math.round(c1.g + (c2.g - c1.g) * t),
+                Math.round(c1.b + (c2.b - c1.b) * t)
+            );
+        };
 
-        function updateBackgroundColor() {
-            const isTop = !document.getElementById('page-top').classList.contains('hidden');
-            const isMenuOpen = document.getElementById('nav-menu').style.display === 'flex';
-            if (isTop && !isMenuOpen) {
-                const colorHex = getDynamicColor();
-                document.body.style.backgroundColor = colorHex;
-                if (scene && scene.fog) scene.fog.color.set(colorHex);
-            }
-        }
+        window.syncServerTime = async function() {
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/ip');
+                const data = await response.json();
+                timeOffset = new Date(data.datetime).getTime() - Date.now();
+            } catch (e) { timeOffset = 0; }
+        };
 
-        function resetHoverState() {
-            if (hoveredFlower) {
-                gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: "power2.out" });
-                hoveredFlower = null;
-            }
-            document.body.style.cursor = 'default';
-        }
-
-        // --- Stats UI Updater ---
-        function updateStatsUI() {
+        window.updateStatsUI = function() {
             document.querySelectorAll('.actions-val').forEach(el => el.textContent = state.actions.toLocaleString());
             document.querySelectorAll('.amount-val').forEach(el => el.textContent = state.amount.toLocaleString());
-            updateTargetCountdown();
-        }
+            window.updateTargetCountdown();
+        };
 
-        function updateTargetCountdown() {
+        window.updateTargetCountdown = function() {
             const now = new Date();
             const target = new Date(state.targetDate);
             const diffTime = target - now;
@@ -678,129 +816,11 @@
                 countdownStr = `${days}D ${hours}H ${mins}M ${secs}S`;
             } else { countdownStr = "GOAL REACHED"; }
             document.querySelectorAll('.target-countdown-val').forEach(el => el.textContent = countdownStr);
-        }
-
-        window.handleDateChange = function(newDate) {
-            state.targetDate = newDate;
-            updateTargetCountdown();
         };
 
-        window.downloadLogCSV = function() {
-            if (state.flowers.length === 0) return;
-            let csvContent = "\uFEFF"; 
-            csvContent += "Name,Client,Project,Amount,Notes\n";
-            state.flowers.forEach(f => {
-                const d = f.userData;
-                const row = [`"${(d.name || '').replace(/"/g, '""')}"`, `"${(d.client || '').replace(/"/g, '""')}"`, `"${(d.project || '').replace(/"/g, '""')}"`, d.amount, `"${(d.notes || '').replace(/"/g, '""')}"`];
-                csvContent += row.join(",") + "\n";
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `ActionTree_Log_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        };
+        // --- 2. Core Functions ---
 
-        // --- UI functions ---
-        window.showDetail = function(data) {
-            const modal = document.getElementById('detail-modal');
-            document.getElementById('detail-name').textContent = data.name; 
-            document.getElementById('detail-client').textContent = data.client || "---";
-            document.getElementById('detail-project').textContent = data.project || "---";
-            document.getElementById('detail-notes').textContent = data.notes || "---";
-            document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; 
-            resetHoverState();
-            if (modal) { modal.style.display = 'flex'; state.isModalOpen = true; }
-        };
-
-        window.closeDetailModal = function() { document.getElementById('detail-modal').style.display = 'none'; state.isModalOpen = false; };
-
-        window.closeModal = function() { 
-            document.getElementById('post-modal').style.display = 'none'; 
-            document.getElementById('action-form').reset();
-            document.querySelectorAll('#action-form input, #action-form textarea').forEach(el => { el.classList.remove('input-error'); el.placeholder = ""; });
-            state.isModalOpen = false;
-        };
-
-        window.openModal = function() { resetHoverState(); document.getElementById('post-modal').style.display = 'flex'; state.isModalOpen = true; };
-
-        window.showPage = function(id) {
-            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
-            const p = document.getElementById(`page-${id}`); if(p) p.classList.remove('hidden');
-            const nav = document.getElementById('nav-menu'); if(nav) nav.style.display = 'none';
-            document.getElementById('menu-toggle').classList.remove('open');
-            document.body.style.overflow = (id === 'top') ? 'hidden' : 'auto';
-            if (id !== 'top') window.scrollTo(0, 0); 
-            const h = document.getElementById('main-header');
-            if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } 
-            else { document.body.style.backgroundColor = '#fff'; if(h) h.classList.add('is-dark'); }
-            if (id === 'dashboard') refreshDashboard();
-        };
-
-        function refreshDashboard() {
-            const list = document.getElementById('dashboard-action-list');
-            if (!list) return; list.innerHTML = '';
-            document.getElementById('target-date-input').value = state.targetDate;
-            updateTargetCountdown();
-            const display = [...state.flowers].reverse();
-            document.getElementById('log-count-label').textContent = `Showing ${display.length} actions`;
-            if (display.length === 0) {
-                document.getElementById('no-actions-msg').classList.remove('hidden');
-            } else {
-                document.getElementById('no-actions-msg').classList.add('hidden');
-                display.forEach(f => {
-                    const row = document.createElement('tr');
-                    row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]";
-                    row.onclick = () => window.showDetail(f.userData);
-                    row.innerHTML = `
-                        <td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]">
-                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${f.userData.colorHex}"></span>
-                            ${f.userData.name}
-                        </td>
-                        <td class="py-4 px-2 opacity-40 uppercase tracking-widest truncate max-w-[80px] md:max-w-[150px]">${f.userData.client || "---"}</td>
-                        <td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${f.userData.project || "---"}</td>
-                        <td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">¥${(parseInt(f.userData.amount) || 0).toLocaleString()}</td>
-                    `;
-                    list.appendChild(row);
-                });
-            }
-        }
-
-        window.setTestLevel = function(v) { 
-            state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; 
-            state.actions = v; 
-            state.amount = v * 1200; 
-            for(let i=0; i<v; i++) {
-                const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
-                // シミュレーション時はアニメーションなしで即座に配置
-                addFlowerWithConvergence("Sim User", "Sim Client", "Growth Sim " + (i+1), 1200, "Simulated data", true); 
-            }
-            updateGrowthState(); 
-            updateStatsUI(); 
-            refreshDashboard();
-        };
-
-        window.setTestTime = function(h) { state.simulatedHour = h; updateBackgroundColor(); };
-        window.resetTimeSim = function() { state.simulatedHour = null; updateBackgroundColor(); };
-
-        // --- Core: 3D Visualization ---
-        function updateGrowthState() {
-            const count = state.actions;
-            let targetLevel = count >= 100 ? 3 : count >= 60 ? 2 : count >= 30 ? 1 : 0;
-            let targetMultiplier = targetLevel === 3 ? 1.8 : targetLevel === 2 ? 1.5 : targetLevel === 1 ? 1.25 : 1.0;
-            let targetCamZ;
-            if (window.innerWidth < 768) {
-                targetCamZ = targetLevel === 3 ? 48 : targetLevel === 2 ? 36 : targetLevel === 1 ? 26 : 22;
-            } else {
-                targetCamZ = targetLevel === 3 ? 40 : targetLevel === 2 ? 28 : 20;
-            }
-
-            state.currentLevel = targetLevel; state.growthMultiplier = targetMultiplier;
-            document.querySelectorAll('.level-val').forEach(el => el.textContent = state.currentLevel);
-            if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" });
-            if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); 
-        }
-
+        // 修正: 確実に定義してから使用するために前方へ配置
         function getGuaranteedVisibleTarget() {
             const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
             while (attempts < 50) {
@@ -814,17 +834,246 @@
             return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0).applyMatrix4(treeGroup.matrixWorld) };
         }
 
-        // 演出用：光が集まるアニメーション（引数 isInstant=true ならアニメーションスキップ）
-        function addFlowerWithConvergence(name, client, project, amount, notes, isInstant = false) {
-            const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
-            const target = getGuaranteedVisibleTarget(); // ターゲット位置（ランダム）を決定
+        // --- 3. Window Level Navigation & Modal Functions ---
 
-            if (isInstant) {
-                // シミュレーション等で即座に追加する場合
-                addFlowerToTreeAt(name, client, project, amount, notes, target.local.x, target.local.y, target.local.z, colorHex);
-                return;
+        window.showPage = function(id) {
+            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+            const p = document.getElementById(`page-${id}`); if(p) p.classList.remove('hidden');
+            const nav = document.getElementById('nav-menu'); if(nav) nav.style.display = 'none';
+            const toggle = document.getElementById('menu-toggle'); if(toggle) toggle.classList.remove('open');
+            document.body.style.overflow = (id === 'top') ? 'hidden' : 'auto';
+            if (id !== 'top') window.scrollTo(0, 0); 
+            const h = document.getElementById('main-header');
+            if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } 
+            else { document.body.style.backgroundColor = '#fff'; if(h) h.classList.add('is-dark'); }
+            if (id === 'dashboard') refreshDashboard();
+        };
+
+        window.openModal = function() { 
+            resetHoverState(); 
+            const modal = document.getElementById('post-modal');
+            if(modal) { modal.style.display = 'flex'; state.isModalOpen = true; } 
+        };
+
+        window.closeModal = function() { 
+            const modal = document.getElementById('post-modal'); if(modal) modal.style.display = 'none'; 
+            const form = document.getElementById('action-form');
+            if(form) {
+                form.reset();
+                const amtCont = document.getElementById('amount-container');
+                if(amtCont) { 
+                    gsap.to(amtCont, { opacity: 0, duration: 0.2, onComplete: () => amtCont.classList.add('invisible') });
+                }
+                const propRadio = document.querySelector('input[name="post-status"][value="proposal"]');
+                if(propRadio) propRadio.checked = true;
+                form.querySelectorAll('input, textarea').forEach(el => { el.classList.remove('input-error'); el.placeholder = ""; });
+            }
+            state.isModalOpen = false;
+        };
+
+        window.closeDetailModal = function() { const modal = document.getElementById('detail-modal'); if(modal) modal.style.display = 'none'; state.isModalOpen = false; };
+
+        window.showDetail = function(data) {
+            const modal = document.getElementById('detail-modal');
+            if (!modal) return;
+            document.getElementById('detail-name').textContent = data.name; 
+            document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER' : 'PROPOSAL';
+            document.getElementById('detail-client').textContent = data.client || "---";
+            document.getElementById('detail-project').textContent = data.project || "---";
+            document.getElementById('detail-notes').textContent = data.notes || "---";
+            document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; 
+            resetHoverState();
+            modal.style.display = 'flex'; 
+            state.isModalOpen = true;
+        };
+
+        window.downloadLogCSV = function() {
+            if (state.flowers.length === 0) return;
+            let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n";
+            state.flowers.forEach(f => {
+                const d = f.userData;
+                const row = [`"${(d.name || '')}"`, `"${(d.status || 'proposal')}"`, `"${(d.client || '')}"`, `"${(d.project || '')}"`, d.amount, `"${(d.notes || '')}"`];
+                csvContent += row.join(",") + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+        };
+
+        window.setTestLevel = function(v) { 
+            state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; 
+            state.actions = v; state.amount = v * 1200; 
+            for(let i=0; i<v; i++) {
+                const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
+                addFlowerWithConvergence("Sim User", "Sim Client", "Growth Sim " + (i+1), 1200, "Simulated data", 'order', true); 
+            }
+            updateGrowthState(); window.updateStatsUI(); refreshDashboard();
+        };
+
+        window.setTestTime = function(h) { state.simulatedHour = h; updateBackgroundColor(); };
+        window.resetTimeSim = function() { state.simulatedHour = null; updateBackgroundColor(); };
+
+        window.resetAllData = async function() {
+            if(!confirm("全てのデータを削除しますか？")) return;
+            
+            // ローディング表示
+            const loader = document.getElementById('app-loader');
+            if(loader) {
+                loader.style.display = 'flex';
+                const span = loader.querySelector('span');
+                if(span) span.textContent = "Resetting...";
             }
 
+            if(window.firebase) {
+                // Firebase logic...
+                const { db, appId, collection, getDocs, writeBatch } = window.firebase;
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                try {
+                    const snapshot = await getDocs(q);
+                    const batch = writeBatch(db);
+                    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                } catch(e) {
+                    console.error(e);
+                    alert("削除に失敗しました");
+                }
+            } else {
+                // Local Logic
+                state.flowers.forEach(f => treeGroup.remove(f));
+                state.flowers = []; state.actions = 0; state.amount = 0;
+                updateGrowthState(); window.updateStatsUI(); refreshDashboard();
+            }
+            
+            if(loader) loader.style.display = 'none';
+        };
+
+        // --- 4. Internal Helper Functions ---
+
+        function updateBackgroundColor() {
+            const topPage = document.getElementById('page-top');
+            if (topPage && !topPage.classList.contains('hidden')) {
+                const colorHex = window.getDynamicColor();
+                document.body.style.backgroundColor = colorHex;
+                if (scene && scene.fog) scene.fog.color.set(colorHex);
+            }
+        }
+
+        function resetHoverState() {
+            if (hoveredFlower) {
+                gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: "power2.out" });
+                hoveredFlower = null;
+            }
+            document.body.style.cursor = 'default';
+        }
+
+        function refreshDashboard() {
+            const list = document.getElementById('dashboard-action-list');
+            if (!list) return; list.innerHTML = '';
+            window.updateTargetCountdown();
+            const display = [...state.flowers].reverse();
+            document.getElementById('log-count-label').textContent = `Showing ${display.length} actions`;
+            const msg = document.getElementById('no-actions-msg');
+            if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } 
+            else {
+                if(msg) msg.classList.add('hidden');
+                display.forEach(f => {
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]";
+                    row.onclick = () => window.showDetail(f.userData);
+                    const amountDisplay = f.userData.status === 'order' ? `¥${(parseInt(f.userData.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>';
+                    row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${f.userData.colorHex}"></span>${f.userData.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${f.userData.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${f.userData.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`;
+                    list.appendChild(row);
+                });
+            }
+        }
+
+        // --- 5. 3D & Animation Core ---
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            if(!container) return;
+            scene = new THREE.Scene(); scene.fog = new THREE.Fog(window.getDynamicColor(), 10, 85); 
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 3000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+            treeGroup = new THREE.Group(); scene.add(treeGroup);
+            
+            // 25,000 Particles (Rich Star Dust)
+            const geometry = new THREE.BufferGeometry(); 
+            const count = window.innerWidth < 768 ? 12000 : 25000;
+            const positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
+            for (let i = 0; i < count; i++) {
+                const y = (Math.random() - 0.3) * 38; 
+                const br = (y + 15) / 38;
+                const r = br * 12 * state.baseSpreadFactor * Math.pow(Math.random(), 0.6);
+                const a = y * 0.2 + Math.random() * Math.PI * 2;
+                positions[i*3] = Math.cos(a)*r; positions[i*3+1] = y; positions[i*3+2] = Math.sin(a)*r;
+                const c = 0.6 + Math.random() * 0.4; 
+                colors[i*3]=c; colors[i*3+1]=c; colors[i*3+2]=c; 
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particles = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending }));
+            treeGroup.add(particles);
+
+            const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+            state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, state.maxBuds); state.instancedBuds.count = 0; treeGroup.add(state.instancedBuds);
+
+            camera.position.z = 20; camera.position.y = 5.0; camera.lookAt(0, 8, 0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate); const time = Date.now();
+            state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02;
+            state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02;
+            if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; }
+            state.flowers.forEach(f => {
+                const ud = f.userData; if (ud.baseX === undefined) return;
+                f.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*state.driftFactor*3.8;
+                f.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*state.driftFactor*3.2;
+                f.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*state.driftFactor*3.8;
+            });
+            if (!state.isModalOpen) {
+                raycaster.setFromCamera(mouse, camera); const hit = raycaster.intersectObjects(state.flowers);
+                if (hit.length > 0) {
+                    const obj = hit[0].object;
+                    if (hoveredFlower !== obj) { if (hoveredFlower) gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = obj; gsap.to(obj.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 0.6 }); }
+                    document.body.style.cursor = 'pointer';
+                } else { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = null; } document.body.style.cursor = 'default'; }
+            } else if (hoveredFlower) resetHoverState();
+            if(renderer) renderer.render(scene, camera);
+        }
+
+        function animateActionButton() {
+            const buttons = document.querySelectorAll('.vivid-cycle-btn');
+            buttons.forEach(btn => { 
+                gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); 
+                const tl = gsap.timeline({ repeat: -1 }); 
+                DESIGN_PALETTE.forEach(color => { tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }); });
+            });
+            const breathButtons = document.querySelectorAll('.breath-animation');
+            breathButtons.forEach(btn => {
+                gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" });
+            });
+        }
+
+        function updateGrowthState() {
+            const count = state.actions;
+            let targetLevel = count >= 100 ? 3 : count >= 60 ? 2 : count >= 30 ? 1 : 0;
+            let targetMultiplier = targetLevel === 3 ? 1.8 : targetLevel === 2 ? 1.5 : targetLevel === 1 ? 1.25 : 1.0;
+            let targetCamZ = window.innerWidth < 768 ? (targetLevel === 3 ? 55 : targetLevel === 2 ? 42 : 28) : (targetLevel === 3 ? 45 : targetLevel === 2 ? 35 : 22);
+            state.currentLevel = targetLevel; state.growthMultiplier = targetMultiplier;
+            if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" });
+            if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); 
+        }
+
+        function addFlowerWithConvergence(name, client, project, amount, notes, status, isInstant = false) {
+            const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
+            const target = getGuaranteedVisibleTarget();
+            if (isInstant) {
+                addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex);
+                return;
+            }
             const trails = [];
             for (let i = 0; i < 15; i++) {
                 const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 15, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 0.0 }));
@@ -835,38 +1084,29 @@
                 gsap.to(trail.scale, { y: 0.01, duration: 1.2, ease: "power3.in" });
             }
             if (particles) gsap.to(particles.material, { opacity: 1.0, duration: 0.2, yoyo: true, repeat: 1 });
-            
             setTimeout(() => { 
                 trails.forEach(t => scene.remove(t)); 
-                addFlowerToTreeAt(name, client, project, amount, notes, target.local.x, target.local.y, target.local.z, colorHex, true); 
+                addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex); 
             }, 1200);
         }
 
-        // 決定した座標に花を追加する関数
-        function addFlowerToTreeAt(name, client, project, amount, notes, posX, y, posZ, colorHex, isNew = false) {
-            const f = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
+        function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex) {
+            const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
             f.position.set(posX, y, posZ); f.scale.set(0, 0, 0);
-            f.userData = { name, client, project, amount, notes, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
+            f.userData = { name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
             treeGroup.add(f); state.flowers.push(f);
             gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
         }
 
-        // 初期表示用のデータから復元する（位置決定に乱数シードを使用）
-        // ローカル版ではデータ保存されないが、シミュレーション用に関数は残す
         function addFlowerFromData(data) {
             const colorHex = data.colorHex || DESIGN_PALETTE[0];
             const seed = data.timestamp || 1;
             const seededRandom = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
-
-            const y = (seededRandom(seed * 0.1) - 0.2) * 20 * state.growthMultiplier + 4;
+            const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.currentLevel === 3 ? 1.8 : 1.0 + (state.currentLevel * 0.25)) + 4;
             const branchFactor = (y + 6) / 22;
             const a = seededRandom(seed * 0.2) * Math.PI * 2;
-            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 8 * state.baseSpreadFactor * state.growthMultiplier);
-            
-            const posX = Math.cos(a) * r;
-            const posZ = Math.sin(a) * r;
-            
-            addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, posX, y, posZ, colorHex);
+            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 9 * state.baseSpreadFactor);
+            addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, data.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex);
         }
 
         function addBudsInstanced(count) {
@@ -882,126 +1122,116 @@
             state.instancedBuds.count = state.budCount; state.instancedBuds.instanceMatrix.needsUpdate = true;
         }
 
-        function initThree() {
-            state.baseSpreadFactor = (window.innerWidth >= 1440) ? 1.8 : 1.5;
-            const container = document.getElementById('canvas-container');
-            scene = new THREE.Scene(); scene.fog = new THREE.Fog(getDynamicColor(), 10, 65); 
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 3000);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-            treeGroup = new THREE.Group(); scene.add(treeGroup);
-            const geometry = new THREE.BufferGeometry(); const count = window.innerWidth < 768 ? 6000 : 15000;
-            const positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
-            for (let i = 0; i < count; i++) {
-                const y = (Math.random() - 0.3) * 28; const br = (y + 12) / 28;
-                const r = br * 8 * state.baseSpreadFactor * Math.pow(Math.random(), 0.5);
-                const a = y * 0.3 + Math.random() * Math.PI * 2;
-                positions[i*3] = Math.cos(a)*r; positions[i*3+1] = y; positions[i*3+2] = Math.sin(a)*r;
-                const c = 0.4 + Math.random() * 0.2; colors[i*3]=c; colors[i*3+1]=c; colors[i*3+2]=c; 
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            particles = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, opacity: 0.45 }));
-            treeGroup.add(particles);
-            const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-            state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, state.maxBuds); state.instancedBuds.count = 0; treeGroup.add(state.instancedBuds);
-            camera.position.z = 20; camera.position.y = 5.0; camera.lookAt(0, 8, 0); animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate); const time = Date.now();
-            state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02;
-            state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02;
-            if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; }
-            state.flowers.forEach(f => {
-                const ud = f.userData; if (ud.baseX === undefined) return;
-                f.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*state.driftFactor*3;
-                f.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*state.driftFactor*2.5;
-                f.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*state.driftFactor*3;
-            });
-            if (!state.isModalOpen) {
-                raycaster.setFromCamera(mouse, camera); const hit = raycaster.intersectObjects(state.flowers);
-                if (hit.length > 0) {
-                    const obj = hit[0].object;
-                    if (hoveredFlower !== obj) { if (hoveredFlower) gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = obj; gsap.to(obj.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 0.6 }); }
-                    document.body.style.cursor = 'pointer';
-                } else { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = null; } document.body.style.cursor = 'default'; }
-            } else if (hoveredFlower) resetHoverState();
-            renderer.render(scene, camera);
-        }
-
-        function animateActionButton() {
-            const buttons = document.querySelectorAll('.vivid-cycle-btn');
-            buttons.forEach(btn => { const tl = gsap.timeline({ repeat: -1 }); DESIGN_PALETTE.forEach(color => { tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }); }); });
-        }
+        // --- 6. App Lifecycle ---
 
         window.addEventListener('load', async () => {
-            // 初期ローダーを消す（Firebaseを使わないため即座に）
-            const loader = document.getElementById('app-loader');
-            if(loader) loader.style.display = 'none';
-
-            initThree();
+            const loader = document.getElementById('app-loader'); if(loader) loader.style.display = 'none';
+            initThree(); animate(); animateActionButton(); addBudsInstanced(2000);
+            
             const slider = document.getElementById('stats-slider');
-            const item = `
-                <div class="marquee-item text-white">
-                    <div class="stats-group"><span class="stats-label">Actions</span><span class="stats-value actions-val text-white">0</span></div>
-                    <div class="stats-group"><span class="stats-label">Level</span><span class="stats-value level-val text-white">0</span></div>
-                    <div class="stats-group"><span class="stats-label">Amount</span><span class="stats-value text-white">¥<span class="amount-val">0</span></span></div>
-                    <div class="stats-group"><span class="stats-label">Target</span><span class="stats-value target-countdown-val countdown-stable">---</span></div>
-                </div>`;
+            const item = `<div class="marquee-item text-white">
+                <div class="stats-group"><span class="stats-label">Actions</span><span class="stats-value actions-val text-white">0</span></div>
+                <div class="stats-group"><span class="stats-label">Level</span><span class="stats-value level-val text-white">0</span></div>
+                <div class="stats-group"><span class="stats-label">Amount</span><span class="stats-value text-white">¥<span class="amount-val">0</span></span></div>
+                <div class="stats-group"><span class="stats-label">Target</span><span class="stats-value target-countdown-val countdown-stable">---</span></div>
+            </div>`;
             if (slider) slider.innerHTML = item.repeat(2);
 
-            document.getElementById('action-form').onsubmit = (e) => {
-                e.preventDefault();
-                const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }, { id: 'post-amount' }];
-                let isValid = true;
-                fields.forEach(f => {
-                    const el = document.getElementById(f.id);
-                    if (!el.value.trim()) { el.classList.add('input-error'); el.placeholder = "入力してください"; isValid = false; }
-                    else { el.classList.remove('input-error'); }
+            document.getElementsByName('post-status').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const amtCont = document.getElementById('amount-container');
+                    const amtInp = document.getElementById('post-amount');
+                    if (e.target.value === 'order') { 
+                        amtCont.classList.remove('invisible', 'opacity-0');
+                        gsap.to(amtCont, { opacity: 1, duration: 0.3 });
+                        amtInp.setAttribute('required', 'true');
+                    } else { 
+                        gsap.to(amtCont, { opacity: 0, duration: 0.3, onComplete: () => amtCont.classList.add('invisible') });
+                        amtInp.removeAttribute('required'); amtInp.value = '';
+                    }
                 });
-                if (!isValid) return;
-                
-                const btn = document.getElementById('submit-action-btn');
-                btn.disabled = true;
-                btn.textContent = "Processing...";
+            });
 
-                const n = document.getElementById('post-name').value;
-                const c = document.getElementById('post-client').value;
-                const p = document.getElementById('post-project').value;
-                const a = parseInt(document.getElementById('post-amount').value) || 0;
-                const notes = document.getElementById('post-notes').value;
-                
-                // 演出：光が集まるアニメーションを実行
-                addFlowerWithConvergence(n, c, p, a, notes);
+            const actionForm = document.getElementById('action-form');
+            if (actionForm) {
+                actionForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    if(window.firebase) return; 
 
-                // 集計更新（アニメーションと非同期でOKだが、今回は演出完了を待たずにUI更新）
-                state.actions++; state.amount += a;
-                updateStatsUI();
-                if(!document.getElementById('page-dashboard').classList.contains('hidden')) refreshDashboard();
+                    const statusRadios = document.getElementsByName('post-status');
+                    let status = 'proposal'; statusRadios.forEach(r => { if(r.checked) status = r.value; });
+                    const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }];
+                    if(status === 'order') fields.push({ id: 'post-amount' });
+                    let isValid = true;
+                    fields.forEach(f => {
+                        const el = document.getElementById(f.id);
+                        if (!el.value.trim()) { el.classList.add('input-error'); el.placeholder = "必須"; isValid = false; }
+                        else { el.classList.remove('input-error'); }
+                    });
+                    if (!isValid) return;
+                    const n = document.getElementById('post-name').value;
+                    const c = document.getElementById('post-client').value;
+                    const p = document.getElementById('post-project').value;
+                    const a = parseInt(document.getElementById('post-amount').value) || 0;
+                    const notes = document.getElementById('post-notes').value;
+                    addFlowerWithConvergence(n, c, p, a, notes, status);
+                    state.actions++; if(status === 'order') state.amount += a;
+                    window.updateStatsUI(); refreshDashboard();
+                    window.closeModal();
+                };
+            }
 
-                window.closeModal();
-                document.getElementById('action-form').reset();
-                btn.disabled = false;
-                btn.textContent = "ACTION / 投稿する";
-            };
+            await window.syncServerTime(); updateBackgroundColor(); window.updateStatsUI();
+            setInterval(window.updateTargetCountdown, 1000); 
 
-            await syncServerTime(); updateBackgroundColor(); animateActionButton(); addBudsInstanced(2000); 
-            setInterval(updateTargetCountdown, 1000); 
-
-            window.addEventListener('click', (e) => { if (state.isModalOpen) return; if (hoveredFlower) window.showDetail(hoveredFlower.userData); });
             window.addEventListener('mousemove', (e) => { mouse.x = (e.clientX/window.innerWidth)*2-1; mouse.y = -(e.clientY/window.innerHeight)*2+1; state.mouseTargetX = mouse.x*0.1; state.mouseTargetY = mouse.y*0.08; });
-            
-            window.addEventListener('resize', () => { 
-                if(camera && renderer) { 
-                    camera.aspect = window.innerWidth/window.innerHeight; 
-                    camera.updateProjectionMatrix(); 
-                    renderer.setSize(window.innerWidth, window.innerHeight); 
-                    
-                    state.baseSpreadFactor = (window.innerWidth >= 1440) ? 1.8 : 1.5;
-                    updateGrowthState();
-                } 
+            window.addEventListener('resize', () => { if(camera && renderer) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); updateGrowthState(); } });
+
+            const canvasEl = document.querySelector('canvas');
+            if (canvasEl) {
+                canvasEl.addEventListener('click', (e) => { if (state.isModalOpen) return; if (hoveredFlower) window.showDetail(hoveredFlower.userData); });
+            }
+
+            window.addEventListener('firebase-ready', (e) => {
+                const { db, appId, collection, onSnapshot, addDoc } = e.detail;
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                
+                if(actionForm) {
+                    actionForm.onsubmit = async (evt) => {
+                        evt.preventDefault();
+                        const status = document.querySelector('input[name="post-status"]:checked').value;
+                        const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }];
+                        if(status === 'order') fields.push({ id: 'post-amount' });
+                        let valid = true;
+                        fields.forEach(f => {
+                            const el = document.getElementById(f.id);
+                            if (el && !el.value.trim()) { el.classList.add('input-error'); valid = false; }
+                            else if(el) { el.classList.remove('input-error'); }
+                        });
+                        if (!valid) return;
+                        const btn = document.getElementById('submit-action-btn');
+                        btn.disabled = true; btn.textContent = "Saving...";
+                        try {
+                            await addDoc(q, {
+                                name: document.getElementById('post-name').value, client: document.getElementById('post-client').value,
+                                project: document.getElementById('post-project').value, amount: parseInt(document.getElementById('post-amount').value) || 0,
+                                notes: document.getElementById('post-notes').value, status: status,
+                                colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)], timestamp: Date.now()
+                            });
+                            window.closeModal();
+                        } catch (err) { console.error(err); } finally { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
+                    };
+                }
+                
+                onSnapshot(q, (snapshot) => {
+                    state.flowers.forEach(f => treeGroup.remove(f));
+                    state.flowers = []; state.actions = 0; state.amount = 0;
+                    snapshot.forEach((doc) => {
+                        const d = doc.data(); addFlowerFromData(d);
+                        state.actions++; if(d.status === 'order') state.amount += (parseInt(d.amount) || 0);
+                    });
+                    updateGrowthState(); window.updateStatsUI(); refreshDashboard();
+                }, (err) => console.error(err));
             });
         });
 
@@ -1010,10 +1240,13 @@
             const isOpen = nav.style.display === 'flex';
             nav.style.display = isOpen ? 'none' : 'flex';
             document.getElementById('menu-toggle').classList.toggle('open');
-            if (!isOpen) { nav.style.backgroundColor = getDynamicColor(); if(header) header.classList.remove('is-dark'); } 
-            else { 
+            if (!isOpen) { 
+                nav.style.backgroundColor = window.getDynamicColor(); 
+                if(header) header.classList.remove('is-dark'); 
+            } else { 
                 const isTop = !document.getElementById('page-top').classList.contains('hidden');
-                if (isTop && header) header.classList.remove('is-dark'); else if(header) header.classList.add('is-dark'); 
+                if (isTop && header) header.classList.remove('is-dark'); 
+                else if(header) header.classList.add('is-dark'); 
             }
         };
     </script>
