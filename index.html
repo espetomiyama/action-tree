@@ -589,6 +589,7 @@
             <button onclick="window.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black">&times;</button>
             <div class="mb-4 md:mb-6 pr-8">
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
+                <!-- 短縮された説明文 -->
                 <p class="text-[10px] text-gray-400 font-bold mt-1.5 leading-relaxed text-black">
                     ACTIONを投稿して、100の木を育てましょう。
                 </p>
@@ -607,6 +608,7 @@
                     <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
                 </div>
 
+                <!-- ステータス選択 -->
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Status / ステータス</label>
                     <div class="flex gap-8 mt-2 h-8 items-center">
@@ -625,7 +627,7 @@
                     </div>
                 </div>
 
-                <!-- 金額入力欄（レイアウト固定） -->
+                <!-- 金額入力欄：レイアウト安定化のために高さを最初から確保（h-20） -->
                 <div class="h-20 relative overflow-hidden flex flex-col justify-end">
                     <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-2 transition-all duration-300">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">CONTRACT AMOUNT / 受注額</label>
@@ -635,9 +637,11 @@
 
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black text-black">ACTION NOTES / ノート</label>
+                    <!-- フォントサイズ: 14px, 太さ: Bold (800) -->
                     <textarea id="post-notes" maxlength="300" placeholder="" class="w-full border-b py-2 h-20 md:h-24 resize-none text-black font-bold text-sm rounded-none"></textarea>
                 </div>
                 
+                <!-- ボタンの角丸削除、呼吸アニメなし -->
                 <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-4 md:py-5 font-bold uppercase mt-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none">
                     ACTION / 投稿する
                 </button>
@@ -688,6 +692,7 @@
         let appId;
 
         try {
+            // Canvas環境（プレビュー）かどうかのチェック
             if (typeof __firebase_config !== 'undefined') {
                 firebaseConfig = JSON.parse(__firebase_config);
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
@@ -695,22 +700,30 @@
                 throw new Error("Local environment detected");
             }
         } catch (e) {
+            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+            // 【重要】ここをご自身のFirebase設定に書き換えてください！
+            // (Firebaseコンソール > プロジェクトの設定 > 全般 > マイアプリ > SDKの設定)
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             firebaseConfig = {
-                apiKey: "YOUR_API_KEY",
-                authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-                projectId: "YOUR_PROJECT_ID",
-                storageBucket: "YOUR_PROJECT_ID.appspot.com",
-                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-                appId: "YOUR_APP_ID"
+                apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
+                authDomain: "action-tree.firebaseapp.com",
+                projectId: "action-tree",
+                storageBucket: "action-tree.firebasestorage.app",
+                messagingSenderId: "471274997168",
+                appId: "1:471274997168:web:b0479cfc2006b136ad0275"
             };
             appId = 'action-tree-platform';
         }
 
         const initApp = async () => {
+            // 書き換え忘れチェック
             if (firebaseConfig.apiKey === "YOUR_API_KEY") {
                 setTimeout(() => {
                     const loader = document.getElementById('app-loader');
-                    if(loader) loader.style.display = 'none';
+                    if(loader) {
+                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~960</div>';
+                        loader.onclick = () => loader.style.display = 'none';
+                    }
                 }, 1000);
                 return;
             }
@@ -718,7 +731,7 @@
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                // 修正: 必要な関数をすべてwindow.firebaseに公開
+                // getDocs, deleteDoc, writeBatch を公開
                 window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -1090,7 +1103,7 @@
             }, 1200);
         }
 
-        function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex) {
+        function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex, isNew = false) {
             const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
             f.position.set(posX, y, posZ); f.scale.set(0, 0, 0);
             f.userData = { name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
@@ -1105,7 +1118,7 @@
             const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.currentLevel === 3 ? 1.8 : 1.0 + (state.currentLevel * 0.25)) + 4;
             const branchFactor = (y + 6) / 22;
             const a = seededRandom(seed * 0.2) * Math.PI * 2;
-            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 9 * state.baseSpreadFactor);
+            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 10 * state.baseSpreadFactor);
             addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, data.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex);
         }
 
