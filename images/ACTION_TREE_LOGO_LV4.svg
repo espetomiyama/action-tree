@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1080 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.10, SVG Export Plug-In . SVG Version: 1.2.0 Build 236)  -->
+  <g>
+    <g id="_レイヤー_1" data-name="レイヤー_1">
+      <g>
+        <circle class="cls-1" cx="355.3" cy="468.2" r="243.1"/>
+        <circle class="cls-1" cx="718.2" cy="468.1" r="243.1"/>
+        <rect class="cls-1" x="388" y="618.4" width="304.1" height="425.7"/>
+      </g>
+      <circle class="cls-1" cx="728.7" cy="195.1" r="91.2"/>
+      <circle class="cls-1" cx="208.7" cy="683.1" r="91.2"/>
+      <circle class="cls-1" cx="904.8" cy="840.1" r="56.1"/>
+    </g>
+  </g>
+</svg>
