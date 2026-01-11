@@ -27,7 +27,8 @@
 
         .full-screen-section {
             height: 100vh;
-            height: 100svh;
+            height: 100svh; /* Small Viewport Height */
+            height: 100dvh; /* Dynamic Viewport Height for Mobile Address bar */
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -172,15 +173,25 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
+        /* Nav Icon Hit Area & Style */
         .nav-icon {
-            width: 24px;
-            height: 10px;
+            width: 44px; /* Expanded hit area */
+            height: 44px; /* Expanded hit area */
             position: relative;
             cursor: pointer;
             z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-icon-inner {
+            width: 24px;
+            height: 10px;
+            position: relative;
         }
 
-        @media (min-width: 768px) { .nav-icon { width: 30px; height: 12px; } }
+        @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
 
         .nav-icon span {
             display: block;
@@ -222,7 +233,7 @@
             right: 20px;
             width: 74px;
             height: 74px;
-            z-index: 50;
+            z-index: 140; /* Increased z-index for better touch response */
             border-radius: 9999px;
             background-color: #fff;
             color: #000;
@@ -233,6 +244,7 @@
             text-transform: uppercase;
             font-weight: 800;
             will-change: transform, background-color;
+            cursor: pointer;
         }
 
         @media (min-width: 768px) {
@@ -445,7 +457,12 @@
             <span class="logo-main-text" onclick="window.showPage('top')">100 Action Tree</span>
         </div>
         <div class="ml-auto">
-            <div id="menu-toggle" class="nav-icon"><span></span><span></span></div>
+            <!-- Expanded Hit Area for Menu Toggle -->
+            <div id="menu-toggle" class="nav-icon">
+                <div class="nav-icon-inner">
+                    <span></span><span></span>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -828,7 +845,7 @@
             // 【重要】ここをご自身のFirebase設定に書き換えてください！
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             firebaseConfig = {
-                apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
+              apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
                 authDomain: "action-tree.firebaseapp.com",
                 projectId: "action-tree",
                 storageBucket: "action-tree.firebasestorage.app",
@@ -879,10 +896,6 @@
         const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         
         // Define Time Periods with YOSHIROTTEN-style vivid gradients
-        // Night: Deep & Digital
-        // Morning: Holographic & Soft
-        // Day: Strong & Vivid
-        // Evening: Dramatic & Moody
         const TIME_PERIODS = {
             NIGHT:   { base: "#020205", accent: "#3a0088" }, // Pitch Dark + Neon Indigo
             MORNING: { base: "#e0f2f1", accent: "#ff99cc" }, // Ice Cyan + Neon Pink
@@ -1121,8 +1134,25 @@
             const p = document.getElementById(`page-${id}`); if(p) p.classList.remove('hidden');
             const nav = document.getElementById('nav-menu'); if(nav) nav.style.display = 'none';
             const toggle = document.getElementById('menu-toggle'); if(toggle) toggle.classList.remove('open');
+            
+            // Adjust Overflow & Body Position
             document.body.style.overflow = (id === 'top') ? 'hidden' : 'auto';
-            if (id !== 'top') window.scrollTo(0, 0); 
+            
+            if (id !== 'top') {
+                window.scrollTo(0, 0); 
+            } else {
+                // TOPページ復帰時のリサイズ対応 (SP対策)
+                // 少し遅延させてThree.jsのリサイズを発火させる
+                setTimeout(() => {
+                    if(camera && renderer) {
+                        camera.aspect = window.innerWidth/window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        updateGrowthState();
+                    }
+                }, 100);
+            }
+
             const h = document.getElementById('main-header');
             if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } 
             else { document.body.style.backgroundColor = '#fff'; if(h) h.classList.add('is-dark'); }
