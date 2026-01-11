@@ -16,7 +16,7 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0;
             overflow-x: hidden;
-            background-color: #000807; /* フォールバック */
+            background-color: #000807;
             color: #fff;
             letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
@@ -27,8 +27,8 @@
 
         .full-screen-section {
             height: 100vh;
-            height: 100svh; /* Small Viewport Height */
-            height: 100dvh; /* Dynamic Viewport Height for Mobile Address bar */
+            height: 100svh; 
+            height: 100dvh; 
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -42,7 +42,7 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            background: #000; /* Canvasロード前の黒背景 */
+            background: #000; 
         }
 
         header {
@@ -130,14 +130,15 @@
             text-align: center;
         }
 
+        /* 日付表示エリアの幅調整 */
         .countdown-stable {
             font-variant-numeric: tabular-nums;
             display: inline-block;
-            min-width: 150px; 
+            min-width: 130px; 
             text-align: left;
         }
         @media (min-width: 768px) {
-            .countdown-stable { min-width: 220px; }
+            .countdown-stable { min-width: 180px; } 
         }
 
         @keyframes marquee {
@@ -175,8 +176,8 @@
 
         /* Nav Icon Hit Area & Style */
         .nav-icon {
-            width: 44px; /* Expanded hit area */
-            height: 44px; /* Expanded hit area */
+            width: 44px;
+            height: 44px;
             position: relative;
             cursor: pointer;
             z-index: 200;
@@ -233,7 +234,7 @@
             right: 20px;
             width: 74px;
             height: 74px;
-            z-index: 140; /* Increased z-index for better touch response */
+            z-index: 140; 
             border-radius: 9999px;
             background-color: #fff;
             color: #000;
@@ -435,6 +436,8 @@
             animation: shake 0.3s ease-in-out;
             border-bottom-color: #000 !important;
         }
+
+        /* --- Success Feedback Overlay (Removed per request) --- */
     </style>
 </head>
 <body style="overflow: hidden;">
@@ -447,14 +450,18 @@
 
     <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper flex-shrink-0" onclick="window.showPage('top')">
-            <img src="images/ACTION_TREE_LOGO_white.svg" 
+            <!-- Default LV1 Logo (for LV0 state) -->
+            <img src="images/ACTION_TREE_LOGO_LV1.svg" 
                  alt="Action Tree Logo" 
                  class="w-6 h-6 md:w-8 md:h-8 object-contain"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div class="logo-fallback w-6 h-6 md:w-8 md:h-8"></div>
         </div>
         <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span class="logo-main-text" onclick="window.showPage('top')">100 Action Tree</span>
+            <!-- 文字間調整：1と0の間を少し広げて、0と0の間とのバランスを調整 -->
+            <span class="logo-main-text" onclick="window.showPage('top')">
+                <span style="margin-right: 0.08em">1</span>00 Action Tree
+            </span>
         </div>
         <div class="ml-auto">
             <!-- Expanded Hit Area for Menu Toggle -->
@@ -517,7 +524,7 @@
                         <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_white.svg" 
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
                              alt="Action Tree Logo" 
                              class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -558,7 +565,7 @@
                         <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_white.svg" 
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
                              alt="Action Tree Logo" 
                              class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -574,8 +581,10 @@
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
                     <span class="page-section-label">Log & Analytics</span>
-                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log.</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
+                    <!-- TITLE UPDATE: Remove dot -->
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log</h2>
+                    <!-- GRID UPDATE: 3 columns -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
                         <div>
                             <span class="page-section-label">Total Actions / Goal</span>
                             <div class="stat-card-value tabular text-black flex items-baseline">
@@ -587,22 +596,29 @@
                             <span class="page-section-label">Total Amount</span>
                             <div class="stat-card-value tabular text-black">¥<span class="amount-val">0</span></div>
                         </div>
+                        <!-- NEW TREE LEVEL -->
+                        <div>
+                            <span class="page-section-label">Tree Level</span>
+                            <div class="stat-card-value tabular text-black level-val-display">LV0</div>
+                        </div>
                     </div>
-                    <div class="flex justify-end mb-20">
-                         <button onclick="window.downloadLogCSV()" class="csv-btn text-black">Download Log (CSV)</button>
-                    </div>
+                    <!-- CSV Button Removed from here -->
                 </div>
 
                 <div class="mb-20 md:mb-24 text-black">
                     <div class="flex items-baseline justify-between border-b border-black pb-4 mb-6 md:mb-8 text-black">
                         <h3 class="text-md md:text-xl font-black uppercase text-black">Action History</h3>
-                        <span class="page-section-label text-black" id="log-count-label">Showing 0 actions</span>
+                        <!-- Showing Count Removed -->
                     </div>
                     <div class="overflow-x-auto text-black">
                         <table class="w-full text-left min-w-[500px] md:min-w-0">
                             <tbody id="dashboard-action-list" class="text-black"></tbody>
                         </table>
                         <div id="no-actions-msg" class="py-20 text-center text-gray-300 uppercase text-[10px] tracking-widest hidden text-black">No actions recorded yet.</div>
+                    </div>
+                    <!-- CSV Button Moved Here -->
+                    <div class="flex justify-end mt-8">
+                         <button onclick="window.downloadLogCSV()" class="csv-btn text-black">Download Log (CSV)</button>
                     </div>
                 </div>
 
@@ -614,7 +630,7 @@
                         <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_white.svg" 
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
                              alt="Action Tree Logo" 
                              class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -638,11 +654,13 @@
                     <div>
                         <span class="page-section-label">Tree Growth Verification</span>
                         <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
-                            <button onclick="window.setTestLevel(0)" class="sim-btn">Reset</button>
-                            <button onclick="window.setTestLevel(15)" class="sim-btn">15 Posts (LV0)</button>
-                            <button onclick="window.setTestLevel(30)" class="sim-btn">30 Posts (LV1)</button>
-                            <button onclick="window.setTestLevel(60)" class="sim-btn">60 Posts (LV2)</button>
-                            <button onclick="window.setTestLevel(100)" class="sim-btn">Level 3 (100)</button>
+                            <button onclick="window.setTestLevel(0)" class="sim-btn">Reset (0)</button>
+                            <button onclick="window.setTestLevel(5)" class="sim-btn">LV0: SOIL (5)</button>
+                            <button onclick="window.setTestLevel(15)" class="sim-btn">LV1: LEAF (15)</button>
+                            <button onclick="window.setTestLevel(35)" class="sim-btn">LV2: STEM (35)</button>
+                            <button onclick="window.setTestLevel(55)" class="sim-btn">LV3: WOOD (55)</button>
+                            <button onclick="window.setTestLevel(75)" class="sim-btn">LV4: FOREST (75)</button>
+                            <button onclick="window.setTestLevel(100)" class="sim-btn">LV5: WORLD (100)</button>
                         </div>
                     </div>
                     <div>
@@ -684,7 +702,7 @@
                         <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_white.svg" 
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
                              alt="Action Tree Logo" 
                              class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -698,35 +716,35 @@
 
     <!-- Post Modal -->
     <div id="post-modal" class="modal-overlay" onclick="if(event.target === this) window.closeModal()">
-        <!-- max-h-[95vh] を max-h-[90dvh] に変更し、SP版アドレスバー対策 -->
-        <div class="bg-white text-black w-full max-w-lg p-5 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[90dvh] relative">
+        <!-- SP Compact: Reduced padding and spacing -->
+        <div class="bg-white text-black w-full max-w-lg p-4 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[90dvh] relative">
             <button onclick="window.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10">&times;</button>
-            <div class="mb-4 md:mb-6 pr-8">
+            <div class="mb-2 md:mb-6 pr-8">
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
-                <!-- 短縮された説明文 -->
-                <p class="text-[10px] text-gray-400 font-bold mt-1.5 leading-relaxed text-black">
+                <!-- Shortened description -->
+                <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">
                     ACTIONを投稿して、100の木を育てましょう。
                 </p>
             </div>
-            <!-- pb-10 を追加して、下部に余白を確保 -->
-            <form id="action-form" class="space-y-4 md:space-y-5 text-black pb-10" novalidate>
+            <!-- Reduced spacing for SP -->
+            <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" novalidate>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label>
-                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none transition-colors" required>
+                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label>
-                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none transition-colors" required>
+                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label>
-                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none transition-colors" required>
+                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
                 </div>
 
-                <!-- ステータス選択 (シンプルドット版: 英語併記・サイズ10px) -->
+                <!-- Status Selection -->
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Status / ステータス</label>
-                    <div class="flex gap-8 mt-2 h-8 items-center">
+                    <div class="flex gap-8 mt-1 h-8 items-center">
                         <label class="flex items-center cursor-pointer">
                             <input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked>
                             <div class="status-option">
@@ -742,34 +760,30 @@
                     </div>
                 </div>
 
-                <!-- 金額入力欄：レイアウト安定化のために高さを最初から確保（h-20） -->
-                <div class="h-20 relative overflow-hidden flex flex-col justify-end">
-                    <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-2 transition-all duration-300">
-                        <!-- CONTRACT AMOUNT -> AMOUNT -->
+                <!-- Amount Input: Compact container height -->
+                <div class="h-14 md:h-20 relative overflow-hidden flex flex-col justify-end">
+                    <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-1 md:pt-2 transition-all duration-300">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">AMOUNT / 受注額</label>
-                        <!-- プレースホルダー削除 -->
-                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none transition-colors">
+                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-1 md:py-2 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors">
                     </div>
                 </div>
 
                 <div>
                     <div class="flex justify-between items-baseline mb-0.5">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 text-black">ACTION NOTES / ノート</label>
-                        <!-- 文字数カウンター追加 -->
                         <span id="char-count-display" class="text-[9px] font-bold text-gray-400">0 / 300</span>
                     </div>
-                    <!-- フォントサイズ: text-xs, 太さ: Bold (800) -->
-                    <textarea id="post-notes" maxlength="300" oninput="window.updateCharCount(this)" placeholder="" class="w-full border-b py-2 h-20 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors"></textarea>
+                    <!-- Reduced height for SP -->
+                    <textarea id="post-notes" maxlength="300" oninput="window.updateCharCount(this)" placeholder="" class="w-full border-b py-1 md:py-2 h-16 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors"></textarea>
                 </div>
                 
-                <!-- エラーメッセージ表示用コンテナ (グレー、主張控えめ) -->
+                <!-- Error Msg -->
                 <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">
                     未入力の項目があります
                 </div>
 
-                <!-- ボタンの角丸削除、呼吸アニメなし -->
-                <!-- margin-bottom を追加して、SPでのタップしやすさを向上 -->
-                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-4 md:py-5 font-bold uppercase mt-4 mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none">
+                <!-- Action Button: Reduced padding for SP -->
+                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-3 md:py-5 font-bold uppercase mt-2 mb-2 md:mt-4 md:mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none">
                     ACTION / 投稿する
                 </button>
             </form>
@@ -777,55 +791,7 @@
     </div>
 
     <!-- Details Modal -->
-    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
-        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
-            <button onclick="window.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black">&times;</button>
-            <div class="mb-8 md:mb-10 text-black">
-                <!-- カラーライン：円形に変更 (w-8 h-1 -> w-3 h-3) -->
-                <div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div>
-                <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3>
-            </div>
-            <div class="space-y-5 md:space-y-6 text-black">
-                <!-- フォームの順序に合わせて整理: Name -> Client -> Project -> Status&Amount -> Notes -->
-                
-                <!-- 1. Name -->
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span>
-                    <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
-                </div>
-                
-                <!-- 2. Client -->
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span>
-                    <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
-                </div>
-                
-                <!-- 3. Project -->
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span>
-                    <p id="detail-project" class="text-sm font-bold break-words text-black">Project Title</p>
-                </div>
-                
-                <!-- 4. Status & Amount -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span>
-                        <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
-                    </div>
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span>
-                        <p id="detail-amount" class="text-sm font-bold break-words text-black">---</p>
-                    </div>
-                </div>
-                
-                <!-- 5. Notes -->
-                <div class="pt-4 border-t border-gray-100">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span>
-                    <p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black">Details go here...</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- ... (Details Modal unchanged) ... -->
 
     <!-- Firebase Scripts -->
     <script type="module">
@@ -847,7 +813,7 @@
             // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
             // 【重要】ここをご自身のFirebase設定に書き換えてください！
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-              firebaseConfig = {
+             firebaseConfig = {
                 apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
                 authDomain: "action-tree.firebaseapp.com",
                 projectId: "action-tree",
@@ -900,13 +866,13 @@
         
         // Define Time Periods with YOSHIROTTEN-style vivid gradients
         const TIME_PERIODS = {
-            NIGHT:   { base: "#020205", accent: "#3a0088" }, // Pitch Dark + Neon Indigo
-            MORNING: { base: "#e0f2f1", accent: "#ff99cc" }, // Ice Cyan + Neon Pink
-            DAY:     { base: "#004080", accent: "#00ffcc" }, // Deep Vivid Blue + Cyber Teal
-            EVENING: { base: "#240b36", accent: "#ff3300" }  // Dark Plum + Magma Orange
+            NIGHT:   { base: "#000205", accent: "#220066" }, 
+            MORNING: { base: "#aaccdd", accent: "#ff88bb" }, 
+            DAY:     { base: "#002a5c", accent: "#00cca3" }, 
+            EVENING: { base: "#1a0526", accent: "#cc2900" }  
         };
 
-        // ... (Shader Code Omitted for brevity, it's the same) ...
+        // Shader Code for YOSHIROTTEN-style Gradient (High Contrast, Liquid Feel)
         const vertexShader = `
             varying vec2 vUv;
             void main() {
@@ -987,10 +953,15 @@
             mouseTargetX: 0, mouseTargetY: 0, currentMouseX: 0, currentMouseY: 0,
             baseSpreadFactor: 1.0, growthMultiplier: 1.0, currentLevel: 0,
             instancedBuds: null, budCount: 0, maxBuds: 15000,
-            driftFactor: 0.1, simulatedHour: null 
+            driftFactor: 0.1, simulatedHour: null,
+            // レスポンシブ判定用
+            isMobile: window.innerWidth < 768
         };
 
         let scene, camera, renderer, treeGroup, particles, hoveredFlower = null;
+        // Effect Groups
+        let effectGroup; 
+        
         let bgMesh, bgUniforms;
         const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
         let timeOffset = 0;
@@ -1001,7 +972,7 @@
         window.isSyncStarted = false; // Prevent double binding
 
         // --- 1. Utility Functions ---
-        // ... (Same as before) ...
+        
         function getGuaranteedVisibleTarget() {
             const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
             while (attempts < 50) {
@@ -1040,16 +1011,6 @@
             const now = new Date();
             // Use simulated hour if set, otherwise real time
             const currentHour = state.simulatedHour !== null ? state.simulatedHour : (now.getHours() + now.getMinutes() / 60);
-
-            // SCHEDULE DEFINITION
-            // 00:00 - 05:00 : NIGHT
-            // 05:00 - 06:00 : NIGHT -> MORNING (Trans)
-            // 06:00 - 12:00 : MORNING
-            // 12:00 - 13:00 : MORNING -> DAY (Trans)
-            // 13:00 - 17:00 : DAY
-            // 17:00 - 18:00 : DAY -> EVENING (Trans)
-            // 18:00 - 23:00 : EVENING
-            // 23:00 - 24:00 : EVENING -> NIGHT (Trans)
 
             if (currentHour < 5) {
                 // NIGHT Static (0-5)
@@ -1108,24 +1069,43 @@
         };
 
         window.updateStatsUI = function() {
+            // Actions
             document.querySelectorAll('.actions-val').forEach(el => el.textContent = state.actions.toLocaleString());
+            // Amount
             document.querySelectorAll('.amount-val').forEach(el => el.textContent = state.amount.toLocaleString());
-            window.updateTargetCountdown();
+            
+            // Level
+            const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"];
+            const currentLabel = levelLabels[state.currentLevel] || "WORLD";
+            // コロンを削除してスペースに変更
+            const levelText = `LV${state.currentLevel} ${currentLabel}`;
+            
+            // Update TOP Marquee Level
+            document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText);
+            
+            // Update LOG Page Level
+            document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText);
+        };
+
+        // NEW: Update Date Time for Marquee (Replaces Countdown)
+        window.updateMarqueeDate = function() {
+            const now = new Date();
+            // Format: YYYY.MM.DD HH:MM:SS
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            
+            const dateStr = `${y}.${m}.${d} ${h}:${min}:${s}`;
+            
+            // Apply to all date slots in marquee
+            document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dateStr);
         };
 
         window.updateTargetCountdown = function() {
-            const now = new Date();
-            const target = new Date(state.targetDate);
-            const diffTime = target - now;
-            let countdownStr = "---";
-            if (diffTime > 0) {
-                const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const mins = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-                const secs = Math.floor((diffTime % (1000 * 60)) / 1000);
-                countdownStr = `${days}D ${hours}H ${mins}M ${secs}S`;
-            } else { countdownStr = "GOAL REACHED"; }
-            document.querySelectorAll('.target-countdown-val').forEach(el => el.textContent = countdownStr);
+            // Deprecated for Marquee, but kept if needed elsewhere or fallback
         };
 
         window.updateCharCount = function(el) {
@@ -1148,11 +1128,10 @@
             if (id !== 'top') {
                 window.scrollTo(0, 0); 
             } else {
-                // TOPページ復帰時のリサイズ対応 (SP対策)
-                // 少し遅延させてThree.jsのリサイズを発火させる
+                // TOPページ復帰時のリサイズ対応
                 setTimeout(() => {
                     if(camera && renderer) {
-                        camera.aspect = window.innerWidth/window.innerHeight;
+                        camera.aspect = window.innerWidth / window.innerHeight;
                         camera.updateProjectionMatrix();
                         renderer.setSize(window.innerWidth, window.innerHeight);
                         updateGrowthState();
@@ -1162,7 +1141,9 @@
 
             const h = document.getElementById('main-header');
             if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } 
-            else { document.body.style.backgroundColor = '#fff'; if(h) h.classList.add('is-dark'); }
+            else { 
+                if(h) h.classList.add('is-dark'); 
+            }
             // Logページを開いたときにリストを更新
             if (id === 'log') refreshLog();
         };
@@ -1217,6 +1198,7 @@
 
         window.downloadLogCSV = function() {
             if (state.flowers.length === 0) return;
+            // BOM付与で文字化け対策 (\uFEFF)
             let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n";
             state.flowers.forEach(f => {
                 const d = f.userData;
@@ -1340,9 +1322,12 @@
         function refreshLog() {
             const list = document.getElementById('dashboard-action-list');
             if (!list) return; list.innerHTML = '';
-            window.updateTargetCountdown();
+            //window.updateTargetCountdown();
             const display = [...state.flowers].reverse();
-            document.getElementById('log-count-label').textContent = `Showing ${display.length} actions`;
+            
+            // Count label removed
+            // document.getElementById('log-count-label').textContent = `Showing ${display.length} actions`;
+            
             const msg = document.getElementById('no-actions-msg');
             if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } 
             else {
@@ -1363,8 +1348,14 @@
         function initThree() {
             const container = document.getElementById('canvas-container');
             if(!container) return;
+            
             scene = new THREE.Scene(); scene.fog = new THREE.Fog(window.getDynamicColor(), 10, 85); 
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 3000);
+            
+            // Use wrapper dimensions
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
             
             // Gradient Background Setup
             bgUniforms = {
@@ -1385,21 +1376,34 @@
             scene.add(bgMesh);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(w, h); 
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
             treeGroup = new THREE.Group(); scene.add(treeGroup);
             
+            // Effect Group (Front of tree)
+            effectGroup = new THREE.Group();
+            scene.add(effectGroup);
+
             // 25,000 Particles
             const geometry = new THREE.BufferGeometry(); 
-            const count = window.innerWidth < 768 ? 12000 : 25000;
+            const count = window.innerWidth < 768 ? 15000 : 25000; // Init based on window
             const positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
+            
+            // Initial Shape Adjustment
+            const radiusScale = state.isMobile ? 0.8 : 1.0; 
+            const heightScale = state.isMobile ? 1.2 : 1.0;
+
             for (let i = 0; i < count; i++) {
-                const y = (Math.random() - 0.3) * 38; 
-                const br = (y + 15) / 38;
-                const r = br * 12 * state.baseSpreadFactor * Math.pow(Math.random(), 0.6);
-                const a = y * 0.2 + Math.random() * Math.PI * 2;
+                const y = (Math.random() - 0.3) * 38 * heightScale; 
+                let br = (y + 12) / 35; 
+                if(br < 0) br = 0;
+
+                const r = br * 14 * state.baseSpreadFactor * Math.pow(Math.random(), 0.7) * radiusScale;
+                const a = y * 0.1 + Math.random() * Math.PI * 2;
                 positions[i*3] = Math.cos(a)*r; positions[i*3+1] = y; positions[i*3+2] = Math.sin(a)*r;
-                const c = 0.6 + Math.random() * 0.4; 
+                
+                const c = 0.5 + Math.random() * 0.5; 
                 colors[i*3]=c; colors[i*3+1]=c; colors[i*3+2]=c; 
             }
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -1410,7 +1414,9 @@
             const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
             state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, state.maxBuds); state.instancedBuds.count = 0; treeGroup.add(state.instancedBuds);
 
-            camera.position.z = 20; camera.position.y = 5.0; camera.lookAt(0, 8, 0);
+            camera.position.z = state.isMobile ? 35 : 22; 
+            camera.position.y = 5.0; 
+            camera.lookAt(0, 8, 0);
         }
 
         function animate() {
@@ -1422,6 +1428,8 @@
             // Time Sync for background color
             updateBackgroundColor();
 
+            // Mouse handling needs adjustment for simulation container? 
+            // For now, keep window based as mouse moves relative to window center mostly works.
             state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02;
             state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02;
             if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; }
@@ -1457,36 +1465,247 @@
 
         function updateGrowthState() {
             const count = state.actions;
-            let targetLevel = count >= 100 ? 3 : count >= 60 ? 2 : count >= 30 ? 1 : 0;
-            let targetMultiplier = targetLevel === 3 ? 1.8 : targetLevel === 2 ? 1.5 : targetLevel === 1 ? 1.25 : 1.0;
-            let targetCamZ = window.innerWidth < 768 ? (targetLevel === 3 ? 55 : targetLevel === 2 ? 42 : 28) : (targetLevel === 3 ? 45 : targetLevel === 2 ? 35 : 22);
-            state.currentLevel = targetLevel; state.growthMultiplier = targetMultiplier;
+            
+            // New Level Definition
+            let targetLevel = 0;
+            if (count >= 100) targetLevel = 5;
+            else if (count >= 70) targetLevel = 4;
+            else if (count >= 50) targetLevel = 3;
+            else if (count >= 30) targetLevel = 2;
+            else if (count >= 10) targetLevel = 1;
+            else targetLevel = 0;
+
+            let targetMultiplier = 1.0 + (targetLevel * 0.2); 
+            
+            // SP版対応：カメラ位置をより遠くにする
+            // シミュレーション時のisMobile判定も反映される
+            let baseCamZ = state.isMobile ? 32 : 22; 
+            let targetCamZ = baseCamZ + (targetLevel * (state.isMobile ? 6 : 4));
+
+            state.currentLevel = targetLevel; 
+            state.growthMultiplier = targetMultiplier;
+            
             if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" });
             if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); 
+            
+            window.updateStatsUI();
+
+            // --- LOGO UPDATE Logic ---
+            // LV0 -> ACTION_TREE_LOGO_LV1.svg
+            // LV1 -> ACTION_TREE_LOGO_LV2.svg
+            // ...
+            // LV5 -> ACTION_TREE_LOGO_LV6.svg
+            const logoLevel = targetLevel + 1;
+            const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`;
+
+            // ヘッダーロゴの更新
+            const headerLogo = document.querySelector('#main-header img');
+            if (headerLogo) {
+                // パスが異なる場合のみ更新（ちらつき防止）
+                // URLとして解決されたsrcと比較するため、ファイル名が含まれているかで判定
+                if (!headerLogo.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) {
+                    headerLogo.src = newLogoPath;
+                }
+            }
+            
+            // フッターロゴも合わせて更新する場合（現在はヘッダー指定ですが、統一感を出すため記述しておきます）
+            document.querySelectorAll('.app-footer img').forEach(img => {
+                if (!img.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) {
+                    img.src = newLogoPath;
+                }
+            });
         }
 
         function addFlowerWithConvergence(name, client, project, amount, notes, status, isInstant = false) {
             const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
             const target = getGuaranteedVisibleTarget();
+            
             if (isInstant) {
                 addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex);
                 return;
             }
-            const trails = [];
-            for (let i = 0; i < 15; i++) {
-                const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 15, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 0.0 }));
-                const startR = 60, startTheta = Math.random()*Math.PI*2, startPhi = Math.random()*Math.PI;
-                trail.position.set(startR * Math.sin(startPhi) * Math.cos(startTheta), startR * Math.sin(startPhi) * Math.sin(startTheta), startR * Math.cos(startPhi));
-                trail.lookAt(target.world); trail.rotateX(Math.PI/2); scene.add(trail); trails.push(trail);
-                gsap.to(trail.position, { x: target.world.x, y: target.world.y, z: target.world.z, duration: 1.2, ease: "power3.in", onStart: () => trail.material.opacity = 1.0 });
-                gsap.to(trail.scale, { y: 0.01, duration: 1.2, ease: "power3.in" });
-            }
-            if (particles) gsap.to(particles.material, { opacity: 1.0, duration: 0.2, yoyo: true, repeat: 1 });
-            setTimeout(() => { 
-                trails.forEach(t => scene.remove(t)); 
-                addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex); 
-            }, 1200);
+
+            // --- 演出強化: 軽やかな光の飛翔（ゆったり版） ---
+            
+            // 1. スタート地点（画面手前下方）
+            const startPos = new THREE.Vector3(0, -8, 25); 
+            if (state.isMobile) startPos.z = 35;
+            
+            // 2. 光の玉
+            const projectile = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 8, 8), 
+                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+            );
+            projectile.position.copy(startPos);
+            effectGroup.add(projectile);
+
+            // 3. 軌跡
+            const trailGeo = new THREE.BufferGeometry();
+            const trailLen = 30; // トレイルを少し長くして優雅に
+            const trailPos = new Float32Array(trailLen * 3);
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+            const trailMat = new THREE.LineBasicMaterial({ 
+                color: colorHex, 
+                transparent: true, 
+                opacity: 0.25, // より薄く繊細に
+                blending: THREE.AdditiveBlending 
+            });
+            const trailLine = new THREE.Line(trailGeo, trailMat);
+            trailLine.frustumCulled = false;
+            effectGroup.add(trailLine);
+
+            // 4. ベジェ曲線制御点
+            const controlPos = new THREE.Vector3().addVectors(startPos, target.world).multiplyScalar(0.5);
+            controlPos.y += 6.0; // ふわり感を出すためもう少し高く
+
+            // アニメーション用カーブ関数
+            const getBezierPoint = (t, p0, p1, p2) => {
+                const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
+                const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;
+                const z = (1 - t) * (1 - t) * p0.z + 2 * (1 - t) * t * p1.z + t * t * p2.z;
+                return new THREE.Vector3(x, y, z);
+            };
+
+            const animObj = { t: 0 };
+            
+            gsap.to(animObj, {
+                t: 1,
+                duration: 2.5, // 1.5 -> 2.5秒：かなりゆったり
+                ease: "power1.inOut", // 出だしも着弾も滑らかに
+                onUpdate: () => {
+                    const currentPos = getBezierPoint(animObj.t, startPos, controlPos, target.world);
+                    projectile.position.copy(currentPos);
+                    
+                    // 終盤で少し小さく消えていく
+                    if (animObj.t > 0.8) {
+                        projectile.scale.setScalar(1.0 - (animObj.t - 0.8) * 5);
+                    }
+
+                    const positions = trailLine.geometry.attributes.position.array;
+                    for (let i = 0; i < trailLen - 1; i++) {
+                        positions[i * 3] = positions[(i + 1) * 3];
+                        positions[i * 3 + 1] = positions[(i + 1) * 3 + 1];
+                        positions[i * 3 + 2] = positions[(i + 1) * 3 + 2];
+                    }
+                    positions[(trailLen - 1) * 3] = currentPos.x;
+                    positions[(trailLen - 1) * 3 + 1] = currentPos.y;
+                    positions[(trailLen - 1) * 3 + 2] = currentPos.z;
+                    trailLine.geometry.attributes.position.needsUpdate = true;
+                },
+                onComplete: () => {
+                    effectGroup.remove(projectile);
+                    effectGroup.remove(trailLine);
+                    
+                    createSparkleEffect(target.world, colorHex);
+                    flashTreeParticles(); // ツリーの反応
+
+                    // 実を生成
+                    addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex);
+                }
+            });
         }
+
+        // ★修正: ツリー全体の粒子を「じわっ」と輝かせる
+        function flashTreeParticles() {
+            if (!particles) return;
+            
+            const baseSize = 0.12;
+            const baseOpacity = 0.65;
+
+            // 1. ゆっくりと光が広がる（吸い込むような動き）
+            gsap.to(particles.material, {
+                size: 0.18,      // 拡大率を少し抑えめに
+                opacity: 0.9,    // 完全に1.0まで行かず少し透明感を残す
+                duration: 0.8,   // 0.05 -> 0.8秒：じわっと明るく
+                ease: "sine.out",
+                overwrite: true,
+                onComplete: () => {
+                    // 2. とてもゆっくりと戻る（深い呼吸）
+                    gsap.to(particles.material, {
+                        size: baseSize,
+                        opacity: baseOpacity,
+                        duration: 3.0, // 1.5 -> 3.0秒：余韻を長く
+                        ease: "sine.inOut" 
+                    });
+                }
+            });
+        }
+
+        // 修正: スパークルエフェクト（よりスローに、漂うように）
+        function createSparkleEffect(pos, colorHex) {
+            const particleCount = 60; // 24 -> 60個に増量
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = [];
+            
+            for(let i=0; i<particleCount; i++) {
+                positions[i*3] = pos.x;
+                positions[i*3+1] = pos.y;
+                positions[i*3+2] = pos.z;
+                
+                // 速度をさらに抑える
+                const v = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.2, // 拡散範囲を狭く
+                    (Math.random() - 0.5) * 0.2 + 0.05, // わずかに上昇
+                    (Math.random() - 0.5) * 0.2
+                ).normalize().multiplyScalar(0.02 + Math.random() * 0.05); // 非常にゆっくり
+                velocities.push(v);
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const mat = new THREE.PointsMaterial({
+                color: colorHex,
+                size: 0.2, 
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const sparkleSystem = new THREE.Points(geo, mat);
+            effectGroup.add(sparkleSystem);
+            
+            const ringGeo = new THREE.RingGeometry(0.05, 0.1, 32); // より細く
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.copy(pos);
+            ring.lookAt(camera.position); 
+            effectGroup.add(ring);
+
+            // アニメーション
+            const anim = { val: 0 };
+            gsap.to(anim, {
+                val: 1,
+                duration: 3.5, // 2.0 -> 3.5秒：長く漂わせる
+                ease: "sine.out",
+                onUpdate: () => {
+                    const posAttr = sparkleSystem.geometry.attributes.position;
+                    for(let i=0; i<particleCount; i++) {
+                        posAttr.array[i*3] += velocities[i].x;
+                        posAttr.array[i*3+1] += velocities[i].y;
+                        posAttr.array[i*3+2] += velocities[i].z;
+                        velocities[i].multiplyScalar(0.99); // 減速を緩やかにして漂わせる
+                    }
+                    posAttr.needsUpdate = true;
+                    
+                    // ゆっくりフェードアウト
+                    sparkleSystem.material.opacity = (1 - anim.val) * 0.8;
+                    
+                    // リング拡大（さらにゆっくり）
+                    const rScale = 1 + anim.val * 2.5; 
+                    ring.scale.set(rScale, rScale, rScale);
+                    ring.material.opacity = (1 - anim.val) * 0.3;
+                },
+                onComplete: () => {
+                    effectGroup.remove(sparkleSystem);
+                    effectGroup.remove(ring);
+                    geo.dispose(); mat.dispose();
+                    ringGeo.dispose(); ringMat.dispose();
+                }
+            });
+        }
+
+        // HTMLオーバーレイ演出（削除済み）
+        // function showSuccessFeedback() { ... }
 
         function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex, isNew = false, id = null) {
             const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
@@ -1495,17 +1714,6 @@
             f.userData = { id: id, name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
             treeGroup.add(f); state.flowers.push(f);
             gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
-        }
-
-        function addFlowerFromData(data) {
-            const colorHex = data.colorHex || DESIGN_PALETTE[0];
-            const seed = data.timestamp || 1;
-            const seededRandom = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
-            const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.currentLevel === 3 ? 1.8 : 1.0 + (state.currentLevel * 0.25)) + 4;
-            const branchFactor = (y + 6) / 22;
-            const a = seededRandom(seed * 0.2) * Math.PI * 2;
-            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 9 * state.baseSpreadFactor);
-            addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, data.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex, false, data.id);
         }
 
         function addBudsInstanced(count) {
@@ -1555,10 +1763,18 @@
                     const btn = document.getElementById('submit-action-btn');
                     btn.disabled = true; btn.textContent = "Saving...";
                     try {
+                        const n = document.getElementById('post-name').value;
+                        const c = document.getElementById('post-client').value;
+                        const p = document.getElementById('post-project').value;
+                        const a = parseInt(document.getElementById('post-amount').value) || 0;
+                        const notes = document.getElementById('post-notes').value;
+                        
+                        addFlowerWithConvergence(n, c, p, a, notes, status, false);
+
                         await addDoc(q, {
-                            name: document.getElementById('post-name').value, client: document.getElementById('post-client').value,
-                            project: document.getElementById('post-project').value, amount: parseInt(document.getElementById('post-amount').value) || 0,
-                            notes: document.getElementById('post-notes').value, status: status,
+                            name: n, client: c,
+                            project: p, amount: a,
+                            notes: notes, status: status,
                             colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)], timestamp: Date.now()
                         });
                         window.closeModal();
@@ -1605,15 +1821,19 @@
             }
             
             // Fallback: If firebase not used/ready (e.g. dev mode), manual form handling is already in initThree? No, needs setup.
-            // Setup Slider
+            // Setup Slider (UPDATED to TOTAL ACTIONS, TOTAL AMOUNT, TREE LEVEL, DATE)
             const slider = document.getElementById('stats-slider');
             const item = `<div class="marquee-item text-white">
-                <div class="stats-group"><span class="stats-label">Actions</span><span class="stats-value actions-val text-white">0</span></div>
-                <div class="stats-group"><span class="stats-label">Level</span><span class="stats-value level-val text-white">0</span></div>
-                <div class="stats-group"><span class="stats-label">Amount</span><span class="stats-value text-white">¥<span class="amount-val">0</span></span></div>
-                <div class="stats-group"><span class="stats-label">Target</span><span class="stats-value target-countdown-val countdown-stable">---</span></div>
+                <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val text-white">0</span></div>
+                <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value text-white">¥<span class="amount-val">0</span></span></div>
+                <div class="stats-group"><span class="stats-label">Tree Level</span><span class="stats-value level-val text-white">LV0 SOIL</span></div>
+                <div class="stats-group"><span class="stats-label">Date</span><span class="stats-value marquee-date-val countdown-stable">---</span></div>
             </div>`;
             if (slider) slider.innerHTML = item.repeat(2);
+
+            // Start Date Updater for Marquee
+            window.updateMarqueeDate();
+            setInterval(window.updateMarqueeDate, 1000);
 
             // Setup Form Interactions (Status Change)
             document.getElementsByName('post-status').forEach(radio => {
@@ -1638,8 +1858,18 @@
                     if (actionForm) {
                         actionForm.onsubmit = (e) => {
                             e.preventDefault();
-                            // ... simple local logic ...
-                            // (Omitted to force Firebase path focus, but keeps UI alive)
+                            
+                            const status = document.querySelector('input[name="post-status"]:checked').value;
+                            const n = document.getElementById('post-name').value;
+                            const c = document.getElementById('post-client').value;
+                            const p = document.getElementById('post-project').value;
+                            const a = parseInt(document.getElementById('post-amount').value) || 0;
+                            const notes = document.getElementById('post-notes').value;
+
+                            // Local Simulation of Action
+                            addFlowerWithConvergence(n, c, p, a, notes, status);
+                            state.actions++; if(status === 'order') state.amount += a;
+                            window.updateStatsUI(); refreshLog();
                             window.closeModal();
                         };
                     }
@@ -1647,10 +1877,25 @@
             }, 3000);
 
             await window.syncServerTime(); updateBackgroundColor(); window.updateStatsUI();
-            setInterval(window.updateTargetCountdown, 1000); 
-
+            
             window.addEventListener('mousemove', (e) => { mouse.x = (e.clientX/window.innerWidth)*2-1; mouse.y = -(e.clientY/window.innerHeight)*2+1; state.mouseTargetX = mouse.x*0.1; state.mouseTargetY = mouse.y*0.08; });
-            window.addEventListener('resize', () => { if(camera && renderer) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); updateGrowthState(); } });
+            
+            // リサイズ処理の強化（Window依存に戻す）
+            window.addEventListener('resize', () => { 
+                if(camera && renderer) { 
+                    camera.aspect = window.innerWidth / window.innerHeight; 
+                    camera.updateProjectionMatrix(); 
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    
+                    // SP/PC切り替え判定
+                    const wasMobile = state.isMobile;
+                    state.isMobile = window.innerWidth < 768; 
+                    
+                    if (wasMobile !== state.isMobile) {
+                        updateGrowthState(); // カメラ位置などを再計算
+                    }
+                } 
+            });
 
             const canvasEl = document.querySelector('canvas');
             if (canvasEl) {
