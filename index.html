@@ -16,7 +16,7 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0;
             overflow-x: hidden;
-            background-color: #000807; 
+            background-color: #000807; /* フォールバック */
             color: #fff;
             letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
@@ -41,6 +41,7 @@
             width: 100%;
             height: 100%;
             z-index: 0;
+            background: #000; /* Canvasロード前の黒背景 */
         }
 
         header {
@@ -161,12 +162,14 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: #004036; 
+            background: rgba(0, 40, 30, 0.9); 
             z-index: 150;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: background-color 0.4s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         .nav-icon {
@@ -206,6 +209,7 @@
             transition: opacity 0.4s ease;
             color: #fff;
             cursor: pointer;
+            margin: 10px 0;
         }
 
         @media (min-width: 768px) { .menu-link { font-size: 24px; } }
@@ -354,8 +358,8 @@
         }
         .status-dot {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             border: 1px solid #ccc;
             margin-right: 8px;
@@ -380,6 +384,22 @@
             border-color: #999;
         }
         
+        /* シンプルなスクロールバー */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e5e5;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+        
         /* 起動時ローダー */
         #app-loader {
             position: fixed;
@@ -391,6 +411,17 @@
             justify-content: center;
             flex-direction: column;
             transition: opacity 0.8s ease;
+        }
+        
+        /* フォームエラーアニメーション */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .input-error-shake {
+            animation: shake 0.3s ease-in-out;
+            border-bottom-color: #000 !important;
         }
     </style>
 </head>
@@ -419,10 +450,12 @@
     </header>
 
     <div id="nav-menu" class="menu-overlay">
-        <div class="flex-grow flex flex-col justify-center items-center gap-8 md:gap-12">
+        <div class="flex-grow flex flex-col justify-center items-center gap-6 md:gap-10">
             <a href="#" onclick="window.showPage('top')" class="menu-link">Top</a>
             <a href="#" onclick="window.showPage('about')" class="menu-link">About</a>
-            <a href="#" onclick="window.showPage('dashboard')" class="menu-link">Dashboard</a>
+            <a href="#" onclick="window.showPage('rules')" class="menu-link">Rules</a>
+            <a href="#" onclick="window.showPage('log')" class="menu-link">Actions Log</a>
+            <a href="#" onclick="window.showPage('dashboard')" class="menu-link !text-[12px] md:!text-[14px] opacity-50 hover:opacity-100 mt-4">Dashboard</a>
         </div>
         <div class="pb-10 text-center">
             <p class="text-[9px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. ALL RIGHTS RESERVED.</p>
@@ -430,7 +463,7 @@
     </div>
 
     <main id="app-content">
-        <!-- TOP PAGE -->
+        <!-- 1. TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
             <div class="marquee-container">
@@ -442,7 +475,7 @@
             </button>
         </div>
 
-        <!-- ABOUT PAGE -->
+        <!-- 2. ABOUT PAGE (Concept Only) -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -459,9 +492,31 @@
                         <p>すぐには結果が出ないかもしれません。それでも、みんなで種をまき、水をやり、枝を伸ばしていく。100本のアクションが集まったとき、私たちの景色はきっと変わっているはずです。</p>
                     </div>
                 </div>
+                <footer class="app-footer">
+                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
+                    </nav>
+                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
+                        <img src="images/ACTION_TREE_LOGO_white.svg" 
+                             alt="Action Tree Logo" 
+                             class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="logo-fallback w-4 h-4 md:w-5 md:h-5 text-black"></div>
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
+                </footer>
+            </div>
+        </div>
+
+        <!-- 3. ACTION RULES PAGE -->
+        <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
+            <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
                     <span class="page-section-label">Rules</span>
-                    <h3 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">ルールと活用方法</h3>
+                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">ルールと活用方法</h2>
                     <p class="statement-text-container mb-10 md:mb-12">クライアントからの受注案件ではなく、<br class="hidden md:block">「相手のことを思い、考え、見出した提案」が投稿の対象です。</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 md:gap-y-10">
                         <div class="rule-card">
@@ -480,9 +535,10 @@
                 </div>
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link">Top</a>
-                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link">About</a>
-                        <a href="#" onclick="window.showPage('dashboard')" class="footer-nav-link">Dashboard</a>
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
                         <img src="images/ACTION_TREE_LOGO_white.svg" 
@@ -496,13 +552,13 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PAGE -->
-        <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
+        <!-- 4. ACTIONS LOG PAGE -->
+        <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
-                    <span class="page-section-label">Platform Analytics</span>
-                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Dashboard.</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
+                    <span class="page-section-label">Log & Analytics</span>
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log.</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
                         <div>
                             <span class="page-section-label">Total Actions / Goal</span>
                             <div class="stat-card-value tabular text-black flex items-baseline">
@@ -514,23 +570,15 @@
                             <span class="page-section-label">Total Amount</span>
                             <div class="stat-card-value tabular text-black">¥<span class="amount-val">0</span></div>
                         </div>
-                        <div>
-                            <span class="page-section-label">Target Countdown</span>
-                            <div class="stat-card-value target-countdown-val tabular text-black">---</div>
-                        </div>
                     </div>
-                    <div class="flex flex-col md:flex-row md:items-end justify-end gap-4 mb-20 text-black">
-                        <!-- ALL RESETボタン -->
-                        <button onclick="window.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors">
-                            ALL RESET
-                        </button>
-                        <button onclick="window.downloadLogCSV()" class="csv-btn self-start md:self-end text-black">Download Log (CSV)</button>
+                    <div class="flex justify-end mb-20">
+                         <button onclick="window.downloadLogCSV()" class="csv-btn text-black">Download Log (CSV)</button>
                     </div>
                 </div>
 
                 <div class="mb-20 md:mb-24 text-black">
                     <div class="flex items-baseline justify-between border-b border-black pb-4 mb-6 md:mb-8 text-black">
-                        <h3 class="text-md md:text-xl font-black uppercase text-black">Recent Actions Log.</h3>
+                        <h3 class="text-md md:text-xl font-black uppercase text-black">Action History</h3>
                         <span class="page-section-label text-black" id="log-count-label">Showing 0 actions</span>
                     </div>
                     <div class="overflow-x-auto text-black">
@@ -539,6 +587,33 @@
                         </table>
                         <div id="no-actions-msg" class="py-20 text-center text-gray-300 uppercase text-[10px] tracking-widest hidden text-black">No actions recorded yet.</div>
                     </div>
+                </div>
+
+                <footer class="app-footer">
+                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
+                    </nav>
+                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
+                        <img src="images/ACTION_TREE_LOGO_white.svg" 
+                             alt="Action Tree Logo" 
+                             class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="logo-fallback w-4 h-4 md:w-5 md:h-5 text-black"></div>
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
+                </footer>
+            </div>
+        </div>
+
+        <!-- 5. DASHBOARD (Admin/Sim) PAGE -->
+        <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
+            <div class="max-w-5xl mx-auto px-6 md:px-10">
+                <div class="mb-16 md:mb-24">
+                    <span class="page-section-label">System Management</span>
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2>
                 </div>
 
                 <!-- Simulation Tools -->
@@ -555,12 +630,32 @@
                     </div>
                     <div>
                         <span class="page-section-label text-black">Environmental Atmosphere</span>
-                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
-                            <button onclick="window.setTestTime(0)" class="sim-btn">Night (00:00)</button>
-                            <button onclick="window.setTestTime(12)" class="sim-btn">Day (12:00)</button>
-                            <button onclick="window.setTestTime(18)" class="sim-btn">Evening (18:00)</button>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center">
+                            <button onclick="window.setTestTime(2)" class="sim-btn">Night (02:00)</button>
+                            <button onclick="window.setTestTime(9)" class="sim-btn">Morning (09:00)</button>
+                            <button onclick="window.setTestTime(15)" class="sim-btn">Day (15:00)</button>
+                            <button onclick="window.setTestTime(20)" class="sim-btn">Evening (20:00)</button>
                             <button onclick="window.resetTimeSim()" class="sim-btn text-black">Real-time sync</button>
+                            
+                            <!-- Custom Time Input -->
+                            <div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200">
+                                <input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" 
+                                       class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors"
+                                       onkeydown="if(event.key==='Enter') window.applyCustomTime()">
+                                <button onclick="window.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70">SET</button>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ALL RESET -->
+                <div class="border-t border-black pt-16 mb-20">
+                    <h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3>
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。<br>（投稿データは全て削除され、木の成長も初期状態に戻ります）</p>
+                        <button onclick="window.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                            ALL RESET
+                        </button>
                     </div>
                 </div>
 
@@ -568,7 +663,8 @@
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
                         <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
                         <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
-                        <a href="#" onclick="window.showPage('dashboard')" class="footer-nav-link text-black">Dashboard</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
                         <img src="images/ACTION_TREE_LOGO_white.svg" 
@@ -597,31 +693,31 @@
             <form id="action-form" class="space-y-4 md:space-y-5 text-black" novalidate>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label>
-                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none transition-colors" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label>
-                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none transition-colors" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label>
-                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none" required>
+                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1.5 focus:outline-none text-black font-bold text-sm rounded-none transition-colors" required>
                 </div>
 
-                <!-- ステータス選択 -->
+                <!-- ステータス選択 (シンプルドット版: 英語併記・サイズ10px) -->
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Status / ステータス</label>
                     <div class="flex gap-8 mt-2 h-8 items-center">
                         <label class="flex items-center cursor-pointer">
                             <input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked>
                             <div class="status-option">
-                                <span class="status-dot"></span>提案
+                                <span class="status-dot"></span>PROPOSAL / 提案
                             </div>
                         </label>
                         <label class="flex items-center cursor-pointer">
                             <input type="radio" name="post-status" value="order" class="status-radio hidden">
                             <div class="status-option">
-                                <span class="status-dot"></span>受注
+                                <span class="status-dot"></span>ORDER / 受注
                             </div>
                         </label>
                     </div>
@@ -630,17 +726,28 @@
                 <!-- 金額入力欄：レイアウト安定化のために高さを最初から確保（h-20） -->
                 <div class="h-20 relative overflow-hidden flex flex-col justify-end">
                     <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-2 transition-all duration-300">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">CONTRACT AMOUNT / 受注額</label>
-                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none">
+                        <!-- CONTRACT AMOUNT -> AMOUNT -->
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">AMOUNT / 受注額</label>
+                        <!-- プレースホルダー削除 -->
+                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-2 focus:outline-none text-black font-bold text-sm rounded-none transition-colors">
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black text-black">ACTION NOTES / ノート</label>
-                    <!-- フォントサイズ: 14px, 太さ: Bold (800) -->
-                    <textarea id="post-notes" maxlength="300" placeholder="" class="w-full border-b py-2 h-20 md:h-24 resize-none text-black font-bold text-sm rounded-none"></textarea>
+                    <div class="flex justify-between items-baseline mb-0.5">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 text-black">ACTION NOTES / ノート</label>
+                        <!-- 文字数カウンター追加 -->
+                        <span id="char-count-display" class="text-[9px] font-bold text-gray-400">0 / 300</span>
+                    </div>
+                    <!-- フォントサイズ: text-xs, 太さ: Bold (800) -->
+                    <textarea id="post-notes" maxlength="300" oninput="window.updateCharCount(this)" placeholder="" class="w-full border-b py-2 h-20 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors"></textarea>
                 </div>
                 
+                <!-- エラーメッセージ表示用コンテナ (グレー、主張控えめ) -->
+                <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">
+                    未入力の項目があります
+                </div>
+
                 <!-- ボタンの角丸削除、呼吸アニメなし -->
                 <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-4 md:py-5 font-bold uppercase mt-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none">
                     ACTION / 投稿する
@@ -654,28 +761,46 @@
         <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
             <button onclick="window.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black">&times;</button>
             <div class="mb-8 md:mb-10 text-black">
-                <div id="detail-accent-line" class="w-8 h-1 mb-4 rounded-full" style="background: #000;"></div>
+                <!-- カラーライン：円形に変更 (w-8 h-1 -> w-3 h-3) -->
+                <div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div>
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3>
             </div>
             <div class="space-y-5 md:space-y-6 text-black">
+                <!-- フォームの順序に合わせて整理: Name -> Client -> Project -> Status&Amount -> Notes -->
+                
+                <!-- 1. Name -->
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Contributor</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span>
                     <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
                 </div>
+                
+                <!-- 2. Client -->
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status</span>
-                    <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
-                </div>
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span>
                     <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
                 </div>
+                
+                <!-- 3. Project -->
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span>
                     <p id="detail-project" class="text-sm font-bold break-words text-black">Project Title</p>
                 </div>
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Action Notes</span>
+                
+                <!-- 4. Status & Amount -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span>
+                        <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span>
+                        <p id="detail-amount" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                </div>
+                
+                <!-- 5. Notes -->
+                <div class="pt-4 border-t border-gray-100">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span>
                     <p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black">Details go here...</p>
                 </div>
             </div>
@@ -692,7 +817,6 @@
         let appId;
 
         try {
-            // Canvas環境（プレビュー）かどうかのチェック
             if (typeof __firebase_config !== 'undefined') {
                 firebaseConfig = JSON.parse(__firebase_config);
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
@@ -702,7 +826,6 @@
         } catch (e) {
             // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
             // 【重要】ここをご自身のFirebase設定に書き換えてください！
-            // (Firebaseコンソール > プロジェクトの設定 > 全般 > マイアプリ > SDKの設定)
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             firebaseConfig = {
                 apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
@@ -716,7 +839,6 @@
         }
 
         const initApp = async () => {
-            // 書き換え忘れチェック
             if (firebaseConfig.apiKey === "YOUR_API_KEY") {
                 setTimeout(() => {
                     const loader = document.getElementById('app-loader');
@@ -731,7 +853,6 @@
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                // getDocs, deleteDoc, writeBatch を公開
                 window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -756,9 +877,93 @@
     <script>
         // --- 0. Core State & Constants ---
         const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
-        const TIME_COLORS = [
-            { hour: 0, color: "#000807" }, { hour: 6, color: "#43736a" }, { hour: 12, color: "#43736a" }, { hour: 18, color: "#004036" }, { hour: 24, color: "#000807" }  
-        ];
+        
+        // Define Time Periods with YOSHIROTTEN-style vivid gradients
+        // Night: Deep & Digital
+        // Morning: Holographic & Soft
+        // Day: Strong & Vivid
+        // Evening: Dramatic & Moody
+        const TIME_PERIODS = {
+            NIGHT:   { base: "#020205", accent: "#3a0088" }, // Pitch Dark + Neon Indigo
+            MORNING: { base: "#e0f2f1", accent: "#ff99cc" }, // Ice Cyan + Neon Pink
+            DAY:     { base: "#004080", accent: "#00ffcc" }, // Deep Vivid Blue + Cyber Teal
+            EVENING: { base: "#240b36", accent: "#ff3300" }  // Dark Plum + Magma Orange
+        };
+
+        // Shader Code for YOSHIROTTEN-style Gradient (High Contrast, Liquid Feel)
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform float uTime;
+            uniform vec3 uColorA;
+            uniform vec3 uColorB;
+            varying vec2 vUv;
+
+            // Simplex-like noise function
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+            float snoise(vec2 v) {
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1;
+                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                i = mod289(i);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ;
+                m = m*m ;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+
+            void main() {
+                float time = uTime * 0.15;
+                
+                // Create liquid-like distortion
+                vec2 pos = vUv;
+                float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8));
+                float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1));
+                
+                // Combine noises for organic feel
+                float mixFactor = (noiseVal + noiseVal2) * 0.5;
+                
+                // Add vertical gradient influence
+                mixFactor += (vUv.y - 0.5) * 0.8;
+                
+                // Sharpen the transition for more "Graphic" look
+                mixFactor = smoothstep(-0.4, 0.4, mixFactor);
+                
+                // Clamp
+                mixFactor = clamp(mixFactor, 0.0, 1.0);
+
+                // Mix colors
+                vec3 color = mix(uColorA, uColorB, mixFactor);
+                
+                // Add subtle grain/dither
+                float grain = fract(sin(dot(vUv.xy ,vec2(12.9898,78.233))) * 43758.5453);
+                color += (grain - 0.5) * 0.03;
+
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
 
         let state = {
             actions: 0, amount: 0, targetDate: "2025-12-31", 
@@ -770,11 +975,26 @@
         };
 
         let scene, camera, renderer, treeGroup, particles, hoveredFlower = null;
+        let bgMesh, bgUniforms;
         const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
         let timeOffset = 0;
 
-        // --- 1. Utility Functions (Attached to window) ---
+        // --- 1. Utility Functions ---
         
+        // Define ALL functions before usage
+        function getGuaranteedVisibleTarget() {
+            const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
+            while (attempts < 50) {
+                const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2;
+                const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier);
+                const posX = Math.cos(a) * r, posZ = Math.sin(a) * r;
+                vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); const worldPos = vector.clone(); vector.project(camera);
+                if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: worldPos };
+                attempts++;
+            }
+            return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0).applyMatrix4(treeGroup.matrixWorld) };
+        }
+
         window.hexToRgb = function(hex) {
             const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
             return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
@@ -784,22 +1004,79 @@
             return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         };
 
-        window.getDynamicColor = function() {
-            const now = new Date();
-            const totalHours = state.simulatedHour !== null ? state.simulatedHour : (now.getHours() + now.getMinutes() / 60);
-            let start = TIME_COLORS[0], end = TIME_COLORS[1];
-            for (let i = 0; i < TIME_COLORS.length - 1; i++) {
-                if (totalHours >= TIME_COLORS[i].hour && totalHours < TIME_COLORS[i+1].hour) {
-                    start = TIME_COLORS[i]; end = TIME_COLORS[i+1]; break;
-                }
-            }
-            const t = (totalHours - start.hour) / (end.hour - start.hour);
-            const c1 = window.hexToRgb(start.color), c2 = window.hexToRgb(end.color);
+        window.interpolateColor = function(color1, color2, factor) {
+            const c1 = window.hexToRgb(color1);
+            const c2 = window.hexToRgb(color2);
+            if(!c1 || !c2) return color1;
             return window.rgbToHex(
-                Math.round(c1.r + (c2.r - c1.r) * t),
-                Math.round(c1.g + (c2.g - c1.g) * t),
-                Math.round(c1.b + (c2.b - c1.b) * t)
+                Math.round(c1.r + (c2.r - c1.r) * factor),
+                Math.round(c1.g + (c2.g - c1.g) * factor),
+                Math.round(c1.b + (c2.b - c1.b) * factor)
             );
+        }
+
+        // --- New Gradient Logic with 60-min Transitions ---
+        window.getGradientColors = function() {
+            const now = new Date();
+            // Use simulated hour if set, otherwise real time
+            const currentHour = state.simulatedHour !== null ? state.simulatedHour : (now.getHours() + now.getMinutes() / 60);
+
+            // SCHEDULE DEFINITION
+            // 00:00 - 05:00 : NIGHT
+            // 05:00 - 06:00 : NIGHT -> MORNING (Trans)
+            // 06:00 - 12:00 : MORNING
+            // 12:00 - 13:00 : MORNING -> DAY (Trans)
+            // 13:00 - 17:00 : DAY
+            // 17:00 - 18:00 : DAY -> EVENING (Trans)
+            // 18:00 - 23:00 : EVENING
+            // 23:00 - 24:00 : EVENING -> NIGHT (Trans)
+
+            if (currentHour < 5) {
+                // NIGHT Static (0-5)
+                return TIME_PERIODS.NIGHT;
+            } else if (currentHour < 6) {
+                // NIGHT -> MORNING (5-6)
+                const t = currentHour - 5;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.NIGHT.base, TIME_PERIODS.MORNING.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.NIGHT.accent, TIME_PERIODS.MORNING.accent, t)
+                };
+            } else if (currentHour < 12) {
+                // MORNING Static (6-12)
+                return TIME_PERIODS.MORNING;
+            } else if (currentHour < 13) {
+                // MORNING -> DAY (12-13)
+                const t = currentHour - 12;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.MORNING.base, TIME_PERIODS.DAY.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.MORNING.accent, TIME_PERIODS.DAY.accent, t)
+                };
+            } else if (currentHour < 17) {
+                // DAY Static (13-17)
+                return TIME_PERIODS.DAY;
+            } else if (currentHour < 18) {
+                // DAY -> EVENING (17-18)
+                const t = currentHour - 17;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.DAY.base, TIME_PERIODS.EVENING.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.DAY.accent, TIME_PERIODS.EVENING.accent, t)
+                };
+            } else if (currentHour < 23) {
+                // EVENING Static (18-23)
+                return TIME_PERIODS.EVENING;
+            } else {
+                // EVENING -> NIGHT (23-24)
+                const t = currentHour - 23;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.EVENING.base, TIME_PERIODS.NIGHT.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.EVENING.accent, TIME_PERIODS.NIGHT.accent, t)
+                };
+            }
+        };
+
+        window.getDynamicColor = function() {
+            // For Body BG fallback and Fog (Use Base Color)
+            return window.getGradientColors().base;
         };
 
         window.syncServerTime = async function() {
@@ -831,23 +1108,13 @@
             document.querySelectorAll('.target-countdown-val').forEach(el => el.textContent = countdownStr);
         };
 
-        // --- 2. Core Functions ---
+        window.updateCharCount = function(el) {
+            const count = el.value.length;
+            const display = document.getElementById('char-count-display');
+            if(display) display.textContent = `${count} / 300`;
+        };
 
-        // 修正: 確実に定義してから使用するために前方へ配置
-        function getGuaranteedVisibleTarget() {
-            const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
-            while (attempts < 50) {
-                const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2;
-                const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier);
-                const posX = Math.cos(a) * r, posZ = Math.sin(a) * r;
-                vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); const worldPos = vector.clone(); vector.project(camera);
-                if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: worldPos };
-                attempts++;
-            }
-            return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0).applyMatrix4(treeGroup.matrixWorld) };
-        }
-
-        // --- 3. Window Level Navigation & Modal Functions ---
+        // --- 2. Window Level Navigation & Modal ---
 
         window.showPage = function(id) {
             document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
@@ -859,12 +1126,15 @@
             const h = document.getElementById('main-header');
             if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } 
             else { document.body.style.backgroundColor = '#fff'; if(h) h.classList.add('is-dark'); }
-            if (id === 'dashboard') refreshDashboard();
+            // Logページを開いたときにリストを更新
+            if (id === 'log') refreshLog();
         };
 
         window.openModal = function() { 
             resetHoverState(); 
             const modal = document.getElementById('post-modal');
+            const err = document.getElementById('form-error-msg');
+            if(err) err.classList.add('hidden');
             if(modal) { modal.style.display = 'flex'; state.isModalOpen = true; } 
         };
 
@@ -879,7 +1149,11 @@
                 }
                 const propRadio = document.querySelector('input[name="post-status"][value="proposal"]');
                 if(propRadio) propRadio.checked = true;
-                form.querySelectorAll('input, textarea').forEach(el => { el.classList.remove('input-error'); el.placeholder = ""; });
+                const cnt = document.getElementById('char-count-display');
+                if(cnt) cnt.textContent = "0 / 300";
+                form.querySelectorAll('input, textarea').forEach(el => { el.classList.remove('input-error-shake'); el.placeholder = ""; });
+                const err = document.getElementById('form-error-msg');
+                if(err) err.classList.add('hidden');
             }
             state.isModalOpen = false;
         };
@@ -890,10 +1164,14 @@
             const modal = document.getElementById('detail-modal');
             if (!modal) return;
             document.getElementById('detail-name').textContent = data.name; 
-            document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER' : 'PROPOSAL';
+            document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案';
+            
+            const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : '';
+            document.getElementById('detail-amount').textContent = amtDisplay;
+
             document.getElementById('detail-client').textContent = data.client || "---";
             document.getElementById('detail-project').textContent = data.project || "---";
-            document.getElementById('detail-notes').textContent = data.notes || "---";
+            document.getElementById('detail-notes').textContent = data.notes || "";
             document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; 
             resetHoverState();
             modal.style.display = 'flex'; 
@@ -919,16 +1197,32 @@
                 const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
                 addFlowerWithConvergence("Sim User", "Sim Client", "Growth Sim " + (i+1), 1200, "Simulated data", 'order', true); 
             }
-            updateGrowthState(); window.updateStatsUI(); refreshDashboard();
+            updateGrowthState(); window.updateStatsUI(); refreshLog();
         };
 
         window.setTestTime = function(h) { state.simulatedHour = h; updateBackgroundColor(); };
-        window.resetTimeSim = function() { state.simulatedHour = null; updateBackgroundColor(); };
+        window.applyCustomTime = function() {
+            const input = document.getElementById('custom-time-input');
+            let val = parseFloat(input.value);
+            if(isNaN(val)) return;
+            if(val < 0) val = 0;
+            if(val >= 24) val = 0; // 24 is 0
+            window.setTestTime(val);
+        };
+        window.resetTimeSim = function() { 
+            state.simulatedHour = null; 
+            updateBackgroundColor(); 
+            const input = document.getElementById('custom-time-input');
+            if(input) input.value = '';
+        };
 
         window.resetAllData = async function() {
-            if(!confirm("全てのデータを削除しますか？")) return;
+            // 1段階目の確認
+            if(!confirm("【警告】全てのデータを削除しようとしています。\nこの操作を実行すると、これまでの投稿データは完全に失われます。\n\n本当に実行しますか？")) return;
             
-            // ローディング表示
+            // 2段階目の確認（念押し）
+            if(!confirm("【最終確認】この操作は取り消すことができません。\n本当に全てのデータをリセットしてよろしいですか？")) return;
+            
             const loader = document.getElementById('app-loader');
             if(loader) {
                 loader.style.display = 'flex';
@@ -936,37 +1230,64 @@
                 if(span) span.textContent = "Resetting...";
             }
 
-            if(window.firebase) {
-                // Firebase logic...
-                const { db, appId, collection, getDocs, writeBatch } = window.firebase;
-                const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
-                try {
+            // メッセージ保持用変数
+            let resultMessage = "";
+
+            try {
+                if(window.firebase) {
+                    const { db, appId, collection, getDocs, writeBatch } = window.firebase;
+                    const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                    
                     const snapshot = await getDocs(q);
-                    const batch = writeBatch(db);
-                    snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                    await batch.commit();
-                } catch(e) {
-                    console.error(e);
-                    alert("削除に失敗しました");
+                    
+                    if (snapshot.size === 0) {
+                        resultMessage = "削除対象のデータがありませんでした。";
+                    } else {
+                        // Firestore Batch Limit is 500.
+                        const batch = writeBatch(db);
+                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                        await batch.commit();
+                        resultMessage = "全てのデータを削除しました。";
+                    }
+                } else {
+                    // Local state reset
+                    state.flowers.forEach(f => treeGroup.remove(f));
+                    state.flowers = []; state.actions = 0; state.amount = 0;
+                    updateGrowthState(); window.updateStatsUI(); refreshLog();
+                    resultMessage = "全てのデータをリセットしました。（シミュレーションモード）";
                 }
-            } else {
-                // Local Logic
-                state.flowers.forEach(f => treeGroup.remove(f));
-                state.flowers = []; state.actions = 0; state.amount = 0;
-                updateGrowthState(); window.updateStatsUI(); refreshDashboard();
+            } catch(e) {
+                console.error(e);
+                resultMessage = "エラーが発生しました：削除に失敗しました。\n" + e.message;
+            } finally {
+                if(loader) loader.style.display = 'none';
+                // 処理完了後に確実にアラートを出すために少し遅延させる
+                if(resultMessage) {
+                    setTimeout(() => alert(resultMessage), 100);
+                }
             }
-            
-            if(loader) loader.style.display = 'none';
         };
 
-        // --- 4. Internal Helper Functions ---
+        // --- 3. Internal Helper Functions ---
 
         function updateBackgroundColor() {
             const topPage = document.getElementById('page-top');
-            if (topPage && !topPage.classList.contains('hidden')) {
-                const colorHex = window.getDynamicColor();
-                document.body.style.backgroundColor = colorHex;
-                if (scene && scene.fog) scene.fog.color.set(colorHex);
+            
+            // Get gradient colors based on schedule
+            const colors = window.getGradientColors();
+            const colorHex = colors.base;
+            const accentHex = colors.accent;
+            
+            // HTML body bg for non-canvas pages (Use base color)
+            document.body.style.backgroundColor = colorHex;
+            
+            // Fog update
+            if (scene && scene.fog) scene.fog.color.set(colorHex);
+
+            // Shader update
+            if (bgUniforms) {
+                bgUniforms.uColorA.value.set(colorHex);
+                bgUniforms.uColorB.value.set(accentHex);
             }
         }
 
@@ -978,7 +1299,8 @@
             document.body.style.cursor = 'default';
         }
 
-        function refreshDashboard() {
+        // リネーム: Dashboardページの更新ではなく、Logページの更新になったため
+        function refreshLog() {
             const list = document.getElementById('dashboard-action-list');
             if (!list) return; list.innerHTML = '';
             window.updateTargetCountdown();
@@ -999,19 +1321,38 @@
             }
         }
 
-        // --- 5. 3D & Animation Core ---
+        // --- 4. 3D & Animation Core ---
 
         function initThree() {
             const container = document.getElementById('canvas-container');
             if(!container) return;
             scene = new THREE.Scene(); scene.fog = new THREE.Fog(window.getDynamicColor(), 10, 85); 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 3000);
+            
+            // Gradient Background Setup
+            bgUniforms = {
+                uTime: { value: 0 },
+                uColorA: { value: new THREE.Color("#000000") },
+                uColorB: { value: new THREE.Color("#330066") }
+            };
+            
+            const bgGeo = new THREE.PlaneGeometry(300, 300); // Large enough to cover view
+            const bgMat = new THREE.ShaderMaterial({
+                uniforms: bgUniforms,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                depthWrite: false, // Ensure it's behind everything
+            });
+            bgMesh = new THREE.Mesh(bgGeo, bgMat);
+            bgMesh.position.z = -50; 
+            scene.add(bgMesh);
+
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
             treeGroup = new THREE.Group(); scene.add(treeGroup);
             
-            // 25,000 Particles (Rich Star Dust)
+            // 25,000 Particles
             const geometry = new THREE.BufferGeometry(); 
             const count = window.innerWidth < 768 ? 12000 : 25000;
             const positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
@@ -1037,6 +1378,13 @@
 
         function animate() {
             requestAnimationFrame(animate); const time = Date.now();
+            
+            // Update Shader Time
+            if (bgUniforms) bgUniforms.uTime.value += 0.01;
+            
+            // Time Sync for background color
+            updateBackgroundColor();
+
             state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02;
             state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02;
             if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; }
@@ -1103,10 +1451,11 @@
             }, 1200);
         }
 
-        function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex, isNew = false) {
+        function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex, isNew = false, id = null) {
             const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
             f.position.set(posX, y, posZ); f.scale.set(0, 0, 0);
-            f.userData = { name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
+            // IDもuserDataに保存
+            f.userData = { id: id, name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
             treeGroup.add(f); state.flowers.push(f);
             gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
         }
@@ -1118,8 +1467,8 @@
             const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.currentLevel === 3 ? 1.8 : 1.0 + (state.currentLevel * 0.25)) + 4;
             const branchFactor = (y + 6) / 22;
             const a = seededRandom(seed * 0.2) * Math.PI * 2;
-            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 10 * state.baseSpreadFactor);
-            addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, data.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex);
+            const r = 0.8 + seededRandom(seed * 0.3) * (branchFactor * 9 * state.baseSpreadFactor);
+            addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, data.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex, false, data.id);
         }
 
         function addBudsInstanced(count) {
@@ -1169,27 +1518,40 @@
             if (actionForm) {
                 actionForm.onsubmit = (e) => {
                     e.preventDefault();
-                    if(window.firebase) return; 
-
-                    const statusRadios = document.getElementsByName('post-status');
-                    let status = 'proposal'; statusRadios.forEach(r => { if(r.checked) status = r.value; });
+                    
+                    const status = document.querySelector('input[name="post-status"]:checked').value;
                     const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }];
                     if(status === 'order') fields.push({ id: 'post-amount' });
-                    let isValid = true;
+
+                    let valid = true;
+                    // リセット
+                    document.getElementById('form-error-msg').classList.add('hidden');
+                    actionForm.querySelectorAll('input, textarea').forEach(el => el.classList.remove('input-error-shake'));
+
                     fields.forEach(f => {
                         const el = document.getElementById(f.id);
-                        if (!el.value.trim()) { el.classList.add('input-error'); el.placeholder = "必須"; isValid = false; }
-                        else { el.classList.remove('input-error'); }
+                        if (!el.value.trim()) { 
+                            el.classList.add('input-error-shake'); 
+                            valid = false; 
+                        }
                     });
-                    if (!isValid) return;
+
+                    if (!valid) {
+                        document.getElementById('form-error-msg').classList.remove('hidden');
+                        return;
+                    }
+
+                    if(window.firebase) return; 
+
                     const n = document.getElementById('post-name').value;
                     const c = document.getElementById('post-client').value;
                     const p = document.getElementById('post-project').value;
                     const a = parseInt(document.getElementById('post-amount').value) || 0;
                     const notes = document.getElementById('post-notes').value;
+                    
                     addFlowerWithConvergence(n, c, p, a, notes, status);
                     state.actions++; if(status === 'order') state.amount += a;
-                    window.updateStatsUI(); refreshDashboard();
+                    window.updateStatsUI(); refreshLog();
                     window.closeModal();
                 };
             }
@@ -1218,10 +1580,17 @@
                         let valid = true;
                         fields.forEach(f => {
                             const el = document.getElementById(f.id);
-                            if (el && !el.value.trim()) { el.classList.add('input-error'); valid = false; }
-                            else if(el) { el.classList.remove('input-error'); }
+                            if (el && !el.value.trim()) { 
+                                el.classList.add('input-error-shake'); 
+                                valid = false; 
+                            }
                         });
-                        if (!valid) return;
+
+                        if (!valid) {
+                            document.getElementById('form-error-msg').classList.remove('hidden');
+                            return;
+                        }
+
                         const btn = document.getElementById('submit-action-btn');
                         btn.disabled = true; btn.textContent = "Saving...";
                         try {
@@ -1240,10 +1609,13 @@
                     state.flowers.forEach(f => treeGroup.remove(f));
                     state.flowers = []; state.actions = 0; state.amount = 0;
                     snapshot.forEach((doc) => {
-                        const d = doc.data(); addFlowerFromData(d);
+                        const d = doc.data(); 
+                        // IDを保持
+                        d.id = doc.id;
+                        addFlowerFromData(d);
                         state.actions++; if(d.status === 'order') state.amount += (parseInt(d.amount) || 0);
                     });
-                    updateGrowthState(); window.updateStatsUI(); refreshDashboard();
+                    updateGrowthState(); window.updateStatsUI(); refreshLog(); window.refreshAdminList();
                 }, (err) => console.error(err));
             });
         });
@@ -1251,12 +1623,24 @@
         document.getElementById('menu-toggle').onclick = () => {
             const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header');
             const isOpen = nav.style.display === 'flex';
-            nav.style.display = isOpen ? 'none' : 'flex';
-            document.getElementById('menu-toggle').classList.toggle('open');
-            if (!isOpen) { 
-                nav.style.backgroundColor = window.getDynamicColor(); 
+            
+            if (!isOpen) {
+                // OPEN
+                nav.style.display = 'flex';
+                // 時間帯カラーをベースに透過させる (Opacity 0.85)
+                const hex = window.getDynamicColor();
+                const rgb = window.hexToRgb(hex);
+                if (rgb) {
+                    nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.85)`;
+                }
+                
+                document.getElementById('menu-toggle').classList.add('open');
                 if(header) header.classList.remove('is-dark'); 
             } else { 
+                // CLOSE
+                nav.style.display = 'none';
+                document.getElementById('menu-toggle').classList.remove('open');
+                
                 const isTop = !document.getElementById('page-top').classList.contains('hidden');
                 if (isTop && header) header.classList.remove('is-dark'); 
                 else if(header) header.classList.add('is-dark'); 
