@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- ★追加: 検索エンジンにインデックスさせない設定（社内運用向け） -->
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -14,7 +14,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
 
-        /* Base Settings */
+        /* 全体設定 */
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0;
@@ -23,200 +23,495 @@
             color: #fff;
             letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
-            -webkit-tap-highlight-color: transparent;
+            transition: background-color 2.0s ease; 
         }
 
-        /* Layout */
+        html { scroll-behavior: smooth; }
+
+        .full-screen-section {
+            height: 100vh;
+            height: 100svh; 
+            height: 100dvh; 
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
         #canvas-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; background: #000807;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: #000; 
+        }
+
+        header {
+            z-index: 160;
+            pointer-events: none;
+            transition: all 0.4s ease;
         }
         
-        .full-screen-section {
-            height: 100vh; height: 100dvh; width: 100%;
-            display: flex; flex-direction: column; position: relative;
+        .logo-symbol-wrapper, #menu-toggle, .logo-main-text {
+            pointer-events: auto;
         }
 
-        /* UI Elements (Clickable) */
-        .clickable, a, button, input, label, textarea, .nav-icon, .logo-symbol-wrapper {
-            pointer-events: auto !important; cursor: pointer;
-        }
-
-        /* Header */
-        header { 
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
-            pointer-events: none; transition: all 0.4s ease; 
-        }
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
         header.is-dark img { filter: brightness(0); }
         
-        .logo-main-text {
-            font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800;
-            letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase;
+        .logo-fallback {
+            display: none;
+            border-radius: 9999px;
+            border-width: 2px;
+            border-color: currentColor;
         }
-        @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
 
-        /* Menu */
-        .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
-        .nav-icon-inner { width: 24px; height: 10px; position: relative; pointer-events: none; }
-        @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
-        .nav-icon span { display: block; position: absolute; height: 2px; width: 100%; background: #fff; left: 0; transition: all 0.4s; }
-        .nav-icon-inner span:nth-child(1) { top: 0px; }
-        .nav-icon-inner span:nth-child(2) { bottom: 0px; }
-        .nav-icon.open .nav-icon-inner span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
-        .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+        .marquee-container {
+            background: transparent;
+            color: #ffffff; 
+            padding: 2.5rem 0;
+            overflow: hidden;
+            white-space: nowrap;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            z-index: 10;
+            display: flex;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .marquee-container { padding: 1.5rem 0; bottom: 10px; }
+        }
+
+        .marquee-content {
+            display: flex;
+            flex-shrink: 0;
+            min-width: 100%;
+            animation: marquee 60s linear infinite;
+            will-change: transform;
+            transform: translateZ(0); 
+        }
+
+        .marquee-item {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .stats-group {
+            display: flex;
+            align-items: baseline;
+            gap: 1rem; 
+            padding: 0 1.5rem; 
+        }
+        
+        @media (min-width: 768px) {
+            .stats-group { gap: 1.5rem; padding: 0 3.5rem; }
+        }
+
+        .stats-label, .stats-value {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #ffffff;
+            letter-spacing: 0.2em;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 768px) {
+            .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; }
+        }
+
+        .tabular {
+            font-variant-numeric: tabular-nums;
+            display: inline-block;
+            text-align: center;
+        }
+
+        /* 日付表示エリアの幅調整 */
+        .countdown-stable {
+            font-variant-numeric: tabular-nums;
+            display: inline-block;
+            min-width: 130px; 
+            text-align: left;
+        }
+        @media (min-width: 768px) {
+            .countdown-stable { min-width: 180px; } 
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .mono-page { background: #fff; color: #000; }
 
         .menu-overlay {
-            display: none; position: fixed; inset: 0; z-index: 150;
-            background: rgba(0, 40, 30, 0.95); flex-direction: column; 
-            align-items: center; justify-content: center; backdrop-filter: blur(12px);
-            pointer-events: auto;
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 40, 30, 0.9); 
+            z-index: 150;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.4s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-        .menu-link { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; color: #fff; margin: 10px 0; transition: opacity 0.3s; }
+
+        /* Nav Icon Hit Area & Style */
+        .nav-icon {
+            width: 44px;
+            height: 44px;
+            position: relative;
+            cursor: pointer;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-icon-inner {
+            width: 24px;
+            height: 10px;
+            position: relative;
+        }
+
+        @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
+
+        .nav-icon span {
+            display: block;
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: #fff;
+            left: 0;
+            transform-origin: center;
+            transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .nav-icon span:nth-child(1) { top: 0px; }
+        .nav-icon span:nth-child(2) { bottom: 0px; }
+
+        .nav-icon.open span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+        .nav-icon.open span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+
+        .menu-link {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-style: normal;
+            font-size: 20px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            transition: opacity 0.4s ease;
+            color: #fff;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+
+        @media (min-width: 768px) { .menu-link { font-size: 24px; } }
+
         .menu-link:hover { opacity: 0.7; }
 
-        /* Action Button */
         .action-button {
-            position: fixed; bottom: 80px; right: 20px; z-index: 90;
-            width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            text-transform: uppercase; font-weight: 800;
+            position: fixed;
+            bottom: 80px; 
+            right: 20px;
+            width: 74px;
+            height: 74px;
+            z-index: 140; 
+            border-radius: 9999px;
+            background-color: #fff;
+            color: #000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            font-weight: 800;
+            will-change: transform, background-color;
+            cursor: pointer;
         }
-        @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
 
-        /* Marquee */
-        .marquee-container { position: absolute; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; }
-        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; bottom: 10px; } }
-        .marquee-content { display: flex; flex-shrink: 0; min-width: 100%; animation: marquee 60s linear infinite; }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .marquee-item { display: flex; align-items: center; flex-shrink: 0; }
-        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 1.5rem; }
-        .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; }
-        @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
-        .tabular { font-variant-numeric: tabular-nums; }
-        .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 130px; text-align: left; }
-        @media (min-width: 768px) { .countdown-stable { min-width: 180px; } }
+        @media (min-width: 768px) {
+            .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; }
+        }
 
-        /* Pages */
-        .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
-        .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
-        .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
-        .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
-        .app-footer { padding: 4rem 0 3rem; text-align: center; }
-        .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
+        .logo-main-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            color: #ffffff;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
+
+        .page-section-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            color: #999;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .statement-text-container {
+            line-height: 1.8;
+            letter-spacing: 0.12em;
+            font-size: 14px; 
+            color: #333;
+        }
+
+        @media (min-width: 768px) {
+            .statement-text-container { font-size: 15px; }
+        }
+
+        .rule-card {
+            border-left: 1px solid #f0f0f0;
+            padding-left: 1.25rem;
+        }
+
+        .app-footer {
+            padding: 4rem 0 3rem;
+            text-align: center;
+        }
+        @media (min-width: 768px) { .app-footer { padding: 6rem 0 4rem; } }
         
-        /* Sim & CSV Buttons */
-        .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; }
-        .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
-        input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
-        .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
-
-        /* Modal */
-        .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 300; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
-        .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
-        /* Status Radio */
-        .status-radio:checked + div { color: #000; opacity: 1; }
-        .status-radio:checked + div .status-dot { background-color: #000; border-color: #000; }
-        .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #ccc; margin-right: 8px; transition: all 0.3s; }
-        .status-option { color: #ccc; transition: all 0.3s; font-size: 14px; font-weight: 800; display: flex; align-items: center; }
-        .status-radio:not(:checked) + div:hover { color: #999; }
-        .status-radio:not(:checked) + div:hover .status-dot { border-color: #999; }
+        .footer-nav-link {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #000;
+            transition: opacity 0.3s ease;
+        }
         
-        /* Utility */
-        .hidden { display: none !important; }
-        .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
+        .footer-nav-link:hover { opacity: 0.4; }
 
-        /* Loader - 強制解除アニメーション付き */
+        .stat-card-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+        @media (min-width: 768px) {
+            .stat-card-value { font-size: 2.5rem; }
+        }
+
+        .date-input-custom {
+            border: none;
+            border-bottom: 1px solid #000;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            padding: 4px 0;
+            background: transparent;
+            cursor: pointer;
+            outline: none;
+            min-width: 140px;
+        }
+
+        .csv-btn {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            border: 1px solid #000;
+            padding: 8px 16px;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+        }
+        .csv-btn:hover {
+            background: #000;
+            color: #fff;
+        }
+        
+        .sim-btn {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        .sim-btn:hover {
+            border-color: #000;
+            background: #f8f8f8;
+        }
+        
+        /* ラジオボタンのカスタムスタイル（シンプルドット版） */
+        .status-radio:checked + div {
+            color: #000;
+            opacity: 1;
+        }
+        .status-radio:checked + div .status-dot {
+            background-color: #000;
+            border-color: #000;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+            background-color: transparent;
+        }
+        .status-option {
+            color: #ccc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+        }
+        .status-radio:not(:checked) + div:hover {
+            color: #999;
+        }
+        .status-radio:not(:checked) + div:hover .status-dot {
+            border-color: #999;
+        }
+        
+        /* シンプルなスクロールバー */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e5e5;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+        
+        /* 起動時ローダー */
         #app-loader {
-            position: fixed; inset: 0; z-index: 9999; background: #000807;
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
-            pointer-events: auto;
-            animation: forceHide 0.5s linear 4s forwards; /* 4秒後にCSSだけで消える */
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #000807;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease;
         }
-        @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-        #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
+        
+        /* フォームエラーアニメーション */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .input-error-shake {
+            animation: shake 0.3s ease-in-out;
+            border-bottom-color: #000 !important;
+        }
     </style>
-    
-    <!-- Safety Script -->
-    <script>
-        setTimeout(() => {
-            const l = document.getElementById('app-loader');
-            if(l) l.classList.add('loaded');
-        }, 3000);
-    </script>
 </head>
 <body style="overflow: hidden;">
 
-    <!-- Loader -->
+    <!-- Boot Loader -->
     <div id="app-loader">
         <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-        <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing...</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em]">Preparing Soil...</span>
     </div>
 
-    <!-- Header -->
-    <header id="main-header" class="px-5 py-6 md:px-10 md:py-12 flex items-center">
-        <div class="logo-symbol-wrapper clickable flex-shrink-0" onclick="ui.showPage('top')">
-            <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-6 h-6 md:w-8 md:h-8 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <div class="logo-fallback"></div>
+    <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
+        <div class="logo-symbol-wrapper flex-shrink-0" onclick="window.showPage('top')">
+            <!-- Default LV1 Logo (for LV0 state) -->
+            <img src="images/ACTION_TREE_LOGO_LV1.svg" 
+                 alt="Action Tree Logo" 
+                 class="w-6 h-6 md:w-8 md:h-8 object-contain"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="logo-fallback w-6 h-6 md:w-8 md:h-8"></div>
         </div>
-        <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap clickable" onclick="ui.showPage('top')">
-            <span class="logo-main-text"><span style="margin-right: 0.08em">1</span>00 Action Tree</span>
+        <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
+            <!-- 文字間調整：1と0の間を少し広げて、0と0の間とのバランスを調整 -->
+            <span class="logo-main-text" onclick="window.showPage('top')">
+                <span style="margin-right: 0.08em">1</span>00 Action Tree
+            </span>
         </div>
         <div class="ml-auto">
-            <div id="menu-toggle" class="nav-icon clickable" onclick="ui.toggleMenu()">
-                <div class="nav-icon-inner"><span></span><span></span></div>
+            <!-- Expanded Hit Area for Menu Toggle -->
+            <div id="menu-toggle" class="nav-icon">
+                <div class="nav-icon-inner">
+                    <span></span><span></span>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Menu -->
     <div id="nav-menu" class="menu-overlay">
         <div class="flex-grow flex flex-col justify-center items-center gap-6 md:gap-10">
-            <a onclick="ui.showPage('top')" class="menu-link clickable">Top</a>
-            <a onclick="ui.showPage('about')" class="menu-link clickable">About</a>
-            <a onclick="ui.showPage('rules')" class="menu-link clickable">Rules</a>
-            <a onclick="ui.showPage('log')" class="menu-link clickable">Actions Log</a>
-            <a onclick="ui.showPage('dashboard')" class="menu-link clickable !text-[12px] md:!text-[14px] opacity-50 hover:opacity-100 mt-4">Dashboard</a>
+            <a href="#" onclick="window.showPage('top')" class="menu-link">Top</a>
+            <a href="#" onclick="window.showPage('about')" class="menu-link">About</a>
+            <a href="#" onclick="window.showPage('rules')" class="menu-link">Rules</a>
+            <a href="#" onclick="window.showPage('log')" class="menu-link">Actions Log</a>
+            <a href="#" onclick="window.showPage('dashboard')" class="menu-link !text-[12px] md:!text-[14px] opacity-50 hover:opacity-100 mt-4">Dashboard</a>
         </div>
-        <div class="pb-10 text-center text-white">
-            <p class="text-[9px] font-bold uppercase tracking-[0.3em]">© ESPERANZA DESIGN OFFICE. ALL RIGHTS RESERVED.</p>
+        <div class="pb-10 text-center">
+            <p class="text-[9px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. ALL RIGHTS RESERVED.</p>
         </div>
     </div>
 
-    <!-- Content -->
     <main id="app-content">
-        <!-- TOP -->
+        <!-- 1. TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
             <div class="marquee-container">
-                <div class="marquee-content" id="stats-slider">
-                    <!-- Static Initial Content -->
-                    <div class="marquee-item text-white">
-                        <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
-                        <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value">¥<span class="amount-val">0</span></span></div>
-                        <div class="stats-group"><span class="stats-label">Tree Level</span><span class="stats-value level-val">LV0 SOIL</span></div>
-                        <div class="stats-group"><span class="stats-label">Date</span><span class="stats-value marquee-date-val countdown-stable">---</span></div>
-                    </div>
-                </div>
+                <div class="marquee-content" id="stats-slider"></div>
             </div>
-            <button id="main-action-button" onclick="ui.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
+            <!-- vivid-cycle-btn: 色変化, breath-animation: 呼吸アニメ -->
+            <button id="main-action-button" onclick="window.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
 
-        <!-- ABOUT -->
+        <!-- 2. ABOUT PAGE (Concept Only) -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
                     <span class="page-section-label">About 100 ACTION TREE</span>
-                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10">100アクションを目指して</h2>
-                    <div class="statement-text-container space-y-6 md:space-y-8">
+                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">100アクションを目指して</h2>
+                    <div class="statement-text-container space-y-6 md:space-y-8 text-black">
                         <p>100 ACTION TREEは、個人の「自発的なアクション」を養分にして、組織全体の文化を大きく育てていくためのプラットフォームです。</p>
                         <p>私たちは、プロフェッショナルとしてデザインを突き詰めることを何より大切にしています。その職人魂は、私たちのアイデンティティであり、永遠に変わることはありません。しかし、AIが多くのことを代替していくこれからの時代、私たち人間にしかできないこと、それは「問いを立て、対話をし、未来への決断を下すこと」ではないでしょうか。</p>
-                        <div class="py-2 md:py-4"><p class="leading-relaxed font-bold">「まずは100個のアクションを」<br>小さな種まきが、やがて大きな森になる。</p></div>
+                        <div class="py-2 md:py-4">
+                            <p class="leading-relaxed font-bold text-black text-black">「まずは100個のアクションを」<br>小さな種まきが、やがて大きな森になる。</p>
+                        </div>
                         <p>リアルに実行できるのは人の役目であり、実行し、決断することに価値があります。日々の業務の中で生まれる、こうした小さな気づきを、頭の中だけで終わらせないでほしい。</p>
                         <p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「100 ACTION TREE」を構築しました。</p>
                         <p>すぐには結果が出ないかもしれません。それでも、みんなで種をまき、水をやり、枝を伸ばしていく。100本のアクションが集まったとき、私たちの景色はきっと変わっているはずです。</p>
@@ -224,141 +519,195 @@
                 </div>
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="ui.showPage('log')" class="footer-nav-link clickable">Log</a>
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
+                             alt="Action Tree Logo" 
+                             class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="logo-fallback w-4 h-4 md:w-5 md:h-5 text-black"></div>
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
             </div>
         </div>
 
-        <!-- RULES -->
+        <!-- 3. ACTION RULES PAGE -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
                     <span class="page-section-label">Rules</span>
-                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10">ルールと活用方法</h2>
+                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">ルールと活用方法</h2>
                     <p class="statement-text-container mb-10 md:mb-12">クライアントからの受注案件ではなく、<br class="hidden md:block">「相手のことを思い、考え、見出した提案」が投稿の対象です。</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 md:gap-y-10">
-                        <div class="rule-card"><h4 class="text-sm font-bold mb-2">「種まき」提案も大歓迎</h4><p class="text-gray-500 text-[13px] leading-relaxed">こんな事もできるんだと、クライアントに気付きを与えるのも仕事の間口を広げる立派なアクションです。</p></div>
-                        <div class="rule-card"><h4 class="text-sm font-bold mb-2">「会社への提案」も私たちの栄養</h4><p class="text-gray-500 text-[13px] leading-relaxed">「こんな取り組みしてみます」といった、社内の成長を促すアクションも提案の対象です。</p></div>
-                        <div class="rule-card"><h4 class="text-sm font-bold mb-2">「共創」を楽しみましょう</h4><p class="text-gray-500 text-[13px] leading-relaxed">誰かと一緒に考えたり、協力して進めたりしたアクションは、より太くて丈夫な枝になります。</p></div>
+                        <div class="rule-card">
+                            <h4 class="text-sm font-bold mb-2">「種まき」提案も大歓迎</h4>
+                            <p class="text-gray-500 text-[13px] leading-relaxed">こんな事もできるんだと、クライアントに気付きを与えるのも仕事の間口を広げる立派なアクションです。</p>
+                        </div>
+                        <div class="rule-card">
+                            <h4 class="text-sm font-bold mb-2">「会社への提案」も私たちの栄養</h4>
+                            <p class="text-gray-500 text-[13px] leading-relaxed">「こんな取り組みしてみます」といった、社内の成長を促すアクションも提案の対象です。</p>
+                        </div>
+                        <div class="rule-card">
+                            <h4 class="text-sm font-bold mb-2">「共創」を楽しみましょう</h4>
+                            <p class="text-gray-500 text-[13px] leading-relaxed">誰かと一緒に考えたり、協力して進めたりしたアクションは、より太くて丈夫な枝になります。</p>
+                        </div>
                     </div>
                 </div>
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="ui.showPage('log')" class="footer-nav-link clickable">Log</a>
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
+                             alt="Action Tree Logo" 
+                             class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="logo-fallback w-4 h-4 md:w-5 md:h-5 text-black"></div>
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
             </div>
         </div>
 
-        <!-- LOG -->
+        <!-- 4. ACTIONS LOG PAGE -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
                     <span class="page-section-label">Log & Analytics</span>
-                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12">Actions Log</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12">
-                        <div><span class="page-section-label">Total Actions / Goal</span><div class="stat-card-value tabular flex items-baseline"><span class="actions-val">0</span> <span class="text-lg ml-2 text-gray-400 font-bold">/ 100</span></div></div>
-                        <div><span class="page-section-label">Total Amount</span><div class="stat-card-value tabular">¥<span class="amount-val">0</span></div></div>
-                        <div><span class="page-section-label">Tree Level</span><div class="stat-card-value tabular level-val-display">LV0</div></div>
+                    <!-- TITLE UPDATE: Remove dot -->
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log</h2>
+                    <!-- GRID UPDATE: 3 columns -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
+                        <div>
+                            <span class="page-section-label">Total Actions / Goal</span>
+                            <div class="stat-card-value tabular text-black flex items-baseline">
+                                <span class="actions-val">0</span>
+                                <span class="text-lg ml-2 text-gray-400 font-bold">/ 100</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="page-section-label">Total Amount</span>
+                            <div class="stat-card-value tabular text-black">¥<span class="amount-val">0</span></div>
+                        </div>
+                        <!-- NEW TREE LEVEL -->
+                        <div>
+                            <span class="page-section-label">Tree Level</span>
+                            <div class="stat-card-value tabular text-black level-val-display">LV0</div>
+                        </div>
                     </div>
+                    <!-- CSV Button Removed from here -->
                 </div>
-                <div class="mb-20 md:mb-24">
-                    <div class="flex items-baseline justify-between border-b border-black pb-4 mb-6 md:mb-8">
-                        <h3 class="text-md md:text-xl font-black uppercase">Action History</h3>
+
+                <div class="mb-20 md:mb-24 text-black">
+                    <div class="flex items-baseline justify-between border-b border-black pb-4 mb-6 md:mb-8 text-black">
+                        <h3 class="text-md md:text-xl font-black uppercase text-black">Action History</h3>
+                        <!-- Showing Count Removed -->
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto text-black">
                         <table class="w-full text-left min-w-[500px] md:min-w-0">
-                            <tbody id="dashboard-action-list"></tbody>
+                            <tbody id="dashboard-action-list" class="text-black"></tbody>
                         </table>
-                        <div id="no-actions-msg" class="py-20 text-center text-gray-300 uppercase text-[10px] tracking-widest hidden">No actions recorded yet.</div>
+                        <div id="no-actions-msg" class="py-20 text-center text-gray-300 uppercase text-[10px] tracking-widest hidden text-black">No actions recorded yet.</div>
                     </div>
+                    <!-- CSV Button Moved Here -->
                     <div class="flex justify-end mt-8">
-                         <button onclick="ui.downloadLogCSV()" class="csv-btn text-black clickable">Download Log (CSV)</button>
+                         <button onclick="window.downloadLogCSV()" class="csv-btn text-black">Download Log (CSV)</button>
                     </div>
                 </div>
+
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="ui.showPage('log')" class="footer-nav-link clickable">Log</a>
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
+                             alt="Action Tree Logo" 
+                             class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="logo-fallback w-4 h-4 md:w-5 md:h-5 text-black"></div>
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
             </div>
         </div>
 
-        <!-- DASHBOARD -->
+        <!-- 5. DASHBOARD (Admin/Sim) PAGE -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
                     <span class="page-section-label">System Management</span>
-                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12">Simulation & Reset.</h2>
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2>
                 </div>
-                <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24">
+
+                <!-- Simulation Tools -->
+                <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black">
                     <div>
                         <span class="page-section-label">Tree Growth Verification</span>
-                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4">
-                            <button onclick="ui.setTestLevel(0)" class="sim-btn clickable">Reset</button>
-                            <button onclick="ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button>
-                            <button onclick="ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button>
-                            <button onclick="ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button>
-                            <button onclick="ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button>
-                            <button onclick="ui.setTestLevel(75)" class="sim-btn clickable">LV4 (75)</button>
-                            <button onclick="ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
+                            <button onclick="window.setTestLevel(0)" class="sim-btn">Reset (0)</button>
+                            <button onclick="window.setTestLevel(5)" class="sim-btn">LV0: SOIL (5)</button>
+                            <button onclick="window.setTestLevel(15)" class="sim-btn">LV1: LEAF (15)</button>
+                            <button onclick="window.setTestLevel(35)" class="sim-btn">LV2: STEM (35)</button>
+                            <button onclick="window.setTestLevel(55)" class="sim-btn">LV3: WOOD (55)</button>
+                            <button onclick="window.setTestLevel(75)" class="sim-btn">LV4: FOREST (75)</button>
+                            <button onclick="window.setTestLevel(100)" class="sim-btn">LV5: WORLD (100)</button>
                         </div>
                     </div>
                     <div>
-                        <span class="page-section-label">Environmental Atmosphere</span>
-                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 items-center">
-                            <button onclick="ui.setTestTime(2)" class="sim-btn clickable">Night</button>
-                            <button onclick="ui.setTestTime(9)" class="sim-btn clickable">Morning</button>
-                            <button onclick="ui.setTestTime(15)" class="sim-btn clickable">Day</button>
-                            <button onclick="ui.setTestTime(20)" class="sim-btn clickable">Evening</button>
-                            <button onclick="ui.resetTimeSim()" class="sim-btn text-black clickable">Sync</button>
+                        <span class="page-section-label text-black">Environmental Atmosphere</span>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center">
+                            <button onclick="window.setTestTime(2)" class="sim-btn">Night (02:00)</button>
+                            <button onclick="window.setTestTime(9)" class="sim-btn">Morning (09:00)</button>
+                            <button onclick="window.setTestTime(15)" class="sim-btn">Day (15:00)</button>
+                            <button onclick="window.setTestTime(20)" class="sim-btn">Evening (20:00)</button>
+                            <button onclick="window.resetTimeSim()" class="sim-btn text-black">Real-time sync</button>
+                            
+                            <!-- Custom Time Input -->
                             <div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200">
                                 <input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" 
-                                       class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors clickable"
-                                       onkeydown="if(event.key==='Enter') ui.applyCustomTime()">
-                                <button onclick="ui.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70 clickable">SET</button>
+                                       class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors"
+                                       onkeydown="if(event.key==='Enter') window.applyCustomTime()">
+                                <button onclick="window.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70">SET</button>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- ALL RESET -->
                 <div class="border-t border-black pt-16 mb-20">
-                    <h3 class="text-md md:text-lg font-bold uppercase mb-6">Danger Zone</h3>
+                    <h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3>
                     <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。</p>
-                        <button onclick="ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button>
+                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。<br>（投稿データは全て削除され、木の成長も初期状態に戻ります）</p>
+                        <button onclick="window.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                            ALL RESET
+                        </button>
                     </div>
                 </div>
+
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="ui.showPage('log')" class="footer-nav-link clickable">Log</a>
+                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" 
+                             alt="Action Tree Logo" 
+                             class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="logo-fallback w-4 h-4 md:w-5 md:h-5 text-black"></div>
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
@@ -367,471 +716,1284 @@
     </main>
 
     <!-- Post Modal -->
-    <div id="post-modal" class="modal-overlay" onclick="if(event.target === this) ui.closeModal()">
+    <div id="post-modal" class="modal-overlay" onclick="if(event.target === this) window.closeModal()">
+        <!-- SP Compact: Reduced padding and spacing -->
         <div class="bg-white text-black w-full max-w-lg p-4 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[90dvh] relative">
-            <button onclick="ui.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
+            <button onclick="window.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10">&times;</button>
             <div class="mb-2 md:mb-6 pr-8">
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">ACTIONを投稿して、100の木を育てましょう。</p>
+                <!-- Shortened description -->
+                <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">
+                    ACTIONを投稿して、100の木を育てましょう。
+                </p>
             </div>
+            <!-- Reduced spacing for SP -->
             <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" novalidate>
-                <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label><input type="text" id="post-name" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
-                <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label><input type="text" id="post-client" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
-                <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label><input type="text" id="post-project" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label>
+                    <!-- Reverted to text-xs for compact design (Zoom may occur on iPhone) -->
+                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label>
+                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label>
+                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
+                </div>
+
+                <!-- Status Selection -->
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Status / ステータス</label>
                     <div class="flex gap-8 mt-1 h-8 items-center">
-                        <label class="flex items-center cursor-pointer clickable"><input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked><div class="status-option"><span class="status-dot"></span>PROPOSAL / 提案</div></label>
-                        <label class="flex items-center cursor-pointer clickable"><input type="radio" name="post-status" value="order" class="status-radio hidden"><div class="status-option"><span class="status-dot"></span>ORDER / 受注</div></label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked>
+                            <div class="status-option">
+                                <span class="status-dot"></span>PROPOSAL / 提案
+                            </div>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="post-status" value="order" class="status-radio hidden">
+                            <div class="status-option">
+                                <span class="status-dot"></span>ORDER / 受注
+                            </div>
+                        </label>
                     </div>
                 </div>
+
+                <!-- Amount Input: Compact container height -->
                 <div class="h-14 md:h-20 relative overflow-hidden flex flex-col justify-end">
                     <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-1 md:pt-2 transition-all duration-300">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">AMOUNT / 受注額</label>
-                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" class="w-full border-b py-1 md:py-2 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable">
+                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-1 md:py-2 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors">
                     </div>
                 </div>
-                <div><div class="flex justify-between items-baseline mb-0.5"><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 text-black">ACTION NOTES / ノート</label><span id="char-count-display" class="text-[9px] font-bold text-gray-400">0 / 300</span></div><textarea id="post-notes" maxlength="300" oninput="ui.updateCharCount(this)" class="w-full border-b py-1 md:py-2 h-16 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors clickable"></textarea></div>
-                <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">未入力の項目があります</div>
-                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-3 md:py-5 font-bold uppercase mt-2 mb-2 md:mt-4 md:mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none clickable">ACTION / 投稿する</button>
+
+                <div>
+                    <div class="flex justify-between items-baseline mb-0.5">
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 text-black">ACTION NOTES / ノート</label>
+                        <span id="char-count-display" class="text-[9px] font-bold text-gray-400">0 / 300</span>
+                    </div>
+                    <!-- Reduced height for SP -->
+                    <textarea id="post-notes" maxlength="300" oninput="window.updateCharCount(this)" placeholder="" class="w-full border-b py-1 md:py-2 h-16 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors"></textarea>
+                </div>
+                
+                <!-- Error Msg -->
+                <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">
+                    未入力の項目があります
+                </div>
+
+                <!-- Action Button: Reduced padding for SP -->
+                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-3 md:py-5 font-bold uppercase mt-2 mb-2 md:mt-4 md:mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none">
+                    ACTION / 投稿する
+                </button>
             </form>
         </div>
     </div>
 
     <!-- Details Modal -->
-    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) ui.closeDetailModal()">
+    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
         <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
-            <button onclick="ui.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black clickable">&times;</button>
-            <div class="mb-8 md:mb-10 text-black"><div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div><h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3></div>
+            <button onclick="window.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black">&times;</button>
+            <div class="mb-8 md:mb-10 text-black">
+                <!-- カラーライン：円形に変更 (w-8 h-1 -> w-3 h-3) -->
+                <div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div>
+                <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3>
+            </div>
             <div class="space-y-5 md:space-y-6 text-black">
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span><p id="detail-name" class="text-sm font-bold break-words text-black">Name</p></div>
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span><p id="detail-client" class="text-sm font-bold break-words text-black">Client</p></div>
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span><p id="detail-project" class="text-sm font-bold break-words text-black">Project</p></div>
-                <div class="grid grid-cols-2 gap-4"><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span><p id="detail-status" class="text-sm font-bold break-words text-black">---</p></div><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span><p id="detail-amount" class="text-sm font-bold break-words text-black">---</p></div></div>
-                <div class="pt-4 border-t border-gray-100"><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span><p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black"></p></div>
+                <!-- フォームの順序に合わせて整理: Name -> Client -> Project -> Status&Amount -> Notes -->
+                
+                <!-- 1. Name -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span>
+                    <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
+                </div>
+                
+                <!-- 2. Client -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span>
+                    <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
+                </div>
+                
+                <!-- 3. Project -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span>
+                    <p id="detail-project" class="text-sm font-bold break-words text-black">Project Title</p>
+                </div>
+                
+                <!-- 4. Status & Amount -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span>
+                        <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span>
+                        <p id="detail-amount" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                </div>
+                
+                <!-- 5. Notes -->
+                <div class="pt-4 border-t border-gray-100">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span>
+                    <p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black">Details go here...</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 1. UI Script (No Dependencies, Safe) -->
-    <script>
-        // Global UI namespace
-        window.ui = {};
-        window.state = { actions:0, amount:0, isMobile: window.innerWidth<768, currentLevel:0, simulatedHour:null, flowers:[] };
-        window.treeGroup = null;
-
-        // UI Functions
-        ui.showPage = (id) => {
-            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('nav-menu').style.display='none';
-            document.getElementById('menu-toggle').classList.remove('open');
-            const h = document.getElementById('main-header');
-            
-            // Scroll control
-            if(id === 'top') { 
-                document.body.style.overflow = 'hidden';
-                h.classList.remove('is-dark'); 
-            } else { 
-                document.body.style.overflow = 'auto';
-                h.classList.add('is-dark'); 
-                window.scrollTo(0,0);
-            }
-            if (id === 'log' && window.refreshLog) window.refreshLog();
-        };
-        
-        ui.toggleMenu = () => {
-            const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
-            const isOpen = nav.style.display === 'flex';
-            nav.style.display = isOpen ? 'none' : 'flex';
-            toggle.classList.toggle('open');
-            if(!isOpen) {
-                if(header) header.classList.remove('is-dark');
-                if(window.getDynamicColor) {
-                    const hex = window.getDynamicColor();
-                    const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0};
-                    nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-                }
-            } else {
-                const isTop = !document.getElementById('page-top').classList.contains('hidden');
-                if(!isTop && header) header.classList.add('is-dark');
-            }
-        };
-        
-        ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; };
-        ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
-        ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
-        ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
-        
-        // Sim Functions with Safety Checks
-        ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateGrowthState && window.updateGrowthState(); } };
-        ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
-        ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
-        ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
-        ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
-        ui.downloadLogCSV = () => { if(window.downloadLogImpl) window.downloadLogImpl(); };
-
-        // Marquee Logic
-        function updateMarquee() {
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-            document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dateStr);
-        }
-        setInterval(updateMarquee, 1000); updateMarquee();
-
-        // Init Interactions
-        document.addEventListener('DOMContentLoaded', () => {
-            // Form interactions
-            document.getElementsByName('post-status').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    const amt = document.getElementById('amount-container');
-                    const inp = document.getElementById('post-amount');
-                    if(e.target.value === 'order') { 
-                        amt.classList.remove('invisible', 'opacity-0'); 
-                        if(window.gsap) gsap.to(amt, {opacity:1, duration:0.3});
-                        inp.setAttribute('required', 'true');
-                    } else { 
-                        if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')});
-                        inp.removeAttribute('required'); inp.value='';
-                    }
-                });
-            });
-            // Validation Reset
-            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); });
-            });
-            // Button Animations
-            if(window.gsap) {
-                const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
-                document.querySelectorAll('.vivid-cycle-btn').forEach(btn => {
-                    gsap.to(btn, { backgroundColor: "#fff", duration: 0 });
-                    const tl = gsap.timeline({ repeat: -1 });
-                    DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }));
-                });
-                document.querySelectorAll('.breath-animation').forEach(btn => {
-                    gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" });
-                });
-            }
-            
-            // Demo Submit Handler (Default)
-            const form = document.getElementById('action-form');
-            if(form) {
-                form.onsubmit = (e) => {
-                    e.preventDefault();
-                    // Validation
-                    let hasError = false;
-                    ['post-name','post-client','post-project'].forEach(id=>{
-                        const el = document.getElementById(id);
-                        if(!el.value) { el.classList.add('input-error-shake'); hasError=true; }
-                    });
-                    if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return; }
-
-                    const n = document.getElementById('post-name').value;
-                    const c = document.getElementById('post-client').value;
-                    const p = document.getElementById('post-project').value;
-                    const a = document.getElementById('post-amount').value || 0;
-                    const notes = document.getElementById('post-notes').value;
-                    const status = document.querySelector('input[name="post-status"]:checked').value;
-                    
-                    if(window.addFlowerWithConvergence) {
-                        window.addFlowerWithConvergence(n,c,p,a,notes,status,false);
-                        window.state.actions++;
-                        if(status === 'order') window.state.amount += parseInt(a);
-                        if(window.updateStatsUI) window.updateStatsUI();
-                        if(window.refreshLog) window.refreshLog();
-                    }
-                    ui.closeModal();
-                };
-            }
-        });
-    </script>
-    
-    <!-- 2. Visual Script (Three.js) -->
-    <script>
-        const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
-        const TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
-        
-        let scene, camera, renderer, effectGroup, bgUniforms;
-
-        window.addEventListener('load', () => {
-            try { initThree(); } catch(e) { console.error("Three Init Error", e); }
-        });
-
-        function initThree() {
-            const container = document.getElementById('canvas-container');
-            if(!container) return;
-            scene = new THREE.Scene(); 
-            // Fix resize logic to window initially
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
-            camera.position.set(0, 5, window.state.isMobile ? 35 : 22);
-            camera.lookAt(0, 8, 0);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(w, h); 
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-            
-            window.treeGroup = new THREE.Group(); scene.add(window.treeGroup);
-            effectGroup = new THREE.Group(); scene.add(effectGroup);
-            
-            // BG Setup
-            bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000") }, uColorB: { value: new THREE.Color("#330066") } };
-            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
-            const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
-
-            // Particles
-            const pCount = window.innerWidth < 768 ? 15000 : 25000;
-            const pPos = new Float32Array(pCount*3), pCol = new Float32Array(pCount*3);
-            for(let i=0; i<pCount; i++) {
-                const y = (Math.random()-0.3)*38 * (window.state.isMobile?1.2:1.0);
-                let br = (y+12)/35; if(br<0)br=0;
-                const r = br * 14 * Math.pow(Math.random(),0.7) * (window.state.isMobile?0.8:1.0);
-                const a = y*0.1 + Math.random()*Math.PI*2;
-                pPos[i*3]=Math.cos(a)*r; pPos[i*3+1]=y; pPos[i*3+2]=Math.sin(a)*r;
-                const c = 0.5 + Math.random()*0.5; pCol[i*3]=c; pCol[i*3+1]=c; pCol[i*3+2]=c;
-            }
-            const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3)); pGeo.setAttribute('color', new THREE.BufferAttribute(pCol,3));
-            particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ size:0.12, vertexColors:true, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending }));
-            window.treeGroup.add(particles);
-
-            const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-            state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, state.maxBuds); state.instancedBuds.count = 0; treeGroup.add(state.instancedBuds);
-            
-            addBudsInstanced(2000);
-            animate();
-            
-            // ★修正: 初期化時に確実に色を適用
-            window.updateBackgroundColor();
-            window.updateStatsUI();
-            
-            window.addEventListener('resize', () => { 
-                camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-                window.state.isMobile = window.innerWidth < 768; 
-                // Resize時も色を再計算
-                window.updateBackgroundColor();
-            });
-        }
-        
-        function animate() {
-            requestAnimationFrame(animate);
-            if(bgUniforms) bgUniforms.uTime.value += 0.01;
-            window.updateBackgroundColor();
-            if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
-            renderer.render(scene, camera);
-        }
-
-        // Global Utility Functions
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
-        
-        window.getGradientColors = () => {
-            const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
-            // Simple Logic for reliability
-            if(h<5) return TIME_PERIODS.NIGHT;
-            if(h<12) return TIME_PERIODS.MORNING;
-            if(h<17) return TIME_PERIODS.DAY;
-            return TIME_PERIODS.EVENING;
-        };
-        
-        window.getDynamicColor = () => {
-            return window.getGradientColors().base;
-        };
-        
-        window.updateBackgroundColor = () => {
-            const colors = window.getGradientColors();
-            // CSS Background
-            document.body.style.backgroundColor = colors.base;
-            
-            // Fog & Shader
-            if (scene && scene.fog) scene.fog.color.set(colors.base);
-            if (bgUniforms) { bgUniforms.uColorA.value.set(colors.base); bgUniforms.uColorB.value.set(colors.accent); }
-        };
-
-        window.addFlowerWithConvergence = (n,c,p,a,not,s,isInstant) => {
-            const color = DESIGN_PALETTE[Math.floor(Math.random()*DESIGN_PALETTE.length)];
-            const target = getGuaranteedVisibleTarget();
-            if (isInstant) { addFlowerToTreeAt(n,c,p,a,not,s,target.local.x,target.local.y,target.local.z,color); return; }
-            
-            // Animation
-            const startPos = new THREE.Vector3(0, -8, 25); if (state.isMobile) startPos.z = 35;
-            const projectile = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 }));
-            projectile.position.copy(startPos); effectGroup.add(projectile);
-            const trailGeo = new THREE.BufferGeometry(); const trailLen = 30; const trailPos = new Float32Array(trailLen * 3);
-            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
-            const trailMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
-            const trailLine = new THREE.Line(trailGeo, trailMat); trailLine.frustumCulled = false; effectGroup.add(trailLine);
-            const controlPos = new THREE.Vector3().addVectors(startPos, target.world).multiplyScalar(0.5); controlPos.y += 6.0;
-            const getBezierPoint = (t, p0, p1, p2) => { const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x; const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y; const z = (1 - t) * (1 - t) * p0.z + 2 * (1 - t) * t * p1.z + t * t * p2.z; return new THREE.Vector3(x, y, z); };
-            const animObj = { t: 0 };
-            gsap.to(animObj, {
-                t: 1, duration: 2.5, ease: "power1.inOut",
-                onUpdate: () => {
-                    const currentPos = getBezierPoint(animObj.t, startPos, controlPos, target.world); projectile.position.copy(currentPos);
-                    if (animObj.t > 0.8) { projectile.scale.setScalar(1.0 - (animObj.t - 0.8) * 5); }
-                    const positions = trailLine.geometry.attributes.position.array;
-                    for (let i = 0; i < trailLen - 1; i++) { positions[i * 3] = positions[(i + 1) * 3]; positions[i * 3 + 1] = positions[(i + 1) * 3 + 1]; positions[i * 3 + 2] = positions[(i + 1) * 3 + 2]; }
-                    positions[(trailLen - 1) * 3] = currentPos.x; positions[(trailLen - 1) * 3 + 1] = currentPos.y; positions[(trailLen - 1) * 3 + 2] = currentPos.z; trailLine.geometry.attributes.position.needsUpdate = true;
-                },
-                onComplete: () => {
-                    effectGroup.remove(projectile); effectGroup.remove(trailLine);
-                    createSparkleEffect(target.world, color); flashTreeParticles();
-                    addFlowerToTreeAt(n,c,p,a,not,s,target.local.x,target.local.y,target.local.z,color);
-                }
-            });
-        };
-        
-        function getGuaranteedVisibleTarget() { const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld(); while (attempts < 50) { const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2; const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier); const posX = Math.cos(a) * r, posZ = Math.sin(a) * r; vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); vector.project(camera); if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: new THREE.Vector3(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld) }; attempts++; } return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0) }; }
-        function addFlowerToTreeAt(name, client, project, amount, notes, status, x, y, z, color) { const geo = new THREE.SphereGeometry(0.25,16,16); const mat = new THREE.MeshBasicMaterial({color:color}); const mesh = new THREE.Mesh(geo,mat); mesh.position.set(x,y,z); mesh.userData = {name,client,project,amount,notes,status,colorHex:color}; window.treeGroup.add(mesh); state.flowers.push(mesh); gsap.to(mesh.scale, {x:1, y:1, z:1, duration:1.5, ease:"elastic.out(1, 0.3)"}); }
-        window.addFlowerFromData = (d) => { const colorHex = d.colorHex || DESIGN_PALETTE[0]; const seed = d.timestamp || 1; const seededRandom = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); }; const radiusScale = state.isMobile ? 0.8 : 1.0; const heightScale = state.isMobile ? 1.2 : 1.0; const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.growthMultiplier) * heightScale + 4; let branchFactor = (y + 6) / 22; if (branchFactor < 0.1) branchFactor = 0.1; const a = seededRandom(seed * 0.2) * Math.PI * 2; const r = (0.5 + seededRandom(seed * 0.3)) * (branchFactor * 10 * state.baseSpreadFactor) * radiusScale; addFlowerToTreeAt(d.name, d.client, d.project, d.amount, d.notes, d.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex, false, d.id); };
-        function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
-        function createSparkleEffect(pos, colorHex) { const particleCount = 60; const geo = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const velocities = []; for(let i=0; i<particleCount; i++) { positions[i*3] = pos.x; positions[i*3+1] = pos.y; positions[i*3+2] = pos.z; const v = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4 + 0.1, (Math.random() - 0.5) * 0.4).normalize().multiplyScalar(0.02 + Math.random() * 0.04); velocities.push(v); } geo.setAttribute('position', new THREE.BufferAttribute(positions, 3)); const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.3, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); const sparkleSystem = new THREE.Points(geo, mat); effectGroup.add(sparkleSystem); const anim = { val: 0 }; gsap.to(anim, { val: 1, duration: 3.0, ease: "power2.out", onUpdate: () => { const posAttr = sparkleSystem.geometry.attributes.position; for(let i=0; i<particleCount; i++) { posAttr.array[i*3] += velocities[i].x; posAttr.array[i*3+1] += velocities[i].y; posAttr.array[i*3+2] += velocities[i].z; velocities[i].multiplyScalar(0.98); } posAttr.needsUpdate = true; sparkleSystem.material.opacity = (1 - anim.val); }, onComplete: () => { effectGroup.remove(sparkleSystem); geo.dispose(); mat.dispose(); } }); }
-        function addBudsInstanced(c) { /* Simple stub */ }
-        
-        window.updateGrowthState = () => {
-            const count = state.actions;
-            let lv = 0;
-            if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1;
-            state.currentLevel = lv;
-            let mult = 1.0 + lv*0.2;
-            let camZ = (state.isMobile?32:22) + (lv*(state.isMobile?6:4));
-            if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"});
-            if(camera) gsap.to(camera.position, {z:camZ, duration:2, ease:"power2.inOut"});
-            window.updateStatsUI();
-            
-            // Logo Update
-            const newLogoPath = `images/ACTION_TREE_LOGO_LV${lv+1}.svg`;
-            const headerLogo = document.querySelector('#main-header img');
-            if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; }
-            document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } });
-        };
-        
-        window.refreshLog = () => {
-             const list = document.getElementById('dashboard-action-list'); if(!list) return;
-             list.innerHTML = "";
-             const rev = [...window.state.flowers].reverse();
-             if(rev.length > 0) document.getElementById('no-actions-msg').classList.add('hidden');
-             rev.forEach(f => {
-                 const tr = document.createElement('tr');
-                 tr.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]";
-                 const amt = f.userData.status==='order' ? `¥${parseInt(f.userData.amount).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>';
-                 tr.innerHTML = `<td class="py-4 px-2 flex items-center gap-3"><span class="w-2.5 h-2.5 rounded-full" style="background:${f.userData.colorHex}"></span>${f.userData.name}</td><td>${f.userData.client}</td><td>${f.userData.project}</td><td class="text-right">${amt}</td>`;
-                 tr.onclick = () => window.showDetail(f.userData);
-                 list.appendChild(tr);
-             });
-        };
-        window.downloadLogCSV = () => { if(state.flowers.length===0) return; let c="\uFEFFName,Status,Client,Amount\n"; state.flowers.forEach(f=>c+=`"${f.userData.name}","${f.userData.status}","${f.userData.client}",${f.userData.amount}\n`); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'})); a.download='log.csv'; a.click(); };
-        window.setTestLevel = (v) => { window.state.flowers.forEach(f=>window.treeGroup.remove(f)); window.state.flowers=[]; window.state.actions=v; window.updateGrowthState(); };
-        window.setTestTime = (h) => { window.state.simulatedHour=h; window.updateBackgroundColor(); };
-        window.resetTimeSim = () => { window.state.simulatedHour=null; window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
-        window.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else alert("DB未接続"); };
-
-    </script>
-    
-    <!-- 3. Firebase Module -->
+    <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // 【重要】Firebase設定 (再度書き換えてください)
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        const firebaseConfig = {
-            apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
-            authDomain: "action-tree.firebaseapp.com",
-            projectId: "action-tree",
-            storageBucket: "action-tree.firebasestorage.app",
-            messagingSenderId: "471274997168",
-            appId: "1:471274997168:web:b0479cfc2006b136ad0275"
-        };
+        let firebaseConfig;
+        let appId;
 
-        async function startFirebase() {
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
+            } else {
+                throw new Error("Local environment detected");
+            }
+        } catch (e) {
+            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+            // 【重要】ここをご自身のFirebase設定に書き換えてください！
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            firebaseConfig = {
+                apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
+                authDomain: "action-tree.firebaseapp.com",
+                projectId: "action-tree",
+                storageBucket: "action-tree.firebasestorage.app",
+                messagingSenderId: "471274997168",
+                appId: "471274997168"
+            };
+            appId = 'action-tree-platform';
+        }
+
+        const initApp = async () => {
             if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                console.log("Firebase API Key missing.");
+                setTimeout(() => {
+                    const loader = document.getElementById('app-loader');
+                    if(loader) {
+                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~960</div>';
+                        loader.onclick = () => loader.style.display = 'none';
+                    }
+                }, 1000);
                 return;
             }
-
             try {
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                const collectionRef = collection(db, 'actions');
+                window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user, db, appId, collection, addDoc, onSnapshot } }));
+                    }
+                });
+            } catch (err) {
+                console.error("Firebase Init Error:", err);
+                const loader = document.getElementById('app-loader');
+                if(loader) loader.style.display = 'none';
+            }
+        };
+        initApp();
+    </script>
 
-                // Override Form Handler for DB
-                const form = document.getElementById('action-form');
-                if(form) {
-                    form.onsubmit = async (e) => {
-                        e.preventDefault();
-                        const btn = document.getElementById('submit-action-btn');
-                        
-                        let hasError = false;
-                        ['post-name','post-client','post-project'].forEach(id=>{
-                            const el = document.getElementById(id);
-                            if(!el.value) { el.classList.add('input-error-shake'); hasError=true; }
-                        });
-                        if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return; }
+    <!-- Main Logic Script -->
+    <script>
+        // --- 0. Core State & Constants ---
+        const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
+        
+        // Define Time Periods with YOSHIROTTEN-style vivid gradients
+        const TIME_PERIODS = {
+            NIGHT:   { base: "#000205", accent: "#220066" }, 
+            MORNING: { base: "#aaccdd", accent: "#ff88bb" }, 
+            DAY:     { base: "#002a5c", accent: "#00cca3" }, 
+            EVENING: { base: "#1a0526", accent: "#cc2900" }  
+        };
 
+        // Shader Code for YOSHIROTTEN-style Gradient (High Contrast, Liquid Feel)
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform float uTime;
+            uniform vec3 uColorA;
+            uniform vec3 uColorB;
+            varying vec2 vUv;
+
+            // Simplex-like noise function
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+            float snoise(vec2 v) {
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1;
+                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                i = mod289(i);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ;
+                m = m*m ;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+
+            void main() {
+                float time = uTime * 0.15;
+                
+                // Create liquid-like distortion
+                vec2 pos = vUv;
+                float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8));
+                float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1));
+                
+                // Combine noises for organic feel
+                float mixFactor = (noiseVal + noiseVal2) * 0.5;
+                
+                // Add vertical gradient influence
+                mixFactor += (vUv.y - 0.5) * 0.8;
+                
+                // Sharpen the transition for more "Graphic" look
+                mixFactor = smoothstep(-0.4, 0.4, mixFactor);
+                
+                // Clamp
+                mixFactor = clamp(mixFactor, 0.0, 1.0);
+
+                // Mix colors
+                vec3 color = mix(uColorA, uColorB, mixFactor);
+                
+                // Add subtle grain/dither
+                float grain = fract(sin(dot(vUv.xy ,vec2(12.9898,78.233))) * 43758.5453);
+                color += (grain - 0.5) * 0.03;
+
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        let state = {
+            actions: 0, amount: 0, targetDate: "2025-12-31", 
+            flowers: [], isMenuOpen: false, isModalOpen: false, 
+            mouseTargetX: 0, mouseTargetY: 0, currentMouseX: 0, currentMouseY: 0,
+            baseSpreadFactor: 1.0, growthMultiplier: 1.0, currentLevel: 0,
+            instancedBuds: null, budCount: 0, maxBuds: 15000,
+            driftFactor: 0.1, simulatedHour: null,
+            // レスポンシブ判定用
+            isMobile: window.innerWidth < 768
+        };
+
+        let scene, camera, renderer, treeGroup, particles, hoveredFlower = null;
+        // Effect Groups
+        let effectGroup; 
+        
+        let bgMesh, bgUniforms;
+        const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+        let timeOffset = 0;
+
+        // --- Improved Sync Logic Variables ---
+        window.isThreeReady = false; // Flag for Three.js readiness
+        window.firebaseHandle = null; // Store firebase handle
+        window.isSyncStarted = false; // Prevent double binding
+
+        // --- 1. Utility Functions ---
+        
+        function getGuaranteedVisibleTarget() {
+            const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld();
+            while (attempts < 50) {
+                const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2;
+                const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier);
+                const posX = Math.cos(a) * r, posZ = Math.sin(a) * r;
+                vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); const worldPos = vector.clone(); vector.project(camera);
+                if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: worldPos };
+                attempts++;
+            }
+            return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0).applyMatrix4(treeGroup.matrixWorld) };
+        }
+
+        window.hexToRgb = function(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        };
+
+        window.rgbToHex = function(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        };
+
+        window.interpolateColor = function(color1, color2, factor) {
+            const c1 = window.hexToRgb(color1);
+            const c2 = window.hexToRgb(color2);
+            if(!c1 || !c2) return color1;
+            return window.rgbToHex(
+                Math.round(c1.r + (c2.r - c1.r) * factor),
+                Math.round(c1.g + (c2.g - c1.g) * factor),
+                Math.round(c1.b + (c2.b - c1.b) * factor)
+            );
+        }
+
+        // --- New Gradient Logic with 60-min Transitions ---
+        window.getGradientColors = function() {
+            const now = new Date();
+            // Use simulated hour if set, otherwise real time
+            const currentHour = state.simulatedHour !== null ? state.simulatedHour : (now.getHours() + now.getMinutes() / 60);
+
+            if (currentHour < 5) {
+                // NIGHT Static (0-5)
+                return TIME_PERIODS.NIGHT;
+            } else if (currentHour < 6) {
+                // NIGHT -> MORNING (5-6)
+                const t = currentHour - 5;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.NIGHT.base, TIME_PERIODS.MORNING.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.NIGHT.accent, TIME_PERIODS.MORNING.accent, t)
+                };
+            } else if (currentHour < 12) {
+                // MORNING Static (6-12)
+                return TIME_PERIODS.MORNING;
+            } else if (currentHour < 13) {
+                // MORNING -> DAY (12-13)
+                const t = currentHour - 12;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.MORNING.base, TIME_PERIODS.DAY.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.MORNING.accent, TIME_PERIODS.DAY.accent, t)
+                };
+            } else if (currentHour < 17) {
+                // DAY Static (13-17)
+                return TIME_PERIODS.DAY;
+            } else if (currentHour < 18) {
+                // DAY -> EVENING (17-18)
+                const t = currentHour - 17;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.DAY.base, TIME_PERIODS.EVENING.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.DAY.accent, TIME_PERIODS.EVENING.accent, t)
+                };
+            } else if (currentHour < 23) {
+                // EVENING Static (18-23)
+                return TIME_PERIODS.EVENING;
+            } else {
+                // EVENING -> NIGHT (23-24)
+                const t = currentHour - 23;
+                return {
+                    base: window.interpolateColor(TIME_PERIODS.EVENING.base, TIME_PERIODS.NIGHT.base, t),
+                    accent: window.interpolateColor(TIME_PERIODS.EVENING.accent, TIME_PERIODS.NIGHT.accent, t)
+                };
+            }
+        };
+
+        window.getDynamicColor = function() {
+            // For Body BG fallback and Fog (Use Base Color)
+            return window.getGradientColors().base;
+        };
+
+        window.syncServerTime = async function() {
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/ip');
+                const data = await response.json();
+                timeOffset = new Date(data.datetime).getTime() - Date.now();
+            } catch (e) { timeOffset = 0; }
+        };
+
+        window.updateStatsUI = function() {
+            // Actions
+            document.querySelectorAll('.actions-val').forEach(el => el.textContent = state.actions.toLocaleString());
+            // Amount
+            document.querySelectorAll('.amount-val').forEach(el => el.textContent = state.amount.toLocaleString());
+            
+            // Level
+            const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"];
+            const currentLabel = levelLabels[state.currentLevel] || "WORLD";
+            // コロンを削除してスペースに変更
+            const levelText = `LV${state.currentLevel} ${currentLabel}`;
+            
+            // Update TOP Marquee Level
+            document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText);
+            
+            // Update LOG Page Level
+            document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText);
+        };
+
+        // NEW: Update Date Time for Marquee (Replaces Countdown)
+        window.updateMarqueeDate = function() {
+            const now = new Date();
+            // Format: YYYY.MM.DD HH:MM:SS
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            
+            const dateStr = `${y}.${m}.${d} ${h}:${min}:${s}`;
+            
+            // Apply to all date slots in marquee
+            document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dateStr);
+        };
+
+        window.updateTargetCountdown = function() {
+            // Deprecated for Marquee, but kept if needed elsewhere or fallback
+        };
+
+        window.updateCharCount = function(el) {
+            const count = el.value.length;
+            const display = document.getElementById('char-count-display');
+            if(display) display.textContent = `${count} / 300`;
+        };
+
+        // --- 2. Window Level Navigation & Modal ---
+
+        window.showPage = function(id) {
+            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+            const p = document.getElementById(`page-${id}`); if(p) p.classList.remove('hidden');
+            const nav = document.getElementById('nav-menu'); if(nav) nav.style.display = 'none';
+            const toggle = document.getElementById('menu-toggle'); if(toggle) toggle.classList.remove('open');
+            
+            // Adjust Overflow & Body Position
+            document.body.style.overflow = (id === 'top') ? 'hidden' : 'auto';
+            
+            if (id !== 'top') {
+                window.scrollTo(0, 0); 
+            } else {
+                // TOPページ復帰時のリサイズ対応
+                setTimeout(() => {
+                    if(camera && renderer) {
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        updateGrowthState();
+                    }
+                }, 100);
+            }
+
+            const h = document.getElementById('main-header');
+            if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } 
+            else { 
+                if(h) h.classList.add('is-dark'); 
+            }
+            // Logページを開いたときにリストを更新
+            if (id === 'log') refreshLog();
+        };
+
+        window.openModal = function() { 
+            resetHoverState(); 
+            const modal = document.getElementById('post-modal');
+            const err = document.getElementById('form-error-msg');
+            if(err) err.classList.add('hidden');
+            if(modal) { modal.style.display = 'flex'; state.isModalOpen = true; } 
+        };
+
+        window.closeModal = function() { 
+            const modal = document.getElementById('post-modal'); if(modal) modal.style.display = 'none'; 
+            const form = document.getElementById('action-form');
+            if(form) {
+                form.reset();
+                const amtCont = document.getElementById('amount-container');
+                if(amtCont) { 
+                    gsap.to(amtCont, { opacity: 0, duration: 0.2, onComplete: () => amtCont.classList.add('invisible') });
+                }
+                const propRadio = document.querySelector('input[name="post-status"][value="proposal"]');
+                if(propRadio) propRadio.checked = true;
+                const cnt = document.getElementById('char-count-display');
+                if(cnt) cnt.textContent = "0 / 300";
+                form.querySelectorAll('input, textarea').forEach(el => { el.classList.remove('input-error-shake'); el.placeholder = ""; });
+                const err = document.getElementById('form-error-msg');
+                if(err) err.classList.add('hidden');
+            }
+            state.isModalOpen = false;
+        };
+
+        window.closeDetailModal = function() { const modal = document.getElementById('detail-modal'); if(modal) modal.style.display = 'none'; state.isModalOpen = false; };
+
+        window.showDetail = function(data) {
+            const modal = document.getElementById('detail-modal');
+            if (!modal) return;
+            document.getElementById('detail-name').textContent = data.name; 
+            document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案';
+            
+            const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : '';
+            document.getElementById('detail-amount').textContent = amtDisplay;
+
+            document.getElementById('detail-client').textContent = data.client || "---";
+            document.getElementById('detail-project').textContent = data.project || "---";
+            document.getElementById('detail-notes').textContent = data.notes || "";
+            document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; 
+            resetHoverState();
+            modal.style.display = 'flex'; 
+            state.isModalOpen = true;
+        };
+
+        window.downloadLogCSV = function() {
+            if (state.flowers.length === 0) return;
+            // BOM付与で文字化け対策 (\uFEFF)
+            let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n";
+            state.flowers.forEach(f => {
+                const d = f.userData;
+                const row = [`"${(d.name || '')}"`, `"${(d.status || 'proposal')}"`, `"${(d.client || '')}"`, `"${(d.project || '')}"`, d.amount, `"${(d.notes || '')}"`];
+                csvContent += row.join(",") + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+        };
+
+        window.setTestLevel = function(v) { 
+            state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; 
+            state.actions = v; state.amount = v * 1200; 
+            for(let i=0; i<v; i++) {
+                const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
+                addFlowerWithConvergence("Sim User", "Sim Client", "Growth Sim " + (i+1), 1200, "Simulated data", 'order', true); 
+            }
+            updateGrowthState(); window.updateStatsUI(); refreshLog();
+        };
+
+        window.setTestTime = function(h) { state.simulatedHour = h; updateBackgroundColor(); };
+        window.applyCustomTime = function() {
+            const input = document.getElementById('custom-time-input');
+            let val = parseFloat(input.value);
+            if(isNaN(val)) return;
+            if(val < 0) val = 0;
+            if(val >= 24) val = 0; // 24 is 0
+            window.setTestTime(val);
+        };
+        window.resetTimeSim = function() { 
+            state.simulatedHour = null; 
+            updateBackgroundColor(); 
+            const input = document.getElementById('custom-time-input');
+            if(input) input.value = '';
+        };
+
+        window.resetAllData = async function() {
+            // 1段階目の確認
+            if(!confirm("【警告】全てのデータを削除しようとしています。\nこの操作を実行すると、これまでの投稿データは完全に失われます。\n\n本当に実行しますか？")) return;
+            
+            // 2段階目の確認（念押し）
+            if(!confirm("【最終確認】この操作は取り消すことができません。\n本当に全てのデータをリセットしてよろしいですか？")) return;
+            
+            const loader = document.getElementById('app-loader');
+            if(loader) {
+                loader.style.display = 'flex';
+                const span = loader.querySelector('span');
+                if(span) span.textContent = "Resetting...";
+            }
+
+            // メッセージ保持用変数
+            let resultMessage = "";
+
+            try {
+                if(window.firebase) {
+                    const { db, appId, collection, getDocs, writeBatch } = window.firebase;
+                    const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                    
+                    const snapshot = await getDocs(q);
+                    
+                    if (snapshot.size === 0) {
+                        resultMessage = "削除対象のデータがありませんでした。";
+                    } else {
+                        // Firestore Batch Limit is 500.
+                        const batch = writeBatch(db);
+                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                        await batch.commit();
+                        resultMessage = "全てのデータを削除しました。";
+                    }
+                } else {
+                    // Local state reset
+                    state.flowers.forEach(f => treeGroup.remove(f));
+                    state.flowers = []; state.actions = 0; state.amount = 0;
+                    updateGrowthState(); window.updateStatsUI(); refreshLog();
+                    resultMessage = "全てのデータをリセットしました。（シミュレーションモード）";
+                }
+            } catch(e) {
+                console.error(e);
+                resultMessage = "エラーが発生しました：削除に失敗しました。\n" + e.message;
+            } finally {
+                if(loader) loader.style.display = 'none';
+                // 処理完了後に確実にアラートを出すために少し遅延させる
+                if(resultMessage) {
+                    setTimeout(() => alert(resultMessage), 100);
+                }
+            }
+        };
+
+        // --- 3. Internal Helper Functions ---
+
+        function updateBackgroundColor() {
+            const topPage = document.getElementById('page-top');
+            
+            // Get gradient colors based on schedule
+            const colors = window.getGradientColors();
+            const colorHex = colors.base;
+            const accentHex = colors.accent;
+            
+            // HTML body bg for non-canvas pages (Use base color)
+            document.body.style.backgroundColor = colorHex;
+            
+            // Fog update
+            if (scene && scene.fog) scene.fog.color.set(colorHex);
+
+            // Shader update
+            if (bgUniforms) {
+                bgUniforms.uColorA.value.set(colorHex);
+                bgUniforms.uColorB.value.set(accentHex);
+            }
+        }
+
+        function resetHoverState() {
+            if (hoveredFlower) {
+                gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: "power2.out" });
+                hoveredFlower = null;
+            }
+            document.body.style.cursor = 'default';
+        }
+
+        // リネーム: Dashboardページの更新ではなく、Logページの更新になったため
+        function refreshLog() {
+            const list = document.getElementById('dashboard-action-list');
+            if (!list) return; list.innerHTML = '';
+            //window.updateTargetCountdown();
+            const display = [...state.flowers].reverse();
+            
+            // Count label removed
+            // document.getElementById('log-count-label').textContent = `Showing ${display.length} actions`;
+            
+            const msg = document.getElementById('no-actions-msg');
+            if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } 
+            else {
+                if(msg) msg.classList.add('hidden');
+                display.forEach(f => {
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]";
+                    row.onclick = () => window.showDetail(f.userData);
+                    const amountDisplay = f.userData.status === 'order' ? `¥${(parseInt(f.userData.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>';
+                    row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${f.userData.colorHex}"></span>${f.userData.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${f.userData.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${f.userData.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`;
+                    list.appendChild(row);
+                });
+            }
+        }
+
+        // --- 4. 3D & Animation Core ---
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            if(!container) return;
+            
+            scene = new THREE.Scene(); scene.fog = new THREE.Fog(window.getDynamicColor(), 10, 85); 
+            
+            // Use wrapper dimensions
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
+            
+            // Gradient Background Setup
+            bgUniforms = {
+                uTime: { value: 0 },
+                uColorA: { value: new THREE.Color("#000000") },
+                uColorB: { value: new THREE.Color("#330066") }
+            };
+            
+            const bgGeo = new THREE.PlaneGeometry(300, 300); // Large enough to cover view
+            const bgMat = new THREE.ShaderMaterial({
+                uniforms: bgUniforms,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                depthWrite: false, // Ensure it's behind everything
+            });
+            bgMesh = new THREE.Mesh(bgGeo, bgMat);
+            bgMesh.position.z = -50; 
+            scene.add(bgMesh);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(w, h); 
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+            treeGroup = new THREE.Group(); scene.add(treeGroup);
+            
+            // Effect Group (Front of tree)
+            effectGroup = new THREE.Group();
+            scene.add(effectGroup);
+
+            // 25,000 Particles
+            const geometry = new THREE.BufferGeometry(); 
+            const count = window.innerWidth < 768 ? 15000 : 25000; // Init based on window
+            const positions = new Float32Array(count * 3), colors = new Float32Array(count * 3);
+            
+            // Initial Shape Adjustment
+            const radiusScale = state.isMobile ? 0.8 : 1.0; 
+            const heightScale = state.isMobile ? 1.2 : 1.0;
+
+            for (let i = 0; i < count; i++) {
+                const y = (Math.random() - 0.3) * 38 * heightScale; 
+                let br = (y + 12) / 35; 
+                if(br < 0) br = 0;
+
+                const r = br * 14 * state.baseSpreadFactor * Math.pow(Math.random(), 0.7) * radiusScale;
+                const a = y * 0.1 + Math.random() * Math.PI * 2;
+                positions[i*3] = Math.cos(a)*r; positions[i*3+1] = y; positions[i*3+2] = Math.sin(a)*r;
+                
+                const c = 0.5 + Math.random() * 0.5; 
+                colors[i*3]=c; colors[i*3+1]=c; colors[i*3+2]=c; 
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particles = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending }));
+            treeGroup.add(particles);
+
+            const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+            state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, state.maxBuds); state.instancedBuds.count = 0; treeGroup.add(state.instancedBuds);
+
+            camera.position.z = state.isMobile ? 35 : 22; 
+            camera.position.y = 5.0; 
+            camera.lookAt(0, 8, 0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate); const time = Date.now();
+            
+            // Update Shader Time
+            if (bgUniforms) bgUniforms.uTime.value += 0.01;
+            
+            // Time Sync for background color
+            updateBackgroundColor();
+
+            // Mouse handling needs adjustment for simulation container? 
+            // For now, keep window based as mouse moves relative to window center mostly works.
+            state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02;
+            state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02;
+            if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; }
+            state.flowers.forEach(f => {
+                const ud = f.userData; if (ud.baseX === undefined) return;
+                f.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*state.driftFactor*3.8;
+                f.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*state.driftFactor*3.2;
+                f.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*state.driftFactor*3.8;
+            });
+            if (!state.isModalOpen) {
+                raycaster.setFromCamera(mouse, camera); const hit = raycaster.intersectObjects(state.flowers);
+                if (hit.length > 0) {
+                    const obj = hit[0].object;
+                    if (hoveredFlower !== obj) { if (hoveredFlower) gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = obj; gsap.to(obj.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 0.6 }); }
+                    document.body.style.cursor = 'pointer';
+                } else { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = null; } document.body.style.cursor = 'default'; }
+            } else if (hoveredFlower) resetHoverState();
+            if(renderer) renderer.render(scene, camera);
+        }
+
+        function animateActionButton() {
+            const buttons = document.querySelectorAll('.vivid-cycle-btn');
+            buttons.forEach(btn => { 
+                gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); 
+                const tl = gsap.timeline({ repeat: -1 }); 
+                DESIGN_PALETTE.forEach(color => { tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }); });
+            });
+            const breathButtons = document.querySelectorAll('.breath-animation');
+            breathButtons.forEach(btn => {
+                gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" });
+            });
+        }
+
+        function updateGrowthState() {
+            const count = state.actions;
+            
+            // New Level Definition
+            let targetLevel = 0;
+            if (count >= 100) targetLevel = 5;
+            else if (count >= 70) targetLevel = 4;
+            else if (count >= 50) targetLevel = 3;
+            else if (count >= 30) targetLevel = 2;
+            else if (count >= 10) targetLevel = 1;
+            else targetLevel = 0;
+
+            let targetMultiplier = 1.0 + (targetLevel * 0.2); 
+            
+            // SP版対応：カメラ位置をより遠くにする
+            // シミュレーション時のisMobile判定も反映される
+            let baseCamZ = state.isMobile ? 32 : 22; 
+            let targetCamZ = baseCamZ + (targetLevel * (state.isMobile ? 6 : 4));
+
+            state.currentLevel = targetLevel; 
+            state.growthMultiplier = targetMultiplier;
+            
+            if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" });
+            if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); 
+            
+            window.updateStatsUI();
+
+            // --- LOGO UPDATE Logic ---
+            // LV0 -> ACTION_TREE_LOGO_LV1.svg
+            // LV1 -> ACTION_TREE_LOGO_LV2.svg
+            // ...
+            // LV5 -> ACTION_TREE_LOGO_LV6.svg
+            const logoLevel = targetLevel + 1;
+            const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`;
+
+            // ヘッダーロゴの更新
+            const headerLogo = document.querySelector('#main-header img');
+            if (headerLogo) {
+                // パスが異なる場合のみ更新（ちらつき防止）
+                // URLとして解決されたsrcと比較するため、ファイル名が含まれているかで判定
+                if (!headerLogo.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) {
+                    headerLogo.src = newLogoPath;
+                }
+            }
+            
+            // フッターロゴも合わせて更新する場合（現在はヘッダー指定ですが、統一感を出すため記述しておきます）
+            document.querySelectorAll('.app-footer img').forEach(img => {
+                if (!img.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) {
+                    img.src = newLogoPath;
+                }
+            });
+        }
+
+        function addFlowerWithConvergence(name, client, project, amount, notes, status, isInstant = false) {
+            const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)];
+            const target = getGuaranteedVisibleTarget();
+            
+            if (isInstant) {
+                addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex);
+                return;
+            }
+
+            // --- 演出強化: 軽やかな光の飛翔（ゆったり版） ---
+            
+            // 1. スタート地点（画面手前下方）
+            const startPos = new THREE.Vector3(0, -8, 25); 
+            if (state.isMobile) startPos.z = 35;
+            
+            // 2. 光の玉
+            const projectile = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 8, 8), 
+                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+            );
+            projectile.position.copy(startPos);
+            effectGroup.add(projectile);
+
+            // 3. 軌跡
+            const trailGeo = new THREE.BufferGeometry();
+            const trailLen = 30; // トレイルを少し長くして優雅に
+            const trailPos = new Float32Array(trailLen * 3);
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+            const trailMat = new THREE.LineBasicMaterial({ 
+                color: colorHex, 
+                transparent: true, 
+                opacity: 0.25, // より薄く繊細に
+                blending: THREE.AdditiveBlending 
+            });
+            const trailLine = new THREE.Line(trailGeo, trailMat);
+            trailLine.frustumCulled = false;
+            effectGroup.add(trailLine);
+
+            // 4. ベジェ曲線制御点
+            const controlPos = new THREE.Vector3().addVectors(startPos, target.world).multiplyScalar(0.5);
+            controlPos.y += 6.0; // ふわり感を出すためもう少し高く
+
+            // アニメーション用カーブ関数
+            const getBezierPoint = (t, p0, p1, p2) => {
+                const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
+                const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;
+                const z = (1 - t) * (1 - t) * p0.z + 2 * (1 - t) * t * p1.z + t * t * p2.z;
+                return new THREE.Vector3(x, y, z);
+            };
+
+            const animObj = { t: 0 };
+            
+            gsap.to(animObj, {
+                t: 1,
+                duration: 2.5, // 1.5 -> 2.5秒：かなりゆったり
+                ease: "power1.inOut", // 出だしも着弾も滑らかに
+                onUpdate: () => {
+                    const currentPos = getBezierPoint(animObj.t, startPos, controlPos, target.world);
+                    projectile.position.copy(currentPos);
+                    
+                    // 終盤で少し小さく消えていく
+                    if (animObj.t > 0.8) {
+                        projectile.scale.setScalar(1.0 - (animObj.t - 0.8) * 5);
+                    }
+
+                    const positions = trailLine.geometry.attributes.position.array;
+                    for (let i = 0; i < trailLen - 1; i++) {
+                        positions[i * 3] = positions[(i + 1) * 3];
+                        positions[i * 3 + 1] = positions[(i + 1) * 3 + 1];
+                        positions[i * 3 + 2] = positions[(i + 1) * 3 + 2];
+                    }
+                    positions[(trailLen - 1) * 3] = currentPos.x;
+                    positions[(trailLen - 1) * 3 + 1] = currentPos.y;
+                    positions[(trailLen - 1) * 3 + 2] = currentPos.z;
+                    trailLine.geometry.attributes.position.needsUpdate = true;
+                },
+                onComplete: () => {
+                    effectGroup.remove(projectile);
+                    effectGroup.remove(trailLine);
+                    
+                    createSparkleEffect(target.world, colorHex);
+                    flashTreeParticles(); // ツリーの反応
+
+                    // 実を生成
+                    addFlowerToTreeAt(name, client, project, amount, notes, status, target.local.x, target.local.y, target.local.z, colorHex);
+                }
+            });
+        }
+
+        // ★修正: ツリー全体の粒子を「じわっ」と輝かせる
+        function flashTreeParticles() {
+            if (!particles) return;
+            
+            const baseSize = 0.12;
+            const baseOpacity = 0.65;
+
+            // 1. ゆっくりと光が広がる（吸い込むような動き）
+            gsap.to(particles.material, {
+                size: 0.18,      // 拡大率を少し抑えめに
+                opacity: 0.9,    // 完全に1.0まで行かず少し透明感を残す
+                duration: 0.8,   // 0.05 -> 0.8秒：じわっと明るく
+                ease: "sine.out",
+                overwrite: true,
+                onComplete: () => {
+                    // 2. とてもゆっくりと戻る（深い呼吸）
+                    gsap.to(particles.material, {
+                        size: baseSize,
+                        opacity: baseOpacity,
+                        duration: 3.0, // 1.5 -> 3.0秒：余韻を長く
+                        ease: "sine.inOut" 
+                    });
+                }
+            });
+        }
+
+        // 修正: スパークルエフェクト（リングを削除し、粒子のみで表現）
+        function createSparkleEffect(pos, colorHex) {
+            const particleCount = 60; 
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = [];
+            
+            for(let i=0; i<particleCount; i++) {
+                positions[i*3] = pos.x;
+                positions[i*3+1] = pos.y;
+                positions[i*3+2] = pos.z;
+                
+                // リングがない分、拡散範囲を少しだけ広げる
+                const v = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.4, 
+                    (Math.random() - 0.5) * 0.4 + 0.1, // 上昇成分
+                    (Math.random() - 0.5) * 0.4
+                ).normalize().multiplyScalar(0.02 + Math.random() * 0.04); 
+                velocities.push(v);
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const mat = new THREE.PointsMaterial({
+                color: colorHex,
+                size: 0.3, // リングがないので少し大きくして存在感を出す
+                transparent: true,
+                opacity: 1.0, // 最初はくっきり
+                blending: THREE.AdditiveBlending
+            });
+            
+            const sparkleSystem = new THREE.Points(geo, mat);
+            effectGroup.add(sparkleSystem);
+            
+            // --- リング生成処理を削除 ---
+            /*
+            const ringGeo = new THREE.RingGeometry(0.05, 0.1, 32); 
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.copy(pos);
+            ring.lookAt(camera.position); 
+            effectGroup.add(ring);
+            */
+
+            // アニメーション
+            const anim = { val: 0 };
+            gsap.to(anim, {
+                val: 1,
+                duration: 3.0, 
+                ease: "power2.out",
+                onUpdate: () => {
+                    const posAttr = sparkleSystem.geometry.attributes.position;
+                    for(let i=0; i<particleCount; i++) {
+                        posAttr.array[i*3] += velocities[i].x;
+                        posAttr.array[i*3+1] += velocities[i].y;
+                        posAttr.array[i*3+2] += velocities[i].z;
+                        velocities[i].multiplyScalar(0.98); 
+                    }
+                    posAttr.needsUpdate = true;
+                    
+                    // フェードアウト
+                    sparkleSystem.material.opacity = (1 - anim.val);
+                    
+                    // リングのアニメーション削除
+                },
+                onComplete: () => {
+                    effectGroup.remove(sparkleSystem);
+                    // effectGroup.remove(ring);
+                    geo.dispose(); mat.dispose();
+                    // ringGeo.dispose(); ringMat.dispose();
+                }
+            });
+        }
+
+        // HTMLオーバーレイ演出（削除済み）
+        // function showSuccessFeedback() { ... }
+
+        function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex, isNew = false, id = null) {
+            const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 }));
+            f.position.set(posX, y, posZ); f.scale.set(0, 0, 0);
+            // IDもuserDataに保存
+            f.userData = { id: id, name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 };
+            treeGroup.add(f); state.flowers.push(f);
+            gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
+        }
+
+        function addBudsInstanced(count) {
+            if (!state.instancedBuds) return;
+            const matrix = new THREE.Matrix4(), pos = new THREE.Vector3(), quat = new THREE.Quaternion(), sca = new THREE.Vector3();
+            for (let i = 0; i < count; i++) {
+                if (state.budCount >= state.maxBuds) break;
+                const y = (Math.random() - 0.4) * 24 * state.growthMultiplier + 4; const factor = (y + 8) / 24; const a = Math.random() * Math.PI * 2;
+                const r = 0.8 + Math.random() * (factor * 7 * state.baseSpreadFactor * state.growthMultiplier);
+                pos.set(Math.cos(a) * r, y, Math.sin(a) * r); const s = 0.4 + Math.random() * 0.4; sca.set(s, s, s); matrix.compose(pos, quat, sca);
+                state.instancedBuds.setMatrixAt(state.budCount, matrix); state.budCount++;
+            }
+            state.instancedBuds.count = state.budCount; state.instancedBuds.instanceMatrix.needsUpdate = true;
+        }
+
+        // --- 7. Improved Sync Logic ---
+        
+        function startDataSync() {
+            if (window.isSyncStarted) return;
+            window.isSyncStarted = true;
+            
+            const { db, appId, collection, onSnapshot, addDoc } = window.firebaseHandle;
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+            
+            // Connect Form
+            const actionForm = document.getElementById('action-form');
+            if(actionForm) {
+                actionForm.onsubmit = async (evt) => {
+                    evt.preventDefault();
+                    const status = document.querySelector('input[name="post-status"]:checked').value;
+                    const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }];
+                    if(status === 'order') fields.push({ id: 'post-amount' });
+                    let valid = true;
+                    fields.forEach(f => {
+                        const el = document.getElementById(f.id);
+                        if (el && !el.value.trim()) { 
+                            el.classList.add('input-error-shake'); 
+                            valid = false; 
+                        }
+                    });
+
+                    if (!valid) {
+                        document.getElementById('form-error-msg').classList.remove('hidden');
+                        return;
+                    }
+
+                    const btn = document.getElementById('submit-action-btn');
+                    btn.disabled = true; btn.textContent = "Saving...";
+                    try {
                         const n = document.getElementById('post-name').value;
                         const c = document.getElementById('post-client').value;
                         const p = document.getElementById('post-project').value;
-                        const a = document.getElementById('post-amount').value || 0;
+                        const a = parseInt(document.getElementById('post-amount').value) || 0;
                         const notes = document.getElementById('post-notes').value;
-                        const status = document.querySelector('input[name="post-status"]:checked').value;
                         
-                        // Local Visuals
-                        window.addFlowerWithConvergence(n,c,p,a,notes,status,false);
-                        ui.closeModal();
+                        // 演出開始
+                        addFlowerWithConvergence(n, c, p, a, notes, status, false);
 
-                        // DB Save
-                        btn.disabled = true; btn.innerText = "Saving...";
-                        try {
-                            await addDoc(collectionRef, {
-                                name: n, client: c, project: p, amount: parseInt(a), notes: notes, status: status,
-                                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
-                                timestamp: Date.now()
-                            });
-                        } catch(err) {
-                            alert("保存エラー: " + err.message);
-                        } finally {
-                            btn.disabled = false; btn.innerText = "ACTION / 投稿する";
-                        }
-                    };
+                        // データ保存
+                        await addDoc(q, {
+                            name: n, client: c,
+                            project: p, amount: a,
+                            notes: notes, status: status,
+                            colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)], timestamp: Date.now()
+                        });
+                        window.closeModal();
+                    } catch (err) { 
+                        console.error(err); 
+                        // エラー時にアラートを表示して原因を通知
+                        //alert("投稿エラー:\nデータの保存に失敗しました。\n" + err.message + "\n\n※FirebaseのFirestore Databaseが作成されているか、ルールで書き込みが許可されているか確認してください。");
+                    } finally { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
+                };
+            }
+            
+            // Listen
+            onSnapshot(q, (snapshot) => {
+                state.flowers.forEach(f => treeGroup.remove(f));
+                state.flowers = []; state.actions = 0; state.amount = 0;
+                snapshot.forEach((doc) => {
+                    const d = doc.data(); 
+                    d.id = doc.id;
+                    addFlowerFromData(d);
+                    state.actions++; if(d.status === 'order') state.amount += (parseInt(d.amount) || 0);
+                });
+                updateGrowthState(); window.updateStatsUI(); refreshLog();
+            }, (err) => {
+                console.error(err);
+                // 読み込みエラー時もアラート（初回のみなど制御してもいいが、原因特定のため出す）
+                /*
+                if(!window.hasShownError) {
+                     alert("データ同期エラー:\n" + err.message + "\n\n※Firestoreの権限設定(Rules)を確認してください。");
+                     window.hasShownError = true;
+                }
+                */
+            });
+        }
+
+        // Event: Firebase Ready (Capture handle)
+        window.addEventListener('firebase-ready', (e) => {
+            window.firebaseHandle = e.detail;
+            if (window.isThreeReady) {
+                startDataSync();
+            }
+        });
+
+        // Event: Window Load (Init Three)
+        window.addEventListener('load', async () => {
+            const loader = document.getElementById('app-loader'); if(loader) loader.style.display = 'none';
+            
+            initThree(); 
+            animate(); 
+            animateActionButton(); 
+            addBudsInstanced(2000);
+            
+            window.isThreeReady = true;
+            
+            // If firebase was already ready before load
+            if (window.firebaseHandle) {
+                startDataSync();
+            }
+            
+            // Fallback: If firebase not used/ready (e.g. dev mode), manual form handling is already in initThree? No, needs setup.
+            // Setup Slider (UPDATED to TOTAL ACTIONS, TOTAL AMOUNT, TREE LEVEL, DATE)
+            const slider = document.getElementById('stats-slider');
+            const item = `<div class="marquee-item text-white">
+                <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val text-white">0</span></div>
+                <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value text-white">¥<span class="amount-val">0</span></span></div>
+                <div class="stats-group"><span class="stats-label">Tree Level</span><span class="stats-value level-val text-white">LV0 SOIL</span></div>
+                <div class="stats-group"><span class="stats-label">Date</span><span class="stats-value marquee-date-val countdown-stable">---</span></div>
+            </div>`;
+            if (slider) slider.innerHTML = item.repeat(2);
+
+            // Start Date Updater for Marquee
+            window.updateMarqueeDate();
+            setInterval(window.updateMarqueeDate, 1000);
+
+            // Setup Form Interactions (Status Change)
+            document.getElementsByName('post-status').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const amtCont = document.getElementById('amount-container');
+                    const amtInp = document.getElementById('post-amount');
+                    if (e.target.value === 'order') { 
+                        amtCont.classList.remove('invisible', 'opacity-0');
+                        gsap.to(amtCont, { opacity: 1, duration: 0.3 });
+                        amtInp.setAttribute('required', 'true');
+                    } else { 
+                        gsap.to(amtCont, { opacity: 0, duration: 0.3, onComplete: () => amtCont.classList.add('invisible') });
+                        amtInp.removeAttribute('required'); amtInp.value = '';
+                    }
+                });
+            });
+
+            // Fallback Form logic (if firebase never ready, e.g. local)
+            setTimeout(() => {
+                if (!window.isSyncStarted) {
+                    const actionForm = document.getElementById('action-form');
+                    if (actionForm) {
+                        actionForm.onsubmit = (e) => {
+                            e.preventDefault();
+                            
+                            const status = document.querySelector('input[name="post-status"]:checked').value;
+                            const n = document.getElementById('post-name').value;
+                            const c = document.getElementById('post-client').value;
+                            const p = document.getElementById('post-project').value;
+                            const a = parseInt(document.getElementById('post-amount').value) || 0;
+                            const notes = document.getElementById('post-notes').value;
+
+                            // Local Simulation of Action
+                            addFlowerWithConvergence(n, c, p, a, notes, status);
+                            state.actions++; if(status === 'order') state.amount += a;
+                            window.updateStatsUI(); refreshLog();
+                            window.closeModal();
+                        };
+                    }
+                }
+            }, 3000);
+
+            await window.syncServerTime(); updateBackgroundColor(); window.updateStatsUI();
+            
+            window.addEventListener('mousemove', (e) => { mouse.x = (e.clientX/window.innerWidth)*2-1; mouse.y = -(e.clientY/window.innerHeight)*2+1; state.mouseTargetX = mouse.x*0.1; state.mouseTargetY = mouse.y*0.08; });
+            
+            // リサイズ処理の強化（Window依存に戻す）
+            window.addEventListener('resize', () => { 
+                if(camera && renderer) { 
+                    camera.aspect = window.innerWidth / window.innerHeight; 
+                    camera.updateProjectionMatrix(); 
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    
+                    // SP/PC切り替え判定
+                    const wasMobile = state.isMobile;
+                    state.isMobile = window.innerWidth < 768; 
+                    
+                    if (wasMobile !== state.isMobile) {
+                        updateGrowthState(); // カメラ位置などを再計算
+                    }
+                } 
+            });
+
+            const canvasEl = document.querySelector('canvas');
+            if (canvasEl) {
+                canvasEl.addEventListener('click', (e) => { if (state.isModalOpen) return; if (hoveredFlower) window.showDetail(hoveredFlower.userData); });
+            }
+        });
+
+        document.getElementById('menu-toggle').onclick = () => {
+            const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header');
+            const isOpen = nav.style.display === 'flex';
+            
+            if (!isOpen) {
+                // OPEN
+                nav.style.display = 'flex';
+                // 時間帯カラーをベースに透過させる (Opacity 0.85)
+                const hex = window.getDynamicColor();
+                const rgb = window.hexToRgb(hex);
+                if (rgb) {
+                    nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.85)`;
                 }
                 
-                // Expose Reset
-                window.resetDataImpl = async () => {
-                    if(!confirm("DBデータを全削除しますか？")) return;
-                    const q = await getDocs(collectionRef);
-                    const batch = writeBatch(db);
-                    q.forEach(d => batch.delete(d.ref));
-                    await batch.commit();
-                    window.location.reload();
-                };
-
-                await signInAnonymously(auth);
-                onSnapshot(query(collectionRef, orderBy('timestamp', 'asc')), (snap) => {
-                    if(window.treeGroup) {
-                        window.treeGroup.children.filter(c => c.geometry && c.geometry.type === 'SphereGeometry').forEach(c => window.treeGroup.remove(c));
-                    }
-                    window.state.flowers = []; window.state.actions = 0; window.state.amount = 0;
-                    snap.forEach(doc => {
-                        const d = doc.data(); d.id = doc.id;
-                        window.addFlowerFromData(d);
-                        window.state.actions++;
-                        if(d.status === 'order') window.state.amount += (d.amount || 0);
-                    });
-                    window.updateGrowthState();
-                });
-
-            } catch(e) {
-                console.error("Firebase Error:", e);
+                document.getElementById('menu-toggle').classList.add('open');
+                if(header) header.classList.remove('is-dark'); 
+            } else { 
+                // CLOSE
+                nav.style.display = 'none';
+                document.getElementById('menu-toggle').classList.remove('open');
+                
+                const isTop = !document.getElementById('page-top').classList.contains('hidden');
+                if (isTop && header) header.classList.remove('is-dark'); 
+                else if(header) header.classList.add('is-dark'); 
             }
-        }
-        
-        startFirebase();
+        };
     </script>
 </body>
 </html>
