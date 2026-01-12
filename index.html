@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
@@ -11,147 +11,55 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- Global Init -->
-    <script>
-        // グローバル変数の定義
-        window.ui = {};
-        window.state = { 
-            actions:0, amount:0, isMobile: window.innerWidth<768, 
-            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
-        };
-        // Three.js用グローバル変数
-        window.treeGroup = null; 
-        window.camera = null; 
-        window.renderer = null; 
-        window.effectGroup = null;
-
-        // デザイン設定
-        window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
-        window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
-
-        // フォーム送信ハンドラ
-        window.handleFormSubmit = function(event) {
-            event.preventDefault(); // リロード絶対阻止
-            
-            const n = document.getElementById('post-name').value;
-            const c = document.getElementById('post-client').value;
-            const p = document.getElementById('post-project').value;
-            
-            let hasError = false;
-            if(!n) { document.getElementById('post-name').classList.add('input-error-shake'); hasError=true; }
-            if(!c) { document.getElementById('post-client').classList.add('input-error-shake'); hasError=true; }
-            if(!p) { document.getElementById('post-project').classList.add('input-error-shake'); hasError=true; }
-            
-            if(hasError) {
-                document.getElementById('form-error-msg').classList.remove('hidden');
-                return false;
-            }
-
-            const a = parseInt(document.getElementById('post-amount').value) || 0;
-            const notes = document.getElementById('post-notes').value;
-            const status = document.querySelector('input[name="post-status"]:checked').value;
-            const btn = document.getElementById('submit-action-btn');
-            
-            btn.disabled = true; btn.textContent = "Sending...";
-
-            // 座標決定
-            const rY = (Math.random()-0.2)*20 + 5;
-            const rR = (rY+6)/22 * 10 * Math.random();
-            const phi = Math.random()*Math.PI*2;
-            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
-
-            const data = {
-                name: n, client: c, project: p, amount: a, notes: notes, status: status,
-                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
-                timestamp: Date.now(),
-                // 座標を固定して保存
-                baseX: x, baseY: y, baseZ: z,
-                phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
-            };
-
-            // 1. 演出実行
-            if(window.addFlowerWithConvergence) {
-                const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
-                if(window.treeGroup) {
-                    const vec = new THREE.Vector3(x,y,z);
-                    window.treeGroup.updateMatrixWorld(true);
-                    vec.applyMatrix4(window.treeGroup.matrixWorld);
-                    target.world.copy(vec);
-                }
-                window.addFlowerWithConvergence(data.name, data.colorHex, target);
-            }
-            ui.closeModal();
-
-            // 2. データ保存
-            if (window.submitToFirebase) {
-                window.submitToFirebase(data).then(() => {
-                    finalizePost();
-                }).catch(e => {
-                    alert("Error: " + e.message);
-                    finalizePost();
-                });
-            } else {
-                // Demo Mode
-                console.log("Demo Post:", data);
-                window.state.flowers.push({ userData: data });
-                window.state.actions++;
-                if(data.status === 'order') window.state.amount += data.amount;
-                
-                if(window.updateTreeFromState) window.updateTreeFromState();
-                if(window.updateStatsUI) window.updateStatsUI();
-                if(window.refreshLog) window.refreshLog();
-                
-                finalizePost();
-            }
-            return false;
-        };
-
-        function finalizePost() {
-            const btn = document.getElementById('submit-action-btn');
-            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
-            const form = document.getElementById('action-form');
-            if(form) form.reset(); 
-            const amt = document.getElementById('amount-container');
-            if(amt) amt.classList.add('invisible');
-        }
-        
-        // ローダー安全装置
-        setTimeout(() => {
-            const l = document.getElementById('app-loader');
-            if(l) l.classList.add('loaded');
-        }, 3000);
-    </script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
 
-        /* Base */
+        /* --- Base Settings --- */
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            margin: 0; overflow-x: hidden;
+            margin: 0;
+            overflow-x: hidden;
             background: linear-gradient(to bottom, #000807, #001a15);
-            color: #fff; letter-spacing: 0.1em;
-            -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+            color: #fff;
+            letter-spacing: 0.1em;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+            /* iOS Safe Area */
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* Canvas */
+        /* --- Layout --- */
         #canvas-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; background: transparent; pointer-events: auto;
+            z-index: 0; background: transparent;
         }
         
-        .full-screen-section { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
+        .full-screen-section {
+            height: 100vh; height: 100dvh; width: 100%;
+            display: flex; flex-direction: column; position: relative;
+        }
 
-        /* UI */
-        .clickable, a, button, input, label, textarea, .nav-icon { pointer-events: auto !important; cursor: pointer; }
+        /* --- UI Elements --- */
+        .clickable, a, button, input, label, textarea, .nav-icon, .logo-symbol-wrapper, .logo-main-text {
+            pointer-events: auto !important; cursor: pointer;
+        }
 
-        header { position: fixed; top: 0; left: 0; width: 100%; z-index: 500; pointer-events: none; transition: all 0.4s ease; }
+        /* Header */
+        header { 
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 500;
+            pointer-events: none; transition: all 0.4s ease; 
+        }
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
         header.is-dark img { filter: brightness(0); }
-        .logo-main-text { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
+        
+        .logo-main-text {
+            font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800;
+            letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase;
+        }
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
 
+        /* Menu */
         .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .nav-icon-inner { width: 24px; height: 10px; position: relative; pointer-events: none; }
         @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
@@ -161,34 +69,81 @@
         .nav-icon.open .nav-icon-inner span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
         .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
 
-        .menu-overlay { display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0, 40, 30, 0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(12px); pointer-events: auto; }
-        .menu-link { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; color: #fff; margin: 10px 0; transition: opacity 0.3s; }
-        .action-button { position: fixed; bottom: 80px; right: 20px; z-index: 90; width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000; box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; text-transform: uppercase; font-weight: 800; pointer-events: auto; }
+        .menu-overlay {
+            display: none; position: fixed; inset: 0; z-index: 150;
+            background: rgba(0, 40, 30, 0.95); flex-direction: column; 
+            align-items: center; justify-content: center; backdrop-filter: blur(12px);
+            pointer-events: auto;
+        }
+        .menu-link { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; color: #fff; margin: 10px 0; transition: opacity 0.3s; cursor: pointer; }
+        .menu-link:hover { opacity: 0.7; }
+
+        /* Action Button */
+        .action-button {
+            position: fixed; bottom: 100px; right: 20px; z-index: 90;
+            width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            text-transform: uppercase; font-weight: 800;
+        }
+        /* SPでのボタン位置調整（スライダーと被らないように） */
+        @media (max-width: 768px) { .action-button { bottom: 80px; right: 20px; } }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
 
-        /* Marquee */
-        .marquee-container { position: absolute; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; }
-        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; bottom: 10px; } }
-        .marquee-track { display: flex; width: max-content; animation: marquee 120s linear infinite; }
+        /* Marquee (SP表示対策: 位置調整とGPU加速) */
+        .marquee-container { 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            padding: 1.5rem 0; 
+            overflow: hidden; 
+            white-space: nowrap; 
+            z-index: 10; 
+            pointer-events: none;
+            /* iOS Safari Safe Area対応 */
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+        }
+        @media (min-width: 768px) { .marquee-container { padding: 2.5rem 0; padding-bottom: 2.5rem; } }
+        
+        .marquee-track { 
+            display: flex; 
+            width: max-content; 
+            animation: marquee 80s linear infinite; /* 少し速くして動きを見やすく */
+            will-change: transform;
+            transform: translate3d(0, 0, 0); /* GPU強制 */
+        }
         .marquee-content { display: flex; align-items: center; }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        
+        @keyframes marquee { 
+            0% { transform: translate3d(0, 0, 0); } 
+            100% { transform: translate3d(-50%, 0, 0); } 
+        }
+        
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
-        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2.5rem; }
-        .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; }
+        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
+        .stats-label, .stats-value { 
+            font-size: 0.8rem; /* 少し大きく */
+            font-weight: 900; /* 太く */
+            text-transform: uppercase; 
+            color: #fff; 
+            letter-spacing: 0.2em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* 視認性向上 */
+        }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
+        
         .tabular { font-variant-numeric: tabular-nums; }
-        .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 130px; text-align: left; }
-        @media (min-width: 768px) { .countdown-stable { min-width: 180px; } }
+        .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 150px; text-align: left; }
 
+        /* Pages */
         .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
         .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
         .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
         .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
         .app-footer { padding: 4rem 0 3rem; text-align: center; }
-        .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
+        .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; cursor: pointer; }
         .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
         .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
         
+        /* Modal & Form */
         .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 300; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
@@ -202,15 +157,17 @@
         .status-radio:not(:checked) + div:hover { color: #999; }
         .status-radio:not(:checked) + div:hover .status-dot { border-color: #999; }
         
+        /* Utility */
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
-        
+
+        /* Actions Log Font */
         .stat-card-value { 
             font-size: 1.5rem; font-weight: 900 !important; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; 
         }
         @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
 
-        /* Loader Safety */
+        /* Loader */
         #app-loader {
             position: fixed; inset: 0; z-index: 9999; background: #000807;
             display: flex; align-items: center; justify-content: center; flex-direction: column;
@@ -220,6 +177,167 @@
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
+    
+    <!-- ★ CORE SCRIPT ★ -->
+    <script>
+        // Init Globals
+        window.ui = {};
+        window.state = { 
+            actions:0, amount:0, isMobile: window.innerWidth<768, 
+            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
+        };
+        window.treeGroup = null; window.camera = null; window.renderer = null; window.effectGroup = null;
+
+        window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
+        window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
+
+        // --- UI Functions ---
+        window.ui.showPage = function(id) {
+            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById('nav-menu').style.display = 'none';
+            document.getElementById('menu-toggle').classList.remove('open');
+            const h = document.getElementById('main-header');
+            
+            if(id === 'top') { 
+                document.body.style.overflow = 'hidden';
+                h.classList.remove('is-dark'); 
+            } else { 
+                document.body.style.overflow = 'auto';
+                h.classList.add('is-dark'); 
+                window.scrollTo(0,0);
+            }
+            if (id === 'log' && window.refreshLog) window.refreshLog();
+        };
+
+        window.ui.toggleMenu = function() {
+            const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
+            const isOpen = nav.style.display === 'flex';
+            
+            if (!isOpen) {
+                nav.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                if(header) header.classList.remove('is-dark');
+                if(window.getDynamicColor) {
+                    const hex = window.getDynamicColor();
+                    const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0};
+                    nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+                }
+                toggle.classList.add('open');
+            } else { 
+                nav.style.display = 'none';
+                toggle.classList.remove('open');
+                const isTop = !document.getElementById('page-top').classList.contains('hidden');
+                document.body.style.overflow = isTop ? 'hidden' : 'auto';
+                if(!isTop && header) header.classList.add('is-dark'); 
+            }
+        };
+
+        window.ui.openModal = function() { 
+            document.getElementById('post-modal').style.display='flex'; 
+            window.state.isModalOpen=true; 
+            document.getElementById('form-error-msg').classList.add('hidden'); 
+        };
+        
+        window.ui.closeModal = function() { 
+            document.getElementById('post-modal').style.display='none'; 
+            window.state.isModalOpen=false; 
+            const form = document.getElementById('action-form'); if(form) form.reset();
+            const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible');
+        };
+        
+        window.ui.closeDetailModal = function() { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
+        
+        window.ui.updateCharCount = function(el) { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
+
+        window.ui.showDetail = function(data) { 
+            const modal = document.getElementById('detail-modal'); if (!modal) return; 
+            document.getElementById('detail-name').textContent = data.name; 
+            document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; 
+            const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; 
+            document.getElementById('detail-amount').textContent = amtDisplay; 
+            document.getElementById('detail-client').textContent = data.client || "---"; 
+            document.getElementById('detail-project').textContent = data.project || "---"; 
+            document.getElementById('detail-notes').textContent = data.notes || ""; 
+            document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; 
+            if(window.resetHoverState) window.resetHoverState(); 
+            modal.style.display = 'flex'; window.state.isModalOpen = true; 
+        };
+
+        // --- Form Handler ---
+        window.handleFormSubmit = function(event) {
+            event.preventDefault();
+            const n = document.getElementById('post-name').value;
+            const c = document.getElementById('post-client').value;
+            const p = document.getElementById('post-project').value;
+            
+            let hasError = false;
+            if(!n) { document.getElementById('post-name').classList.add('input-error-shake'); hasError=true; }
+            if(!c) { document.getElementById('post-client').classList.add('input-error-shake'); hasError=true; }
+            if(!p) { document.getElementById('post-project').classList.add('input-error-shake'); hasError=true; }
+            if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return false; }
+
+            const a = parseInt(document.getElementById('post-amount').value) || 0;
+            const notes = document.getElementById('post-notes').value;
+            const status = document.querySelector('input[name="post-status"]:checked').value;
+            const btn = document.getElementById('submit-action-btn');
+            
+            btn.disabled = true; btn.textContent = "Sending...";
+
+            const rY = (Math.random()-0.2)*20 + 5; const rR = (rY+6)/22 * 10 * Math.random(); const phi = Math.random()*Math.PI*2;
+            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
+
+            const data = {
+                name: n, client: c, project: p, amount: a, notes: notes, status: status,
+                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
+                timestamp: Date.now(),
+                baseX: x, baseY: y, baseZ: z,
+                phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
+            };
+
+            if(window.addFlowerWithConvergence) {
+                const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
+                if(window.treeGroup) {
+                    const vec = new THREE.Vector3(x,y,z);
+                    window.treeGroup.updateMatrixWorld(true);
+                    vec.applyMatrix4(window.treeGroup.matrixWorld);
+                    target.world.copy(vec);
+                }
+                window.addFlowerWithConvergence(data.name, data.colorHex, target);
+            }
+            ui.closeModal();
+
+            if (window.submitToFirebase) {
+                window.submitToFirebase(data).then(() => { finalizePost(); }).catch(e => { alert("Error: " + e.message); finalizePost(); });
+            } else {
+                window.state.flowers.push({ userData: data });
+                window.state.actions++;
+                if(data.status === 'order') window.state.amount += data.amount;
+                if(window.updateTreeFromState) window.updateTreeFromState();
+                if(window.updateStatsUI) window.updateStatsUI();
+                if(window.refreshLog) window.refreshLog();
+                finalizePost();
+            }
+            return false;
+        };
+
+        function finalizePost() {
+            const btn = document.getElementById('submit-action-btn');
+            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
+            const form = document.getElementById('action-form'); if(form) form.reset(); 
+            const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible');
+        }
+        
+        // Sim Functions
+        window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
+        window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
+        window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
+        window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
+        window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
+        window.ui.downloadLogCSV = () => { if(window.downloadLogImpl) window.downloadLogImpl(); };
+        
+        setTimeout(() => { const l = document.getElementById('app-loader'); if(l) l.classList.add('loaded'); }, 3000);
+    </script>
 </head>
 <body style="overflow: hidden;">
 
@@ -228,7 +346,6 @@
         <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing...</span>
     </div>
 
-    <!-- Header -->
     <header id="main-header" class="px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper clickable flex-shrink-0" onclick="window.ui.showPage('top')">
             <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-6 h-6 md:w-8 md:h-8 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -244,7 +361,6 @@
         </div>
     </header>
 
-    <!-- Menu -->
     <div id="nav-menu" class="menu-overlay">
         <div class="flex-grow flex flex-col justify-center items-center gap-6 md:gap-10">
             <a onclick="window.ui.showPage('top')" class="menu-link clickable">Top</a>
@@ -258,15 +374,12 @@
         </div>
     </div>
 
-    <!-- Content -->
     <main id="app-content">
-        <!-- TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Static Content -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -277,13 +390,12 @@
                     </div>
                 </div>
             </div>
-            <!-- ACTION BUTTON -->
             <button id="main-action-button" onclick="window.ui.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
 
-        <!-- ABOUT PAGE -->
+        <!-- ABOUT -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -312,7 +424,7 @@
             </div>
         </div>
 
-        <!-- RULES PAGE -->
+        <!-- RULES -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
@@ -340,7 +452,7 @@
             </div>
         </div>
 
-        <!-- LOG PAGE -->
+        <!-- LOG -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -381,7 +493,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PAGE -->
+        <!-- DASHBOARD -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -421,7 +533,7 @@
                 <div class="border-t border-black pt-16 mb-20">
                     <h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3>
                     <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。</p>
+                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。</p>
                         <button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button>
                     </div>
                 </div>
@@ -449,7 +561,7 @@
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
                 <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">ACTIONを投稿して、100の木を育てましょう。</p>
             </div>
-            <!-- Global Handler -->
+            <!-- Submit -> window.handleFormSubmit() -->
             <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" onsubmit="return window.handleFormSubmit(event)" novalidate>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label><input type="text" id="post-name" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label><input type="text" id="post-client" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
@@ -492,40 +604,10 @@
     <!-- 1. UI Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // UI Toggle
-            window.ui.toggleMenu = () => {
-                const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
-                const isOpen = nav.style.display === 'flex';
-                nav.style.display = isOpen ? 'none' : 'flex';
-                toggle.classList.toggle('open');
-                if(!isOpen) { if(header) header.classList.remove('is-dark'); if(window.getDynamicColor) { const hex = window.getDynamicColor(); const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0}; nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`; } }
-                else { const isTop = !document.getElementById('page-top').classList.contains('hidden'); if(!isTop && header) header.classList.add('is-dark'); }
-            };
-            window.ui.showPage = (id) => {
-                document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
-                document.getElementById(`page-${id}`).classList.remove('hidden');
-                document.getElementById('nav-menu').style.display='none';
-                document.getElementById('menu-toggle').classList.remove('open');
-                const h = document.getElementById('main-header');
-                if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
-                else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
-                if (id === 'log' && window.refreshLog) window.refreshLog();
-            };
-            window.ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
-            window.ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
-            window.ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
-            window.ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
-            window.ui.showDetail = (data) => { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; window.resetHoverState(); modal.style.display = 'flex'; window.state.isModalOpen = true; };
-            
-            // Sim Functions
-            window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
-            window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
-            window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
-            window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
-            window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
-            window.ui.downloadLogCSV = () => { if(window.downloadLogImpl) window.downloadLogImpl(); };
-
-            // Form Interactions
+            // Inputs
+            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { 
+                const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); 
+            });
             document.getElementsByName('post-status').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const amt = document.getElementById('amount-container');
@@ -534,7 +616,6 @@
                     else { if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); inp.removeAttribute('required'); inp.value=''; }
                 });
             });
-            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); });
             if(window.gsap) {
                 document.querySelectorAll('.vivid-cycle-btn').forEach(btn => { gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); const tl = gsap.timeline({ repeat: -1 }); window.DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" })); });
                 document.querySelectorAll('.breath-animation').forEach(btn => { gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" }); });
@@ -544,8 +625,7 @@
                 const now = new Date();
                 const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
                 document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dStr);
-                
-                // Clone for Loop
+                // Loop
                 const track = document.getElementById('stats-slider-track');
                 const content = document.getElementById('stats-content-source');
                 if(track && content && track.children.length < 5) {
@@ -561,7 +641,7 @@
     
     <!-- 2. Visual Script (Three.js) -->
     <script>
-        let scene, particles, bgMesh, bgUniforms;
+        let scene, particles, effectGroup, bgMesh, bgUniforms;
 
         window.addEventListener('load', () => { try { initThree(); } catch(e) { console.error(e); } });
 
@@ -570,9 +650,12 @@
             if(!container) return;
             scene = new THREE.Scene(); 
             const w = window.innerWidth; const h = window.innerHeight;
+            
+            // Assign to Global
             window.camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
             window.camera.position.set(0, 5, window.state.isMobile ? 35 : 22);
             window.camera.lookAt(0, 8, 0);
+
             window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             window.renderer.setSize(w, h); 
             window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -582,7 +665,7 @@
             window.effectGroup = new THREE.Group(); scene.add(window.effectGroup);
             
             bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000") }, uColorB: { value: new THREE.Color("#330066") } };
-            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
+            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
             const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
 
             const pCount = window.innerWidth < 768 ? 15000 : 25000;
@@ -648,9 +731,10 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        // Utils
+        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
@@ -678,7 +762,7 @@
                  const userData = d.userData || d;
                  const color = userData.colorHex || '#fff';
                  
-                 // ★修正: BasicMaterialに変更（光源不要で確実に表示）
+                 // Bright Material (Emissive)
                  const geo = new THREE.SphereGeometry(0.25,16,16);
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo,mat);
