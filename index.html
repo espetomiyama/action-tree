@@ -851,9 +851,11 @@
 
         let firebaseConfig;
         let appId;
+        let isLocalEnvironment = false; // フラグ追加
 
         try {
             if (typeof __firebase_config !== 'undefined') {
+                // Canvas環境（プレビュー）での自動設定
                 firebaseConfig = JSON.parse(__firebase_config);
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
             } else {
@@ -861,7 +863,8 @@
             }
         } catch (e) {
             // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-            // 【重要】ここをご自身のFirebase設定に書き換えてください！
+            // 【重要】ご自身のサーバー等で使用する場合の設定エリア
+            // Firebaseコンソールの「プロジェクトの設定」からコピーした内容をここに貼ってください
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             firebaseConfig = {
                 apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
@@ -869,17 +872,18 @@
                 projectId: "action-tree",
                 storageBucket: "action-tree.firebasestorage.app",
                 messagingSenderId: "471274997168",
-                appId: "471274997168"
+                appId: "1:471274997168:web:b0479cfc2006b136ad0275"
             };
             appId = 'action-tree-platform';
+            isLocalEnvironment = true; // 独自環境フラグON
         }
 
         const initApp = async () => {
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+            if (firebaseConfig.apiKey === "YOUR_API_KEY" && isLocalEnvironment) {
                 setTimeout(() => {
                     const loader = document.getElementById('app-loader');
                     if(loader) {
-                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~960</div>';
+                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~1060</div>';
                         loader.onclick = () => loader.style.display = 'none';
                     }
                 }, 1000);
@@ -889,6 +893,17 @@
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
+
+                // コレクションパスの決定 (モジュールスコープ内)
+                let collectionRef;
+                if (isLocalEnvironment) {
+                    // 独自環境（GitHubなど）: シンプルにルートの 'actions' コレクションを使う
+                    collectionRef = collection(db, 'actions');
+                } else {
+                    // Canvas環境: 指定のパスを使う
+                    collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                }
+
                 window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -897,11 +912,25 @@
                 }
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user, db, appId, collection, addDoc, onSnapshot } }));
+                        // コレクション参照をdetailに含めてイベント発火
+                        window.dispatchEvent(new CustomEvent('firebase-ready', { 
+                            detail: { 
+                                user, 
+                                db, 
+                                appId, 
+                                collection, 
+                                addDoc, 
+                                onSnapshot,
+                                collectionRef // 追加
+                            } 
+                        }));
                     }
                 });
             } catch (err) {
                 console.error("Firebase Init Error:", err);
+                if (isLocalEnvironment) {
+                    alert("Firebase Init Error:\n" + err.message);
+                }
                 const loader = document.getElementById('app-loader');
                 if(loader) loader.style.display = 'none';
             }
@@ -1785,14 +1814,18 @@
             if (window.isSyncStarted) return;
             window.isSyncStarted = true;
             
-            const { db, appId, collection, onSnapshot, addDoc } = window.firebaseHandle;
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+            // firebase-readyイベントから渡された queryRef を使用
+            const { db, appId, collection, onSnapshot, addDoc, collectionRef } = window.firebaseHandle;
+            
+            // collectionRefがなければ生成（念のため）
+            const q = collectionRef || collection(db, 'artifacts', appId, 'public', 'data', 'actions');
             
             // Connect Form
             const actionForm = document.getElementById('action-form');
             if(actionForm) {
                 actionForm.onsubmit = async (evt) => {
                     evt.preventDefault();
+                    // ... (バリデーション省略) ...
                     const status = document.querySelector('input[name="post-status"]:checked').value;
                     const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }];
                     if(status === 'order') fields.push({ id: 'post-amount' });
@@ -1833,7 +1866,7 @@
                     } catch (err) { 
                         console.error(err); 
                         // エラー時にアラートを表示して原因を通知
-                        //alert("投稿エラー:\nデータの保存に失敗しました。\n" + err.message + "\n\n※FirebaseのFirestore Databaseが作成されているか、ルールで書き込みが許可されているか確認してください。");
+                        if(isLocalEnvironment) alert("投稿エラー:\nデータの保存に失敗しました。\n" + err.message + "\n\n※FirebaseのFirestore Databaseが作成されているか、ルールで書き込みが許可されているか確認してください。");
                     } finally { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
                 };
             }
@@ -1851,13 +1884,10 @@
                 updateGrowthState(); window.updateStatsUI(); refreshLog();
             }, (err) => {
                 console.error(err);
-                // 読み込みエラー時もアラート（初回のみなど制御してもいいが、原因特定のため出す）
-                /*
-                if(!window.hasShownError) {
+                if(isLocalEnvironment && !window.hasShownError) {
                      alert("データ同期エラー:\n" + err.message + "\n\n※Firestoreの権限設定(Rules)を確認してください。");
                      window.hasShownError = true;
                 }
-                */
             });
         }
 
