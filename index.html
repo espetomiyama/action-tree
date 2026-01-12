@@ -177,7 +177,7 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
-        /* Nav Icon Hit Area */
+        /* Nav Icon Hit Area & Style */
         .nav-icon {
             width: 44px;
             height: 44px;
@@ -187,13 +187,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: auto; /* 確実にクリック可能に */
         }
         
         .nav-icon-inner {
             width: 24px;
             height: 10px;
             position: relative;
-            pointer-events: none;
+            pointer-events: none; /* 中身は透過 */
         }
 
         @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
@@ -209,11 +210,11 @@
             transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        .nav-icon span:nth-child(1) { top: 0px; }
-        .nav-icon span:nth-child(2) { bottom: 0px; }
+        .nav-icon .nav-icon-inner span:nth-child(1) { top: 0px; }
+        .nav-icon .nav-icon-inner span:nth-child(2) { bottom: 0px; }
 
-        .nav-icon.open span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
-        .nav-icon.open span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+        .nav-icon.open .nav-icon-inner span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+        .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
 
         .menu-link {
             font-family: 'Inter', sans-serif;
@@ -250,6 +251,7 @@
             font-weight: 800;
             will-change: transform, background-color;
             cursor: pointer;
+            pointer-events: auto; /* 確実にクリック可能に */
         }
 
         @media (min-width: 768px) {
@@ -417,7 +419,7 @@
             background: #ccc;
         }
         
-        /* ローダー */
+        /* ローダーと安全装置（CSS強制解除） */
         #app-loader {
             position: fixed;
             inset: 0;
@@ -429,7 +431,7 @@
             flex-direction: column;
             opacity: 1;
             pointer-events: auto;
-            /* 強制解除アニメーション（安全策） */
+            /* ★重要: JSがエラーでも4秒後には強制的に消える */
             animation: forceHide 0.5s linear 4s forwards;
         }
         
@@ -445,7 +447,7 @@
             animation: none;
         }
         
-        /* フォームエラーアニメーション（下線黒色変化） */
+        /* フォームエラーアニメーション */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -453,17 +455,9 @@
         }
         .input-error-shake {
             animation: shake 0.3s ease-in-out;
-            border-bottom-color: #000 !important; /* ★ここが黒くなる指定 */
+            border-bottom-color: #000 !important; 
         }
     </style>
-    
-    <!-- ★安全装置: 3秒経ってもローダーが消えない場合は強制的に消す -->
-    <script>
-        setTimeout(() => {
-            const loader = document.getElementById('app-loader');
-            if (loader) loader.style.display = 'none';
-        }, 3000);
-    </script>
 </head>
 <body style="overflow: hidden;">
 
@@ -483,11 +477,13 @@
             <div class="logo-fallback w-6 h-6 md:w-8 md:h-8"></div>
         </div>
         <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
+            <!-- 文字間調整 -->
             <span class="logo-main-text" onclick="window.showPage('top')">
                 <span style="margin-right: 0.08em">1</span>00 Action Tree
             </span>
         </div>
         <div class="ml-auto">
+            <!-- Menu Toggle -->
             <div id="menu-toggle" class="nav-icon">
                 <div class="nav-icon-inner"><span></span><span></span></div>
             </div>
@@ -514,6 +510,7 @@
             <div class="marquee-container">
                 <div class="marquee-content" id="stats-slider"></div>
             </div>
+            <!-- ACTION BUTTON -->
             <button id="main-action-button" onclick="window.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
@@ -769,7 +766,43 @@
     </div>
 
     <!-- Details Modal -->
-    <!-- ... (No changes needed here) ... -->
+    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
+        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
+            <button onclick="window.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black">&times;</button>
+            <div class="mb-8 md:mb-10 text-black">
+                <div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div>
+                <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3>
+            </div>
+            <div class="space-y-5 md:space-y-6 text-black">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span>
+                    <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span>
+                    <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span>
+                    <p id="detail-project" class="text-sm font-bold break-words text-black">Project Title</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span>
+                        <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span>
+                        <p id="detail-amount" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-gray-100">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span>
+                    <p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black">Details go here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Logic Script (Standard JS) -->
     <script>
@@ -777,19 +810,25 @@
         document.addEventListener('DOMContentLoaded', () => {
             setupUI();
             
-            // Force remove loader after delay to ensure screen is visible even if errors occur
+            // ★安全装置: 5秒後には絶対にローダーを消す
             setTimeout(() => {
                 const loader = document.getElementById('app-loader');
                 if (loader) loader.classList.add('loaded');
-            }, 3000);
+            }, 5000);
         });
 
         // Initialize Visuals
         window.addEventListener('load', () => {
             try {
                 initVisuals();
+                // 正常にロードできれば即座に消す
+                const loader = document.getElementById('app-loader');
+                if (loader) loader.classList.add('loaded');
             } catch(e) {
                 console.error("Visual Init Error:", e);
+                // エラー時も消す
+                const loader = document.getElementById('app-loader');
+                if (loader) loader.classList.add('loaded');
             }
         });
 
@@ -1080,7 +1119,7 @@
                                 window.closeModal();
                             } catch(err) {
                                 console.error("Save Error:", err);
-                                alert("投稿エラー: " + err.message);
+                                alert("投稿エラー: " + err.message + "\n権限設定を確認してください。");
                             } finally {
                                 btn.disabled = false; btn.textContent = "ACTION / 投稿する";
                             }
