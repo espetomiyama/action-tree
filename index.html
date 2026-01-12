@@ -7,7 +7,6 @@
     
     <title>100 ACTION TREE</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -20,27 +19,32 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0;
             overflow-x: hidden;
-            /* ★修正: JSが動かなくても背景色が出るようにCSSで指定 */
-            background: linear-gradient(to bottom, #000807, #001a15);
+            background-color: #000807; /* Fallback color */
             color: #fff;
             letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- Layout & Z-Index Strategy --- */
+        /* --- Layout --- */
         #canvas-container {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; 
-            /* 背景色はCSS bodyに任せるため透明に */
-            background: transparent;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; background: transparent; pointer-events: auto;
+        }
+        
+        .full-screen-section {
+            height: 100vh; height: 100dvh; width: 100%;
+            display: flex; flex-direction: column; position: relative;
+        }
+
+        /* --- UI Elements --- */
+        .clickable, a, button, input, label, textarea, .nav-icon, .logo-symbol-wrapper, .logo-main-text {
+            pointer-events: auto !important; cursor: pointer;
         }
 
         /* Header */
         header { 
-            position: fixed; top: 0; left: 0; width: 100%; 
-            z-index: 500; 
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 500;
             pointer-events: none; transition: all 0.4s ease; 
         }
         header.is-dark .logo-main-text { color: #000 !important; }
@@ -54,7 +58,7 @@
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
 
         /* Menu */
-        .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+        .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .nav-icon-inner { width: 24px; height: 10px; position: relative; pointer-events: none; }
         @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
         .nav-icon span { display: block; position: absolute; height: 2px; width: 100%; background: #fff; left: 0; transition: all 0.4s; }
@@ -77,7 +81,7 @@
             position: fixed; bottom: 80px; right: 20px; z-index: 90;
             width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000;
             box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            text-transform: uppercase; font-weight: 800; pointer-events: auto; cursor: pointer;
+            text-transform: uppercase; font-weight: 800;
         }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
 
@@ -95,7 +99,6 @@
         @media (min-width: 768px) { .countdown-stable { min-width: 180px; } }
 
         /* Pages */
-        .full-screen-section { height: 100vh; height: 100dvh; display: flex; flex-direction: column; position: relative; }
         .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
         .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
         .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
@@ -125,18 +128,17 @@
         /* Utility */
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
-        .clickable, a, button, input, label, textarea, .nav-icon, .logo-symbol-wrapper, .logo-main-text { pointer-events: auto !important; cursor: pointer; }
 
-        /* --- Loader Safety System --- */
+        /* Loader Safety System */
         #app-loader {
             position: fixed; inset: 0; z-index: 9999; background: #000807;
             display: flex; align-items: center; justify-content: center; flex-direction: column;
             pointer-events: auto;
-            /* ★重要: JSがエラーでも3秒後にCSSで強制的に消滅させる */
-            animation: forceLoaderHide 0.5s ease-out 3s forwards;
+            /* ★最重要: 3.5秒後にCSSだけで強制的に消す（JSエラー対策） */
+            animation: forceHide 0.5s ease-out 3.5s forwards;
         }
-        @keyframes forceLoaderHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-        /* JSで制御できた場合はこちらが適用される */
+        @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+        /* JSで制御できた場合 */
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
 </head>
@@ -180,19 +182,13 @@
 
     <!-- Content -->
     <main id="app-content">
-        <!-- TOP -->
+        <!-- TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
-            <!-- Static Slider (Always visible even if JS fails) -->
             <div class="marquee-container">
                 <div class="marquee-content" id="stats-slider">
+                    <!-- Static Initial Content for Failsafe -->
                     <div class="marquee-item text-white">
-                        <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
-                        <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value">¥<span class="amount-val">0</span></span></div>
-                        <div class="stats-group"><span class="stats-label">Tree Level</span><span class="stats-value level-val">LV0 SOIL</span></div>
-                        <div class="stats-group"><span class="stats-label">Date</span><span class="stats-value marquee-date-val countdown-stable">---</span></div>
-                    </div>
-                     <div class="marquee-item text-white">
                         <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
                         <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value">¥<span class="amount-val">0</span></span></div>
                         <div class="stats-group"><span class="stats-label">Tree Level</span><span class="stats-value level-val">LV0 SOIL</span></div>
@@ -200,19 +196,18 @@
                     </div>
                 </div>
             </div>
-            <!-- ACTION BUTTON -->
             <button id="main-action-button" onclick="ui.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
 
-        <!-- ABOUT -->
+        <!-- ABOUT PAGE -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
                     <span class="page-section-label">About 100 ACTION TREE</span>
-                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10">100アクションを目指して</h2>
-                    <div class="statement-text-container space-y-6 md:space-y-8">
+                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">100アクションを目指して</h2>
+                    <div class="statement-text-container space-y-6 md:space-y-8 text-black">
                         <p>100 ACTION TREEは、個人の「自発的なアクション」を養分にして、組織全体の文化を大きく育てていくためのプラットフォームです。</p>
                         <p>私たちは、プロフェッショナルとしてデザインを突き詰めることを何より大切にしています。その職人魂は、私たちのアイデンティティであり、永遠に変わることはありません。しかし、AIが多くのことを代替していくこれからの時代、私たち人間にしかできないこと、それは「問いを立て、対話をし、未来への決断を下すこと」ではないでしょうか。</p>
                         <div class="py-2 md:py-4"><p class="leading-relaxed font-bold">「まずは100個のアクションを」<br>小さな種まきが、やがて大きな森になる。</p></div>
@@ -236,7 +231,7 @@
             </div>
         </div>
 
-        <!-- RULES -->
+        <!-- RULES PAGE -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
@@ -264,7 +259,7 @@
             </div>
         </div>
 
-        <!-- LOG -->
+        <!-- LOG PAGE -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -305,7 +300,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD -->
+        <!-- DASHBOARD PAGE -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -397,12 +392,14 @@
         </div>
     </div>
 
-    <!-- 1. Global UI & Visuals (Safe from Module errors) -->
+    <!-- 1. UI Script (No Dependencies) -->
     <script>
-        // Global Namespace
+        // Global UI namespace
         window.ui = {};
         window.state = { actions:0, amount:0, isMobile: window.innerWidth<768, currentLevel:0, simulatedHour:null, flowers:[] };
         window.treeGroup = null;
+        window.camera = null; // Expose camera global
+        window.renderer = null; // Expose renderer global
 
         const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         const TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
@@ -418,18 +415,31 @@
             else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
             if (id === 'log' && window.refreshLog) window.refreshLog();
         };
+        
         ui.toggleMenu = () => {
             const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
             const isOpen = nav.style.display === 'flex';
             nav.style.display = isOpen ? 'none' : 'flex';
             toggle.classList.toggle('open');
-            if(!isOpen) { if(header) header.classList.remove('is-dark'); if(window.getDynamicColor) { const hex = window.getDynamicColor(); const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0}; nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`; } }
-            else { const isTop = !document.getElementById('page-top').classList.contains('hidden'); if(!isTop && header) header.classList.add('is-dark'); }
+            if(!isOpen) {
+                if(header) header.classList.remove('is-dark');
+                if(window.getDynamicColor) {
+                    const hex = window.getDynamicColor();
+                    const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0};
+                    nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+                }
+            } else {
+                const isTop = !document.getElementById('page-top').classList.contains('hidden');
+                if(!isTop && header) header.classList.add('is-dark');
+            }
         };
+        
         ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; };
         ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
         ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
         ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
+        
+        // Sim Functions with Safety Checks
         ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateGrowthState && window.updateGrowthState(); } };
         ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
         ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
@@ -443,72 +453,102 @@
             const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dateStr);
         }
+        setInterval(updateMarquee, 1000); updateMarquee();
 
-        // Init Everything
+        // Init Interactions
         document.addEventListener('DOMContentLoaded', () => {
             // Form interactions
             document.getElementsByName('post-status').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const amt = document.getElementById('amount-container');
                     const inp = document.getElementById('post-amount');
-                    if(e.target.value === 'order') { amt.classList.remove('invisible', 'opacity-0'); if(window.gsap) gsap.to(amt, {opacity:1, duration:0.3}); inp.setAttribute('required', 'true'); }
-                    else { if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); inp.removeAttribute('required'); inp.value=''; }
+                    if(e.target.value === 'order') { 
+                        amt.classList.remove('invisible', 'opacity-0'); 
+                        if(window.gsap) gsap.to(amt, {opacity:1, duration:0.3});
+                        inp.setAttribute('required', 'true');
+                    } else { 
+                        if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')});
+                        inp.removeAttribute('required'); inp.value='';
+                    }
                 });
             });
+            // Validation Reset
             ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); });
             });
+            // Button Animations
             if(window.gsap) {
-                document.querySelectorAll('.vivid-cycle-btn').forEach(btn => { gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); const tl = gsap.timeline({ repeat: -1 }); DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" })); });
-                document.querySelectorAll('.breath-animation').forEach(btn => { gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" }); });
+                document.querySelectorAll('.vivid-cycle-btn').forEach(btn => {
+                    gsap.to(btn, { backgroundColor: "#fff", duration: 0 });
+                    const tl = gsap.timeline({ repeat: -1 });
+                    DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" }));
+                });
+                document.querySelectorAll('.breath-animation').forEach(btn => {
+                    gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" });
+                });
             }
-            setInterval(updateMarquee, 1000); updateMarquee();
             
-            // Visuals
-            try { initVisuals(); } catch(e) { console.error(e); }
-            
-            // Fallback Form Handler (If Firebase fails)
+            // Demo Submit Handler (Default)
             const form = document.getElementById('action-form');
             if(form) {
                 form.onsubmit = (e) => {
-                    if(window.isSyncStarted) return; // Let Module handle it
                     e.preventDefault();
+                    // Validation
+                    let hasError = false;
+                    ['post-name','post-client','post-project'].forEach(id=>{
+                        const el = document.getElementById(id);
+                        if(!el.value) { el.classList.add('input-error-shake'); hasError=true; }
+                    });
+                    if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return; }
+
                     const n = document.getElementById('post-name').value;
                     const c = document.getElementById('post-client').value;
                     const p = document.getElementById('post-project').value;
-                    if(!n || !c || !p) { document.getElementById('form-error-msg').classList.remove('hidden'); return; }
                     const a = parseInt(document.getElementById('post-amount').value) || 0;
                     const notes = document.getElementById('post-notes').value;
                     const status = document.querySelector('input[name="post-status"]:checked').value;
+                    
                     if(window.addFlowerWithConvergence) {
                         window.addFlowerWithConvergence(n,c,p,a,notes,status,false);
                         window.state.actions++;
                         if(status === 'order') window.state.amount += a;
-                        window.updateStatsUI(); window.refreshLog();
+                        if(window.updateStatsUI) window.updateStatsUI();
+                        if(window.refreshLog) window.refreshLog();
                     }
                     ui.closeModal();
                 };
             }
         });
+    </script>
+    
+    <!-- 2. Visual Script (Three.js) -->
+    <script>
+        let scene, particles, effectGroup, bgMesh, bgUniforms;
 
-        // 3D Logic
-        let scene, camera, renderer, particles, effectGroup, bgMesh, bgUniforms;
-        function initVisuals() {
+        window.addEventListener('load', () => {
+            try { initThree(); } catch(e) { console.error("Three Init Error", e); }
+        });
+
+        function initThree() {
             const container = document.getElementById('canvas-container');
             if(!container) return;
             scene = new THREE.Scene(); 
-            const w = window.innerWidth; const h = window.innerHeight;
-            camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
-            camera.position.set(0, 5, window.state.isMobile ? 35 : 22); camera.lookAt(0, 8, 0);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(w, h); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
+            // Fix resize logic to window initially
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
+            window.camera.position.set(0, 5, window.state.isMobile ? 35 : 22);
+            window.camera.lookAt(0, 8, 0);
+            window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            window.renderer.setSize(w, h); 
+            window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(window.renderer.domElement);
             
             window.treeGroup = new THREE.Group(); scene.add(window.treeGroup);
             effectGroup = new THREE.Group(); scene.add(effectGroup);
             
-            // BG
+            // BG Setup
             bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000") }, uColorB: { value: new THREE.Color("#330066") } };
             const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
             const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
@@ -527,13 +567,22 @@
             particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ size:0.12, vertexColors:true, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending }));
             window.treeGroup.add(particles);
 
+            const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+            window.state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, window.state.maxBuds); window.state.instancedBuds.count = 0; treeGroup.add(window.state.instancedBuds);
+            
+            addBudsInstanced(2000);
             animate();
+            
             window.updateBackgroundColor();
             window.updateStatsUI();
             
             window.addEventListener('resize', () => { 
-                camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-                window.state.isMobile = window.innerWidth < 768; window.updateBackgroundColor();
+                if(window.camera && window.renderer) {
+                    window.camera.aspect = window.innerWidth / window.innerHeight; window.camera.updateProjectionMatrix(); window.renderer.setSize(window.innerWidth, window.innerHeight);
+                    window.state.isMobile = window.innerWidth < 768; 
+                    // Resize時も色を再計算
+                    window.updateBackgroundColor();
+                }
             });
             const canvasEl = document.querySelector('canvas');
             if (canvasEl) { canvasEl.addEventListener('click', (e) => { if (!window.state.isModalOpen && hoveredFlower) window.showDetail(hoveredFlower.userData); }); }
@@ -544,12 +593,29 @@
             if(bgUniforms) bgUniforms.uTime.value += 0.01;
             window.updateBackgroundColor();
             if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
-            renderer.render(scene, camera);
+            state.flowers.forEach(f => {
+                const ud = f.userData; if (ud.baseX === undefined) return;
+                const time = Date.now();
+                f.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*window.state.driftFactor*3.8;
+                f.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*window.state.driftFactor*3.2;
+                f.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*window.state.driftFactor*3.8;
+            });
+            if (!state.isModalOpen) {
+                raycaster.setFromCamera(mouse, camera); const hit = raycaster.intersectObjects(state.flowers);
+                if (hit.length > 0) {
+                    const obj = hit[0].object;
+                    if (hoveredFlower !== obj) { if (hoveredFlower) gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = obj; gsap.to(obj.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 0.6 }); }
+                    document.body.style.cursor = 'pointer';
+                } else { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = null; } document.body.style.cursor = 'default'; }
+            } else if (hoveredFlower) resetHoverState();
+            if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
+        // Global Utility Functions
         window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
         window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
             if(h<5) return TIME_PERIODS.NIGHT; if(h<12) return TIME_PERIODS.MORNING; if(h<17) return TIME_PERIODS.DAY; return TIME_PERIODS.EVENING;
@@ -584,23 +650,23 @@
                 addFlowerToTreeAt(n,c,p,a,not,s,target.local.x,target.local.y,target.local.z,color);
             }});
         };
-        function getGuaranteedVisibleTarget() { const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld(); while (attempts < 50) { const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2; const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier); const posX = Math.cos(a) * r, posZ = Math.sin(a) * r; vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); vector.project(camera); if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: new THREE.Vector3(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld) }; attempts++; } return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0) }; }
-        function addFlowerToTreeAt(name, client, project, amount, notes, status, x, y, z, color) { const geo = new THREE.SphereGeometry(0.25,16,16); const mat = new THREE.MeshBasicMaterial({color:color}); const mesh = new THREE.Mesh(geo,mat); mesh.position.set(x,y,z); mesh.userData = {name,client,project,amount,notes,status,colorHex:color}; window.treeGroup.add(mesh); state.flowers.push(mesh); gsap.to(mesh.scale, {x:1, y:1, z:1, duration:1.5, ease:"elastic.out(1, 0.3)"}); }
+        function getGuaranteedVisibleTarget() { const vector = new THREE.Vector3(); let attempts = 0; window.treeGroup.updateMatrixWorld(); while (attempts < 50) { const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2; const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier); const posX = Math.cos(a) * r, posZ = Math.sin(a) * r; vector.set(posX, posY, posZ).applyMatrix4(window.treeGroup.matrixWorld); vector.project(window.camera); if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: new THREE.Vector3(posX, posY, posZ).applyMatrix4(window.treeGroup.matrixWorld) }; attempts++; } return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0) }; }
+        function addFlowerToTreeAt(name, client, project, amount, notes, status, x, y, z, color) { const geo = new THREE.SphereGeometry(0.25,16,16); const mat = new THREE.MeshBasicMaterial({color:color}); const mesh = new THREE.Mesh(geo,mat); mesh.position.set(x,y,z); mesh.userData = {name,client,project,amount,notes,status,colorHex:color, baseX:x, baseY:y, baseZ:z, phaseX:Math.random()*Math.PI*2, phaseY:Math.random()*Math.PI*2, phaseZ:Math.random()*Math.PI*2, floatSpeed:0.0004+Math.random()*0.0004}; window.treeGroup.add(mesh); window.state.flowers.push(mesh); gsap.to(mesh.scale, {x:1, y:1, z:1, duration:1.5, ease:"elastic.out(1, 0.3)"}); }
         window.addFlowerFromData = (d) => { const colorHex = d.colorHex || DESIGN_PALETTE[0]; const seed = d.timestamp || 1; const seededRandom = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); }; const radiusScale = state.isMobile ? 0.8 : 1.0; const heightScale = state.isMobile ? 1.2 : 1.0; const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.growthMultiplier) * heightScale + 4; let branchFactor = (y + 6) / 22; if (branchFactor < 0.1) branchFactor = 0.1; const a = seededRandom(seed * 0.2) * Math.PI * 2; const r = (0.5 + seededRandom(seed * 0.3)) * (branchFactor * 10 * state.baseSpreadFactor) * radiusScale; addFlowerToTreeAt(d.name, d.client, d.project, d.amount, d.notes, d.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex, false, d.id); };
         function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
         function createSparkleEffect(pos, colorHex) { const particleCount = 60; const geo = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const velocities = []; for(let i=0; i<particleCount; i++) { positions[i*3] = pos.x; positions[i*3+1] = pos.y; positions[i*3+2] = pos.z; const v = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4 + 0.1, (Math.random() - 0.5) * 0.4).normalize().multiplyScalar(0.02 + Math.random() * 0.04); velocities.push(v); } geo.setAttribute('position', new THREE.BufferAttribute(positions, 3)); const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.3, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); const sparkleSystem = new THREE.Points(geo, mat); effectGroup.add(sparkleSystem); const anim = { val: 0 }; gsap.to(anim, { val: 1, duration: 3.0, ease: "power2.out", onUpdate: () => { const posAttr = sparkleSystem.geometry.attributes.position; for(let i=0; i<particleCount; i++) { posAttr.array[i*3] += velocities[i].x; posAttr.array[i*3+1] += velocities[i].y; posAttr.array[i*3+2] += velocities[i].z; velocities[i].multiplyScalar(0.98); } posAttr.needsUpdate = true; sparkleSystem.material.opacity = (1 - anim.val); }, onComplete: () => { effectGroup.remove(sparkleSystem); geo.dispose(); mat.dispose(); } }); }
         function addBudsInstanced(c) { /* Simple stub */ }
-        window.updateGrowthState = () => { const count = state.actions; let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; state.currentLevel = lv; let mult = 1.0 + lv*0.2; let camZ = (state.isMobile?32:22) + (lv*(state.isMobile?6:4)); if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); if(camera) gsap.to(camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } }); };
+        window.updateGrowthState = () => { const count = state.actions; let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; state.currentLevel = lv; let mult = 1.0 + lv*0.2; let camZ = (state.isMobile?32:22) + (lv*(state.isMobile?6:4)); if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } }); };
     </script>
     
-    <!-- 2. Firebase Logic (Module) -->
+    <!-- 3. Firebase Logic (Optional Module) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // 【重要】Firebase設定 (再度書き換えてください)
+        // 【重要】Firebase設定をここに記入してください
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         const firebaseConfig = {
             apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
@@ -611,20 +677,20 @@
             appId: "1:471274997168:web:b0479cfc2006b136ad0275"
         };
 
-        async function initFirebase() {
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") return;
+        async function startFirebase() {
+            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                console.log("Firebase not configured (Dev Mode)");
+                return;
+            }
 
             try {
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                // Unified path for GitHub Pages
+                // GitHub Pagesなど独自環境で動かすときは 'actions' コレクションを使う
                 const collectionRef = collection(db, 'actions');
 
-                // Flag: Sync started
-                window.isSyncStarted = true;
-
-                // Override Form
+                // Overwrite Form Handler for DB
                 const form = document.getElementById('action-form');
                 if(form) {
                     form.onsubmit = async (e) => {
@@ -653,7 +719,7 @@
                         btn.disabled = true; btn.innerText = "Saving...";
                         try {
                             await addDoc(collectionRef, {
-                                name: n, client: c, project: p, amount: a, notes: notes, status: status,
+                                name: n, client: c, project: p, amount: parseInt(a), notes: notes, status: status,
                                 colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
                                 timestamp: Date.now()
                             });
@@ -665,6 +731,7 @@
                     };
                 }
                 
+                // Expose Reset for DB
                 window.resetDataImpl = async () => {
                     if(!confirm("DBデータを全削除しますか？")) return;
                     const q = await getDocs(collectionRef);
@@ -680,11 +747,12 @@
                         window.treeGroup.children.filter(c => c.geometry && c.geometry.type === 'SphereGeometry').forEach(c => window.treeGroup.remove(c));
                     }
                     window.state.flowers = []; window.state.actions = 0; window.state.amount = 0;
+                    
                     snap.forEach(doc => {
                         const d = doc.data(); d.id = doc.id;
                         window.addFlowerFromData(d);
                         window.state.actions++;
-                        if(d.status === 'order') window.state.amount += (d.amount || 0);
+                        if(d.status === 'order') window.state.amount += (parseInt(d.amount) || 0);
                     });
                     window.updateGrowthState();
                 });
@@ -694,7 +762,7 @@
             }
         }
         
-        initFirebase();
+        startFirebase();
     </script>
 </body>
 </html>
