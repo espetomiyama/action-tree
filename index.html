@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 検索インデックス除外 -->
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
@@ -18,7 +19,7 @@
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0;
-            /* overflowはJSで制御するため初期値はhiddenにしない（TOP表示時に設定） */
+            overflow-x: hidden;
             background: linear-gradient(to bottom, #000807, #001a15);
             color: #fff;
             letter-spacing: 0.1em;
@@ -32,16 +33,14 @@
             z-index: 0; background: transparent; pointer-events: auto;
         }
         
-        .full-screen-section {
-            height: 100vh; height: 100dvh; width: 100%;
-            display: flex; flex-direction: column; position: relative;
-        }
+        .full-screen-section { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
 
         /* --- UI Elements --- */
         .clickable, a, button, input, label, textarea, .nav-icon, .logo-symbol-wrapper, .logo-main-text, .menu-link {
             pointer-events: auto !important; cursor: pointer;
         }
 
+        /* Header */
         header { 
             position: fixed; top: 0; left: 0; width: 100%; z-index: 500; 
             pointer-events: none; transition: all 0.4s ease; 
@@ -67,11 +66,10 @@
         .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
 
         .menu-overlay {
-            display: none; position: fixed; inset: 0; z-index: 400; /* Headerの下、他より上 */
+            display: none; position: fixed; inset: 0; z-index: 150;
             background: rgba(0, 40, 30, 0.95); flex-direction: column; 
             align-items: center; justify-content: center; backdrop-filter: blur(12px);
             pointer-events: auto;
-            /* メニュー展開時のスクロール防止はJSでbodyのoverflowを制御 */
         }
         .menu-link { 
             font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; 
@@ -85,22 +83,20 @@
             position: fixed; bottom: 80px; right: 20px; z-index: 90;
             width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000;
             box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            text-transform: uppercase; font-weight: 800; pointer-events: auto;
+            text-transform: uppercase; font-weight: 800;
         }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
 
-        /* Marquee (スライダー) 修正版 */
+        /* Marquee */
         .marquee-container { 
             position: absolute; bottom: 0; width: 100%; 
             padding: 2.5rem 0; 
             overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; 
         }
-        /* SPでの表示位置調整（少し上げる） */
         @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; bottom: 30px; } }
         
         .marquee-track { 
             display: flex; width: max-content; 
-            /* SPでの表示安定化: translate3dを使用 */
             animation: marquee 120s linear infinite; 
             will-change: transform;
         }
@@ -124,7 +120,7 @@
         .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
         .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
         
-        /* Footer (ナビ付き完全版) */
+        /* Footer */
         .app-footer { padding: 4rem 0 3rem; text-align: center; }
         .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; transition: opacity 0.3s; }
         .footer-nav-link:hover { opacity: 0.5; }
@@ -139,11 +135,10 @@
         .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-        /* Actions Log Font Weight Fix */
-        /* ★修正: 太さを強制的に900(Black)に */
+        /* Actions Log Font */
         .stat-card-value { 
             font-size: 1.5rem; 
-            font-weight: 900 !important; /* Force Black weight */
+            font-weight: 900 !important;
             font-family: 'Inter', sans-serif;
             line-height: 1; 
             letter-spacing: -0.02em; 
@@ -161,14 +156,18 @@
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
 
         /* Loader */
-        #app-loader { position: fixed; inset: 0; z-index: 9999; background: #000807; display: flex; align-items: center; justify-content: center; flex-direction: column; pointer-events: auto; animation: forceHide 0.5s linear 3.5s forwards; }
+        #app-loader {
+            position: fixed; inset: 0; z-index: 9999; background: #000807;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            pointer-events: auto;
+            animation: forceHide 0.5s linear 3s forwards;
+        }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
 
-    <!-- ★★★ CORE SCRIPT ★★★ -->
+    <!-- ★ CORE SCRIPT ★ -->
     <script>
-        // Init Globals
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
@@ -203,11 +202,8 @@
             const isOpen = nav.style.display === 'flex';
             
             if (!isOpen) {
-                // OPEN
                 nav.style.display = 'flex';
-                // ★修正: メニュー展開時はスクロール禁止
                 document.body.style.overflow = 'hidden';
-                
                 if(header) header.classList.remove('is-dark');
                 if(window.getDynamicColor) {
                     const hex = window.getDynamicColor();
@@ -216,14 +212,10 @@
                 }
                 toggle.classList.add('open');
             } else { 
-                // CLOSE
                 nav.style.display = 'none';
                 toggle.classList.remove('open');
-                
-                // ★修正: 閉じた後はページに合わせてスクロール状態を復帰
                 const isTop = !document.getElementById('page-top').classList.contains('hidden');
                 document.body.style.overflow = isTop ? 'hidden' : 'auto';
-                
                 if(!isTop && header) header.classList.add('is-dark'); 
             }
         };
@@ -323,7 +315,6 @@
             const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible');
         }
         
-        // Sim Functions
         window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
         window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
         window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
@@ -404,7 +395,6 @@
                         <p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「100 ACTION TREE」を構築しました。</p>
                     </div>
                 </div>
-                <!-- ★修正: フッター復旧 -->
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
                         <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
@@ -433,7 +423,6 @@
                         <div class="rule-card"><h4 class="text-sm font-bold mb-2">「共創」を楽しみましょう</h4><p class="text-gray-500 text-[13px] leading-relaxed">誰かと一緒に考えたり、協力して進めたりしたアクションは、より太くて丈夫な枝になります。</p></div>
                     </div>
                 </div>
-                <!-- ★修正: フッター復旧 -->
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
                         <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
@@ -456,7 +445,6 @@
                     <span class="page-section-label">Log & Analytics</span>
                     <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
-                        <!-- ★修正: フォント太さをBlack(900)に強制 -->
                         <div><span class="page-section-label">Total Actions / Goal</span><div class="stat-card-value tabular text-black flex items-baseline font-black"><span class="actions-val">0</span> <span class="text-lg ml-2 text-gray-400 font-bold">/ 100</span></div></div>
                         <div><span class="page-section-label">Total Amount</span><div class="stat-card-value tabular text-black font-black">¥<span class="amount-val">0</span></div></div>
                         <div><span class="page-section-label">Tree Level</span><div class="stat-card-value tabular text-black level-val-display font-black">LV0</div></div>
@@ -493,21 +481,61 @@
 
         <!-- DASHBOARD -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
-             <div class="max-w-5xl mx-auto px-6 md:px-10"><div class="mb-16 md:mb-24"><span class="page-section-label">System Management</span><h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2></div><div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black"><div><span class="page-section-label">Tree Growth Verification</span><div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black"><button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset (0)</button><button onclick="window.ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button><button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button><button onclick="window.ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button><button onclick="window.ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button><button onclick="window.ui.setTestLevel(75)" class="sim-btn clickable">LV4 (75)</button><button onclick="window.ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button></div></div><div><span class="page-section-label text-black">Environmental Atmosphere</span><div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center"><button onclick="window.ui.setTestTime(2)" class="sim-btn clickable">Night (02:00)</button><button onclick="window.ui.setTestTime(9)" class="sim-btn clickable">Morning (09:00)</button><button onclick="window.ui.setTestTime(15)" class="sim-btn clickable">Day (15:00)</button><button onclick="window.ui.setTestTime(20)" class="sim-btn clickable">Evening (20:00)</button><button onclick="window.ui.resetTimeSim()" class="sim-btn text-black clickable">Sync</button><div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200"><input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors clickable" onkeydown="if(event.key==='Enter') window.ui.applyCustomTime()"><button onclick="window.ui.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70 clickable">SET</button></div></div></div></div><div class="border-t border-black pt-16 mb-20"><h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3><div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6"><p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。</p><button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button></div></div>
-             <!-- ★修正: フッター復旧 -->
-             <footer class="app-footer">
-                <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                    <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                    <a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                    <a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                    <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
-                </nav>
-                <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                    <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+            <div class="max-w-5xl mx-auto px-6 md:px-10">
+                <div class="mb-16 md:mb-24">
+                    <span class="page-section-label">System Management</span>
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2>
                 </div>
-                <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
-             </footer>
-             </div>
+                <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black">
+                    <div>
+                        <span class="page-section-label">Tree Growth Verification</span>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
+                            <button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset</button>
+                            <button onclick="window.ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button>
+                            <button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button>
+                            <button onclick="window.ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button>
+                            <button onclick="window.ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button>
+                            <button onclick="window.ui.setTestLevel(75)" class="sim-btn clickable">LV4 (75)</button>
+                            <button onclick="window.ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="page-section-label text-black">Environmental Atmosphere</span>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center">
+                            <button onclick="window.ui.setTestTime(2)" class="sim-btn clickable">Night</button>
+                            <button onclick="window.ui.setTestTime(9)" class="sim-btn clickable">Morning</button>
+                            <button onclick="window.ui.setTestTime(15)" class="sim-btn clickable">Day</button>
+                            <button onclick="window.ui.setTestTime(20)" class="sim-btn clickable">Evening</button>
+                            <button onclick="window.ui.resetTimeSim()" class="sim-btn text-black clickable">Sync</button>
+                            <div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200">
+                                <input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" 
+                                       class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors clickable"
+                                       onkeydown="if(event.key==='Enter') window.ui.applyCustomTime()">
+                                <button onclick="window.ui.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70 clickable">SET</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-black pt-16 mb-20">
+                    <h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3>
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。</p>
+                        <button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button>
+                    </div>
+                </div>
+                <footer class="app-footer">
+                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
+                        <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
+                        <a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a>
+                        <a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
+                        <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
+                    </nav>
+                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
+                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
+                </footer>
+            </div>
         </div>
     </main>
 
@@ -519,6 +547,7 @@
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
                 <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">ACTIONを投稿して、100の木を育てましょう。</p>
             </div>
+            <!-- Submit -> window.handleFormSubmit() -->
             <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" onsubmit="return window.handleFormSubmit(event)" novalidate>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label><input type="text" id="post-name" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label><input type="text" id="post-client" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
@@ -574,12 +603,13 @@
                 });
             });
             
-            // Marquee
+            // Marquee Loop Logic
             function updateMarquee() {
                 const now = new Date();
                 const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
                 document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dStr);
-                // Loop
+                
+                // Clone for Loop
                 const track = document.getElementById('stats-slider-track');
                 const content = document.getElementById('stats-content-source');
                 if(track && content && track.children.length < 5) {
@@ -684,9 +714,10 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        // Utils
+        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
@@ -711,12 +742,12 @@
             }
             
             window.state.flowers.forEach(d => {
-                 const userData = d.userData || d; // Handle both structures
+                 const userData = d.userData || d;
                  const color = userData.colorHex || '#fff';
                  
-                 // Bright Material (Emissive)
+                 // ★修正: BasicMaterialに変更（光源不要で確実に表示）
                  const geo = new THREE.SphereGeometry(0.25,16,16);
-                 const mat = new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.8 }); 
+                 const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo,mat);
                  mesh.name = 'action_flower'; // ID tag
                  
@@ -763,7 +794,6 @@
             }, onComplete: () => {
                 window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
                 createSparkleEffect(tPos, color); flashTreeParticles();
-                // Note: The actual tree update happens via data sync
             }});
         };
         function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
