@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- ★追加: 検索エンジンにインデックスさせない設定（社内運用向け） -->
+    <!-- 社内運用向け: 検索インデックス除外 -->
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
@@ -439,6 +439,8 @@
             animation: shake 0.3s ease-in-out;
             border-bottom-color: #000 !important;
         }
+
+        /* --- Success Feedback Overlay (Removed per request) --- */
     </style>
 </head>
 <body style="overflow: hidden;">
@@ -869,7 +871,7 @@
                 projectId: "action-tree",
                 storageBucket: "action-tree.firebasestorage.app",
                 messagingSenderId: "471274997168",
-                appId: "471274997168"
+                appId: "1:471274997168:web:b0479cfc2006b136ad0275"
             };
             appId = 'action-tree-platform';
         }
@@ -879,7 +881,7 @@
                 setTimeout(() => {
                     const loader = document.getElementById('app-loader');
                     if(loader) {
-                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~960</div>';
+                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~1060</div>';
                         loader.onclick = () => loader.style.display = 'none';
                     }
                 }, 1000);
@@ -1173,7 +1175,11 @@
             const toggle = document.getElementById('menu-toggle'); if(toggle) toggle.classList.remove('open');
             
             // Adjust Overflow & Body Position
-            document.body.style.overflow = (id === 'top') ? 'hidden' : 'auto';
+            if (id === 'top') {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = 'auto';
+            }
             
             if (id !== 'top') {
                 window.scrollTo(0, 0); 
