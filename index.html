@@ -439,9 +439,15 @@
             animation: shake 0.3s ease-in-out;
             border-bottom-color: #000 !important;
         }
-
-        /* --- Success Feedback Overlay (Removed) --- */
     </style>
+    
+    <!-- ★安全装置: 5秒経っても画面が真っ暗な場合は強制的にローダーを解除する -->
+    <script>
+        setTimeout(() => {
+            const loader = document.getElementById('app-loader');
+            if (loader) loader.style.display = 'none';
+        }, 5000);
+    </script>
 </head>
 <body style="overflow: hidden;">
 
@@ -795,7 +801,55 @@
     </div>
 
     <!-- Details Modal -->
-    <!-- ... (unchanged) ... -->
+    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
+        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
+            <button onclick="window.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black">&times;</button>
+            <div class="mb-8 md:mb-10 text-black">
+                <!-- カラーライン：円形に変更 (w-8 h-1 -> w-3 h-3) -->
+                <div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div>
+                <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3>
+            </div>
+            <div class="space-y-5 md:space-y-6 text-black">
+                <!-- フォームの順序に合わせて整理: Name -> Client -> Project -> Status&Amount -> Notes -->
+                
+                <!-- 1. Name -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span>
+                    <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
+                </div>
+                
+                <!-- 2. Client -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span>
+                    <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
+                </div>
+                
+                <!-- 3. Project -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span>
+                    <p id="detail-project" class="text-sm font-bold break-words text-black">Project Title</p>
+                </div>
+                
+                <!-- 4. Status & Amount -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span>
+                        <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span>
+                        <p id="detail-amount" class="text-sm font-bold break-words text-black">---</p>
+                    </div>
+                </div>
+                
+                <!-- 5. Notes -->
+                <div class="pt-4 border-t border-gray-100">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span>
+                    <p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black">Details go here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Firebase Scripts -->
     <script type="module">
@@ -805,7 +859,7 @@
 
         let firebaseConfig;
         let appId;
-        // 環境判定フラグは削除（シンプルに）
+        let isLocalEnvironment = false; // フラグ追加
 
         try {
             if (typeof __firebase_config !== 'undefined') {
@@ -829,11 +883,12 @@
                 appId: "1:471274997168:web:b0479cfc2006b136ad0275"
             };
             appId = 'action-tree-platform';
+            isLocalEnvironment = true; // 独自環境フラグON
         }
 
         const initApp = async () => {
-            // APIキー未設定チェック
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+            // APIキーが未設定（ダミーのまま）の場合のチェック
+            if (firebaseConfig.apiKey === "YOUR_API_KEY" && isLocalEnvironment) {
                 setTimeout(() => {
                     const loader = document.getElementById('app-loader');
                     if(loader) {
@@ -849,8 +904,15 @@
                 const auth = getAuth(app);
                 const db = getFirestore(app);
 
-                // コレクションパス: 全環境で統一
-                const collectionPath = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                // コレクションパスの決定 (モジュールスコープ内)
+                let collectionPath;
+                if (isLocalEnvironment) {
+                    // 独自環境（GitHubなど）: シンプルにルートの 'actions' コレクションを使う
+                    collectionPath = collection(db, 'actions');
+                } else {
+                    // Canvas環境: 指定のパスを使う
+                    collectionPath = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                }
 
                 window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch, collectionPath };
                 
@@ -862,6 +924,7 @@
                 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
+                        // イベント発火時に必要な情報を渡す
                         window.dispatchEvent(new CustomEvent('firebase-ready', { 
                             detail: { 
                                 user, 
@@ -870,7 +933,7 @@
                                 collection, 
                                 addDoc, 
                                 onSnapshot,
-                                collectionPath
+                                collectionPath // 決定したパスを渡す
                             } 
                         }));
                     }
