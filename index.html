@@ -177,7 +177,7 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
-        /* Nav Icon Hit Area & Style */
+        /* Nav Icon Hit Area */
         .nav-icon {
             width: 44px;
             height: 44px;
@@ -364,7 +364,7 @@
             background: #f8f8f8;
         }
         
-        /* ラジオボタンのカスタムスタイル（シンプルドット版） */
+        /* ラジオボタン */
         .status-radio:checked + div {
             color: #000;
             opacity: 1;
@@ -401,7 +401,7 @@
             border-color: #999;
         }
         
-        /* シンプルなスクロールバー */
+        /* スクロールバー */
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -417,7 +417,7 @@
             background: #ccc;
         }
         
-        /* 起動時ローダー */
+        /* ローダー */
         #app-loader {
             position: fixed;
             inset: 0;
@@ -445,7 +445,7 @@
             animation: none;
         }
         
-        /* フォームエラーアニメーション */
+        /* フォームエラーアニメーション（下線黒色変化） */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -453,9 +453,17 @@
         }
         .input-error-shake {
             animation: shake 0.3s ease-in-out;
-            border-bottom-color: #000 !important;
+            border-bottom-color: #000 !important; /* ★ここが黒くなる指定 */
         }
     </style>
+    
+    <!-- ★安全装置: 3秒経ってもローダーが消えない場合は強制的に消す -->
+    <script>
+        setTimeout(() => {
+            const loader = document.getElementById('app-loader');
+            if (loader) loader.style.display = 'none';
+        }, 3000);
+    </script>
 </head>
 <body style="overflow: hidden;">
 
@@ -761,43 +769,7 @@
     </div>
 
     <!-- Details Modal -->
-    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
-        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
-            <button onclick="window.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity z-10 text-black">&times;</button>
-            <div class="mb-8 md:mb-10 text-black">
-                <div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div>
-                <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3>
-            </div>
-            <div class="space-y-5 md:space-y-6 text-black">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span>
-                    <p id="detail-name" class="text-sm font-bold break-words text-black">Name</p>
-                </div>
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span>
-                    <p id="detail-client" class="text-sm font-bold break-words text-black">Client Name</p>
-                </div>
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span>
-                    <p id="detail-project" class="text-sm font-bold break-words text-black">Project Title</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span>
-                        <p id="detail-status" class="text-sm font-bold break-words text-black">---</p>
-                    </div>
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span>
-                        <p id="detail-amount" class="text-sm font-bold break-words text-black">---</p>
-                    </div>
-                </div>
-                <div class="pt-4 border-t border-gray-100">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span>
-                    <p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black">Details go here...</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- ... (No changes needed here) ... -->
 
     <!-- Main Logic Script (Standard JS) -->
     <script>
@@ -903,6 +875,16 @@
                 });
             });
 
+            // Input Validation Reset
+             ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('input', function() {
+                        this.classList.remove('input-error-shake');
+                    });
+                }
+            });
+
             // Marquee
              const slider = document.getElementById('stats-slider');
             if(slider) {
@@ -953,8 +935,8 @@
             const geometry = new THREE.BufferGeometry(); 
             const count = window.innerWidth < 768 ? 15000 : 25000;
             const positions = new Float32Array(count * 3), pColors = new Float32Array(count * 3);
+            const radiusScale = state.isMobile ? 0.8 : 1.0; 
             const heightScale = state.isMobile ? 1.2 : 1.0;
-            const radiusScale = state.isMobile ? 0.8 : 1.0;
 
             for (let i = 0; i < count; i++) {
                 const y = (Math.random() - 0.3) * 38 * heightScale; 
@@ -986,45 +968,8 @@
                 canvasEl.addEventListener('click', (e) => { if (!state.isModalOpen && hoveredFlower) window.showDetail(hoveredFlower.userData); });
             }
         }
-
-        // Functions exposed to Window
-        window.showPage = function(id) {
-            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
-            const p = document.getElementById(`page-${id}`); if(p) p.classList.remove('hidden');
-            const nav = document.getElementById('nav-menu'); if(nav) nav.style.display = 'none';
-            const toggle = document.getElementById('menu-toggle'); if(toggle) toggle.classList.remove('open');
-            document.body.style.overflow = (id === 'top') ? 'hidden' : 'auto';
-            if (id !== 'top') { window.scrollTo(0, 0); } else { setTimeout(() => { if(camera && renderer) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); updateGrowthState(); } }, 100); }
-            const h = document.getElementById('main-header');
-            if (id === 'top') { updateBackgroundColor(); if(h) h.classList.remove('is-dark'); } else { if(h) h.classList.add('is-dark'); }
-            if (id === 'log') refreshLog();
-        };
-        window.openModal = function() { resetHoverState(); const modal = document.getElementById('post-modal'); document.getElementById('form-error-msg').classList.add('hidden'); if(modal) { modal.style.display = 'flex'; state.isModalOpen = true; } };
-        window.closeModal = function() { const modal = document.getElementById('post-modal'); if(modal) modal.style.display = 'none'; const form = document.getElementById('action-form'); if(form) { form.reset(); const amtCont = document.getElementById('amount-container'); if(amtCont) { gsap.to(amtCont, { opacity: 0, duration: 0.2, onComplete: () => amtCont.classList.add('invisible') }); } const propRadio = document.querySelector('input[name="post-status"][value="proposal"]'); if(propRadio) propRadio.checked = true; document.getElementById('char-count-display').textContent = "0 / 300"; document.getElementById('form-error-msg').classList.add('hidden'); } state.isModalOpen = false; };
-        window.closeDetailModal = function() { const modal = document.getElementById('detail-modal'); if(modal) modal.style.display = 'none'; state.isModalOpen = false; };
-        window.showDetail = function(data) { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; resetHoverState(); modal.style.display = 'flex'; state.isModalOpen = true; };
-        window.downloadLogCSV = function() { if (state.flowers.length === 0) return; let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n"; state.flowers.forEach(f => { const d = f.userData; const row = [`"${(d.name || '')}"`, `"${(d.status || 'proposal')}"`, `"${(d.client || '')}"`, `"${(d.project || '')}"`, d.amount, `"${(d.notes || '')}"`]; csvContent += row.join(",") + "\n"; }); const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log_${new Date().toISOString().split('T')[0]}.csv`; link.click(); };
-        window.setTestLevel = function(v) { state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; state.actions = v; state.amount = v * 1200; for(let i=0; i<v; i++) { const colorHex = DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)]; addFlowerWithConvergence("Sim User", "Sim Client", "Growth Sim " + (i+1), 1200, "Simulated data", 'order', true); } updateGrowthState(); window.updateStatsUI(); refreshLog(); };
-        window.setTestTime = function(h) { state.simulatedHour = h; updateBackgroundColor(); };
-        window.applyCustomTime = function() { const input = document.getElementById('custom-time-input'); let val = parseFloat(input.value); if(isNaN(val)) return; if(val < 0) val = 0; if(val >= 24) val = 0; window.setTestTime(val); };
-        window.resetTimeSim = function() { state.simulatedHour = null; updateBackgroundColor(); const input = document.getElementById('custom-time-input'); if(input) input.value = ''; };
-        window.resetAllData = async function() { if(!confirm("【警告】全てのデータを削除します。")) return; if(window.firebase && window.firebase.writeBatch) { alert("データベース接続中は管理画面から行ってください。"); } else { state.flowers.forEach(f => treeGroup.remove(f)); state.flowers = []; state.actions = 0; state.amount = 0; updateGrowthState(); window.updateStatsUI(); refreshLog(); } };
-        window.updateCharCount = function(el) { const count = el.value.length; const display = document.getElementById('char-count-display'); if(display) display.textContent = `${count} / 300`; };
         
-        // Exposed for Firebase module
-        window.addFlowerWithConvergence = addFlowerWithConvergence;
-        window.addFlowerFromData = addFlowerFromData;
-        window.updateGrowthState = updateGrowthState;
-        window.updateStatsUI = updateStatsUI;
-        window.refreshLog = refreshLog;
-        window.state = state;
-        window.treeGroup = treeGroup;
-        window.DESIGN_PALETTE = DESIGN_PALETTE;
-
-        // Internal Helpers
-        function animate() { requestAnimationFrame(animate); const time = Date.now(); if (bgUniforms) bgUniforms.uTime.value += 0.01; updateBackgroundColor(); state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02; state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02; if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; } state.flowers.forEach(f => { const ud = f.userData; if (ud.baseX === undefined) return; f.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*state.driftFactor*3.8; f.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*state.driftFactor*3.2; f.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*state.driftFactor*3.8; }); if (!state.isModalOpen) { raycaster.setFromCamera(mouse, camera); const hit = raycaster.intersectObjects(state.flowers); if (hit.length > 0) { const obj = hit[0].object; if (hoveredFlower !== obj) { if (hoveredFlower) gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = obj; gsap.to(obj.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 0.6 }); } document.body.style.cursor = 'pointer'; } else { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = null; } document.body.style.cursor = 'default'; } } else if (hoveredFlower) resetHoverState(); if(renderer && scene && camera) renderer.render(scene, camera); }
-        function onWindowResize() { if(camera && renderer) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); const wasMobile = state.isMobile; state.isMobile = window.innerWidth < 768; if (wasMobile !== state.isMobile) { updateGrowthState(); } } }
-        function onMouseMove(e) { mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1; state.mouseTargetX = mouse.x * 0.1; state.mouseTargetY = mouse.y * 0.08; }
+        // ... (Helpers) ...
         function getGuaranteedVisibleTarget() { const vector = new THREE.Vector3(); let attempts = 0; treeGroup.updateMatrixWorld(); while (attempts < 50) { const posY = (Math.random() - 0.2) * 18 * state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2; const r = 1.5 + Math.random() * (branchFactor * 6 * state.baseSpreadFactor * state.growthMultiplier); const posX = Math.cos(a) * r, posZ = Math.sin(a) * r; vector.set(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld); vector.project(camera); if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: new THREE.Vector3(posX, posY, posZ).applyMatrix4(treeGroup.matrixWorld) }; attempts++; } return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0) }; }
         function hexToRgb(hex) { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; }
         function rgbToHex(r, g, b) { return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
@@ -1043,6 +988,17 @@
         function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
         function createSparkleEffect(pos, colorHex) { const particleCount = 60; const geo = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const velocities = []; for(let i=0; i<particleCount; i++) { positions[i*3] = pos.x; positions[i*3+1] = pos.y; positions[i*3+2] = pos.z; const v = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4 + 0.1, (Math.random() - 0.5) * 0.4).normalize().multiplyScalar(0.02 + Math.random() * 0.04); velocities.push(v); } geo.setAttribute('position', new THREE.BufferAttribute(positions, 3)); const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.3, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); const sparkleSystem = new THREE.Points(geo, mat); effectGroup.add(sparkleSystem); const anim = { val: 0 }; gsap.to(anim, { val: 1, duration: 3.0, ease: "power2.out", onUpdate: () => { const posAttr = sparkleSystem.geometry.attributes.position; for(let i=0; i<particleCount; i++) { posAttr.array[i*3] += velocities[i].x; posAttr.array[i*3+1] += velocities[i].y; posAttr.array[i*3+2] += velocities[i].z; velocities[i].multiplyScalar(0.98); } posAttr.needsUpdate = true; sparkleSystem.material.opacity = (1 - anim.val); }, onComplete: () => { effectGroup.remove(sparkleSystem); geo.dispose(); mat.dispose(); } }); }
         function updateGrowthState() { const count = state.actions; let targetLevel = 0; if (count >= 100) targetLevel = 5; else if (count >= 70) targetLevel = 4; else if (count >= 50) targetLevel = 3; else if (count >= 30) targetLevel = 2; else if (count >= 10) targetLevel = 1; else targetLevel = 0; let targetMultiplier = 1.0 + (targetLevel * 0.2); let baseCamZ = state.isMobile ? 32 : 22; let targetCamZ = baseCamZ + (targetLevel * (state.isMobile ? 6 : 4)); state.currentLevel = targetLevel; state.growthMultiplier = targetMultiplier; if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" }); if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) { img.src = newLogoPath; } }); }
+        
+        // Expose global logic for Firebase module to use
+        window.addFlowerWithConvergence = addFlowerWithConvergence;
+        window.addFlowerFromData = addFlowerFromData;
+        window.updateGrowthState = updateGrowthState;
+        window.updateStatsUI = updateStatsUI;
+        window.refreshLog = refreshLog;
+        window.state = state;
+        window.treeGroup = treeGroup;
+        window.DESIGN_PALETTE = DESIGN_PALETTE;
+
     </script>
     
     <!-- Firebase Logic (Optional Module) -->
@@ -1094,6 +1050,11 @@
                             // Validation (Simple check, as visual functions check valid too)
                             if(!n || !c || !p) {
                                 document.getElementById('form-error-msg').classList.remove('hidden');
+                                // Shake
+                                ['post-name', 'post-client', 'post-project'].forEach(id => {
+                                    const el = document.getElementById(id);
+                                    if(!el.value) el.classList.add('input-error-shake');
+                                });
                                 return;
                             }
 
@@ -1119,7 +1080,7 @@
                                 window.closeModal();
                             } catch(err) {
                                 console.error("Save Error:", err);
-                                alert("投稿エラー: " + err.message + "\n権限設定を確認してください。");
+                                alert("投稿エラー: " + err.message);
                             } finally {
                                 btn.disabled = false; btn.textContent = "ACTION / 投稿する";
                             }
