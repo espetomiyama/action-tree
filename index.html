@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 社内運用向け: 検索インデックス除外 -->
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
@@ -132,6 +133,7 @@
             text-align: center;
         }
 
+        /* 日付表示エリアの幅調整 */
         .countdown-stable {
             font-variant-numeric: tabular-nums;
             display: inline-block;
@@ -175,6 +177,7 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
+        /* Nav Icon Hit Area & Style */
         .nav-icon {
             width: 44px;
             height: 44px;
@@ -206,11 +209,11 @@
             transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        .nav-icon .nav-icon-inner span:nth-child(1) { top: 0px; }
-        .nav-icon .nav-icon-inner span:nth-child(2) { bottom: 0px; }
+        .nav-icon span:nth-child(1) { top: 0px; }
+        .nav-icon span:nth-child(2) { bottom: 0px; }
 
-        .nav-icon.open .nav-icon-inner span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
-        .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+        .nav-icon.open span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+        .nav-icon.open span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
 
         .menu-link {
             font-family: 'Inter', sans-serif;
@@ -361,6 +364,7 @@
             background: #f8f8f8;
         }
         
+        /* ラジオボタンのカスタムスタイル（シンプルドット版） */
         .status-radio:checked + div {
             color: #000;
             opacity: 1;
@@ -397,22 +401,23 @@
             border-color: #999;
         }
         
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ccc; }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        /* シンプルなスクロールバー */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
         }
-        .input-error-shake {
-            animation: shake 0.3s ease-in-out;
-            border-bottom-color: #000 !important;
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e5e5;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
         }
         
-        /* Loading Animation (CSSで強制的に消えるようにする安全策) */
+        /* 起動時ローダー */
         #app-loader {
             position: fixed;
             inset: 0;
@@ -424,23 +429,32 @@
             flex-direction: column;
             opacity: 1;
             pointer-events: auto;
-            /* 4秒後に自動的にフェードアウトして操作可能にする（JSエラー対策） */
-            animation: fadeoutLoader 0.5s ease-out 4s forwards;
+            /* 強制解除アニメーション（安全策） */
+            animation: forceHide 0.5s linear 4s forwards;
         }
         
-        @keyframes fadeoutLoader {
-            to { opacity: 0; pointer-events: none; visibility: hidden; }
-        }
-        
-        /* 正常にJSが動いた場合はクラス付与で即座に消す */
-        #app-loader.loaded {
-            animation: none;
-            opacity: 0;
-            pointer-events: none;
-            visibility: hidden;
-            transition: opacity 0.5s ease;
+        @keyframes forceHide {
+            to { opacity: 0; visibility: hidden; pointer-events: none; }
         }
 
+        #app-loader.loaded {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            animation: none;
+        }
+        
+        /* フォームエラーアニメーション */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .input-error-shake {
+            animation: shake 0.3s ease-in-out;
+            border-bottom-color: #000 !important;
+        }
     </style>
 </head>
 <body style="overflow: hidden;">
@@ -453,6 +467,7 @@
 
     <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper flex-shrink-0" onclick="window.showPage('top')">
+            <!-- Default LV1 Logo -->
             <img src="images/ACTION_TREE_LOGO_LV1.svg" 
                  alt="Action Tree Logo" 
                  class="w-6 h-6 md:w-8 md:h-8 object-contain"
@@ -495,8 +510,8 @@
                 ACTION
             </button>
         </div>
-        <!-- (Other pages omitted for brevity but should be here...) -->
-         <!-- 2. ABOUT PAGE -->
+
+        <!-- 2. ABOUT PAGE -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -786,22 +801,23 @@
 
     <!-- Main Logic Script (Standard JS) -->
     <script>
-        // UI & 3D Initialization
+        // Setup UI immediately
         document.addEventListener('DOMContentLoaded', () => {
             setupUI();
+            
+            // Force remove loader after delay to ensure screen is visible even if errors occur
+            setTimeout(() => {
+                const loader = document.getElementById('app-loader');
+                if (loader) loader.classList.add('loaded');
+            }, 3000);
         });
 
+        // Initialize Visuals
         window.addEventListener('load', () => {
             try {
                 initVisuals();
-                // 確実にローダーを消す
-                const loader = document.getElementById('app-loader');
-                if (loader) loader.classList.add('loaded');
             } catch(e) {
                 console.error("Visual Init Error:", e);
-                // エラーでもローダーは消す
-                const loader = document.getElementById('app-loader');
-                if (loader) loader.classList.add('loaded');
             }
         });
 
@@ -964,6 +980,11 @@
             
             window.addEventListener('resize', onWindowResize);
             window.addEventListener('mousemove', onMouseMove);
+            
+            const canvasEl = document.querySelector('canvas');
+            if (canvasEl) {
+                canvasEl.addEventListener('click', (e) => { if (!state.isModalOpen && hoveredFlower) window.showDetail(hoveredFlower.userData); });
+            }
         }
 
         // Functions exposed to Window
@@ -1071,11 +1092,21 @@
                             const notes = document.getElementById('post-notes').value;
 
                             // Validation (Simple check, as visual functions check valid too)
-                            if(!n || !c || !p) return;
+                            if(!n || !c || !p) {
+                                document.getElementById('form-error-msg').classList.remove('hidden');
+                                return;
+                            }
 
-                            // Visual Feedback (Local)
+                            const btn = document.getElementById('submit-action-btn');
+                            btn.disabled = true; btn.textContent = "Saving...";
+
+                            // Visual Feedback (Local) - Show immediately
                             if(window.addFlowerWithConvergence) {
                                 window.addFlowerWithConvergence(n, c, p, a, notes, status, false);
+                                // Increment locally (will be overwritten by sync)
+                                window.state.actions++;
+                                if(status === 'order') window.state.amount += a;
+                                if(window.updateStatsUI) window.updateStatsUI();
                             }
 
                             // DB Save
@@ -1088,7 +1119,9 @@
                                 window.closeModal();
                             } catch(err) {
                                 console.error("Save Error:", err);
-                                alert("投稿エラー: " + err.message);
+                                alert("投稿エラー: " + err.message + "\n権限設定を確認してください。");
+                            } finally {
+                                btn.disabled = false; btn.textContent = "ACTION / 投稿する";
                             }
                         };
                     }
