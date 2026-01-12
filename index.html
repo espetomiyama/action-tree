@@ -439,8 +439,6 @@
             animation: shake 0.3s ease-in-out;
             border-bottom-color: #000 !important;
         }
-
-        /* --- Success Feedback Overlay (Removed per request) --- */
     </style>
 </head>
 <body style="overflow: hidden;">
@@ -448,7 +446,7 @@
     <!-- Boot Loader -->
     <div id="app-loader">
         <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-        <span class="text-[10px] font-bold uppercase tracking-[0.4em]">Preparing Soil...</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing Soil...</span>
     </div>
 
     <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
@@ -891,12 +889,17 @@
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
+                // コレクションパスをシンプルに統一
+                const collectionRef = collection(db, 'actions');
+
+                window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch, collectionRef };
+
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
+                
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user, db, appId, collection, addDoc, onSnapshot } }));
@@ -1311,7 +1314,7 @@
             try {
                 if(window.firebase) {
                     const { db, appId, collection, getDocs, writeBatch } = window.firebase;
-                    const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+                    const q = window.firebase.collectionRef; // Unified ref
                     
                     const snapshot = await getDocs(q);
                     
@@ -1791,24 +1794,23 @@
             if (window.isSyncStarted) return;
             window.isSyncStarted = true;
             
-            const { db, appId, collection, onSnapshot, addDoc } = window.firebaseHandle;
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
+            // collectionPath (actions) を使用
+            const { db, appId, collection, onSnapshot, addDoc, collectionPath } = window.firebaseHandle;
+            const q = collectionPath;
             
             // Connect Form
             const actionForm = document.getElementById('action-form');
             if(actionForm) {
                 actionForm.onsubmit = async (evt) => {
                     evt.preventDefault();
+                    // ... (バリデーション省略) ...
                     const status = document.querySelector('input[name="post-status"]:checked').value;
                     const fields = [{ id: 'post-name' }, { id: 'post-client' }, { id: 'post-project' }];
                     if(status === 'order') fields.push({ id: 'post-amount' });
                     let valid = true;
                     fields.forEach(f => {
                         const el = document.getElementById(f.id);
-                        if (el && !el.value.trim()) { 
-                            el.classList.add('input-error-shake'); 
-                            valid = false; 
-                        }
+                        if (el && !el.value.trim()) { el.classList.add('input-error-shake'); valid = false; }
                     });
 
                     if (!valid) {
