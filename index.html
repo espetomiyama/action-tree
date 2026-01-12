@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 社内運用向け: 検索インデックス除外 -->
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
@@ -24,6 +23,7 @@
             letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
             transition: background-color 2.0s ease; 
+            -webkit-tap-highlight-color: transparent;
         }
 
         html { scroll-behavior: smooth; }
@@ -69,85 +69,7 @@
             border-color: currentColor;
         }
 
-        .marquee-container {
-            background: transparent;
-            color: #ffffff; 
-            padding: 2.5rem 0;
-            overflow: hidden;
-            white-space: nowrap;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            z-index: 10;
-            display: flex;
-            pointer-events: none;
-        }
-
-        @media (max-width: 768px) {
-            .marquee-container { padding: 1.5rem 0; bottom: 10px; }
-        }
-
-        .marquee-content {
-            display: flex;
-            flex-shrink: 0;
-            min-width: 100%;
-            animation: marquee 60s linear infinite;
-            will-change: transform;
-            transform: translateZ(0); 
-        }
-
-        .marquee-item {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .stats-group {
-            display: flex;
-            align-items: baseline;
-            gap: 1rem; 
-            padding: 0 1.5rem; 
-        }
-        
-        @media (min-width: 768px) {
-            .stats-group { gap: 1.5rem; padding: 0 3.5rem; }
-        }
-
-        .stats-label, .stats-value {
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #ffffff;
-            letter-spacing: 0.2em;
-            line-height: 1;
-            white-space: nowrap;
-        }
-
-        @media (min-width: 768px) {
-            .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; }
-        }
-
-        .tabular {
-            font-variant-numeric: tabular-nums;
-            display: inline-block;
-            text-align: center;
-        }
-
-        /* 日付表示エリアの幅調整 */
-        .countdown-stable {
-            font-variant-numeric: tabular-nums;
-            display: inline-block;
-            min-width: 130px; 
-            text-align: left;
-        }
-        @media (min-width: 768px) {
-            .countdown-stable { min-width: 180px; } 
-        }
-
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
+        /* Marquee Styles Removed */
 
         .modal-overlay {
             background: rgba(0, 0, 0, 0.5);
@@ -177,7 +99,7 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
-        /* Nav Icon Hit Area & Style */
+        /* Nav Icon */
         .nav-icon {
             width: 44px;
             height: 44px;
@@ -187,14 +109,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            pointer-events: auto; /* 確実にクリック可能に */
+            pointer-events: auto;
         }
         
         .nav-icon-inner {
             width: 24px;
             height: 10px;
             position: relative;
-            pointer-events: none; /* 中身は透過 */
+            pointer-events: none;
         }
 
         @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
@@ -210,11 +132,11 @@
             transition: all .4s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        .nav-icon .nav-icon-inner span:nth-child(1) { top: 0px; }
-        .nav-icon .nav-icon-inner span:nth-child(2) { bottom: 0px; }
+        .nav-icon span:nth-child(1) { top: 0px; }
+        .nav-icon span:nth-child(2) { bottom: 0px; }
 
-        .nav-icon.open .nav-icon-inner span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
-        .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+        .nav-icon.open span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+        .nav-icon.open span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
 
         .menu-link {
             font-family: 'Inter', sans-serif;
@@ -235,7 +157,7 @@
 
         .action-button {
             position: fixed;
-            bottom: 80px; 
+            bottom: 40px; /* 位置を少し調整 */
             right: 20px;
             width: 74px;
             height: 74px;
@@ -251,11 +173,11 @@
             font-weight: 800;
             will-change: transform, background-color;
             cursor: pointer;
-            pointer-events: auto; /* 確実にクリック可能に */
+            pointer-events: auto;
         }
 
         @media (min-width: 768px) {
-            .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; }
+            .action-button { bottom: 60px; right: 40px; width: 100px; height: 100px; }
         }
 
         .logo-main-text {
@@ -419,7 +341,7 @@
             background: #ccc;
         }
         
-        /* ローダーと安全装置（CSS強制解除） */
+        /* ローダー */
         #app-loader {
             position: fixed;
             inset: 0;
@@ -431,7 +353,6 @@
             flex-direction: column;
             opacity: 1;
             pointer-events: auto;
-            /* ★重要: JSがエラーでも4秒後には強制的に消える */
             animation: forceHide 0.5s linear 4s forwards;
         }
         
@@ -458,13 +379,21 @@
             border-bottom-color: #000 !important; 
         }
     </style>
+    
+    <!-- ★安全装置: 3秒経ってもローダーが消えない場合は強制的に消す -->
+    <script>
+        setTimeout(() => {
+            const loader = document.getElementById('app-loader');
+            if (loader) loader.classList.add('loaded');
+        }, 3000);
+    </script>
 </head>
 <body style="overflow: hidden;">
 
     <!-- Boot Loader -->
     <div id="app-loader">
         <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-        <span class="text-[10px] font-bold uppercase tracking-[0.4em]">Preparing Soil...</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing Soil...</span>
     </div>
 
     <header id="main-header" class="fixed top-0 left-0 w-full z-[160] px-5 py-6 md:px-10 md:py-12 flex items-center">
@@ -507,9 +436,7 @@
         <!-- 1. TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
-            <div class="marquee-container">
-                <div class="marquee-content" id="stats-slider"></div>
-            </div>
+            <!-- Slider Removed -->
             <!-- ACTION BUTTON -->
             <button id="main-action-button" onclick="window.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
@@ -535,10 +462,10 @@
                 </div>
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
-                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
-                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
-                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
+                        <a onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
                         <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
@@ -572,10 +499,10 @@
                 </div>
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
-                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
-                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
-                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
+                        <a onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
                         <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
@@ -627,10 +554,10 @@
 
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
-                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
-                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
-                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
+                        <a onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
                         <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
@@ -688,10 +615,10 @@
                 </div>
                 <footer class="app-footer">
                     <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a href="#" onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
-                        <a href="#" onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
-                        <a href="#" onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
-                        <a href="#" onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
+                        <a onclick="window.showPage('top')" class="footer-nav-link text-black">Top</a>
+                        <a onclick="window.showPage('about')" class="footer-nav-link text-black">About</a>
+                        <a onclick="window.showPage('rules')" class="footer-nav-link text-black">Rules</a>
+                        <a onclick="window.showPage('log')" class="footer-nav-link text-black">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
                         <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
@@ -810,23 +737,21 @@
         document.addEventListener('DOMContentLoaded', () => {
             setupUI();
             
-            // ★安全装置: 5秒後には絶対にローダーを消す
+            // ★安全装置: 3秒後には絶対にローダーを消す
             setTimeout(() => {
                 const loader = document.getElementById('app-loader');
                 if (loader) loader.classList.add('loaded');
-            }, 5000);
+            }, 3000);
         });
 
         // Initialize Visuals
         window.addEventListener('load', () => {
             try {
                 initVisuals();
-                // 正常にロードできれば即座に消す
                 const loader = document.getElementById('app-loader');
                 if (loader) loader.classList.add('loaded');
             } catch(e) {
                 console.error("Visual Init Error:", e);
-                // エラー時も消す
                 const loader = document.getElementById('app-loader');
                 if (loader) loader.classList.add('loaded');
             }
@@ -867,7 +792,6 @@
                     const isOpen = nav.style.display === 'flex';
                     if (!isOpen) {
                         nav.style.display = 'flex';
-                        // Background color sync
                         if(window.getDynamicColor) {
                             const hex = window.getDynamicColor();
                             const rgb = window.hexToRgb(hex);
@@ -923,18 +847,6 @@
                     });
                 }
             });
-
-            // Marquee
-             const slider = document.getElementById('stats-slider');
-            if(slider) {
-                slider.innerHTML = `<div class="marquee-item text-white">
-                    <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val text-white">0</span></div>
-                    <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value text-white">¥<span class="amount-val">0</span></span></div>
-                    <div class="stats-group"><span class="stats-label">Tree Level</span><span class="stats-value level-val text-white">LV0 SOIL</span></div>
-                    <div class="stats-group"><span class="stats-label">Date</span><span class="stats-value marquee-date-val countdown-stable">---</span></div>
-                </div>`.repeat(2);
-                updateMarqueeDate(); setInterval(updateMarqueeDate, 1000);
-            }
         }
 
         // ----------------------------------------------------
@@ -962,7 +874,7 @@
 
             // Shader
             const vertexShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-            const fragmentShader = `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`;
+            const fragmentShader = `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`;
             bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000000") }, uColorB: { value: new THREE.Color("#330066") } };
             const bgGeo = new THREE.PlaneGeometry(300, 300); 
             const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: vertexShader, fragmentShader: fragmentShader, depthWrite: false });
@@ -974,8 +886,8 @@
             const geometry = new THREE.BufferGeometry(); 
             const count = window.innerWidth < 768 ? 15000 : 25000;
             const positions = new Float32Array(count * 3), pColors = new Float32Array(count * 3);
-            const radiusScale = state.isMobile ? 0.8 : 1.0; 
             const heightScale = state.isMobile ? 1.2 : 1.0;
+            const radiusScale = state.isMobile ? 0.8 : 1.0;
 
             for (let i = 0; i < count; i++) {
                 const y = (Math.random() - 0.3) * 38 * heightScale; 
@@ -1018,7 +930,6 @@
         function updateBackgroundColor() { const colors = getGradientColors(); document.body.style.backgroundColor = colors.base; if (scene && scene.fog) scene.fog.color.set(colors.base); if (bgUniforms) { bgUniforms.uColorA.value.set(colors.base); bgUniforms.uColorB.value.set(colors.accent); } }
         function resetHoverState() { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: "power2.out" }); hoveredFlower = null; } document.body.style.cursor = 'default'; }
         function updateStatsUI() { document.querySelectorAll('.actions-val').forEach(el => el.textContent = state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[state.currentLevel] || "WORLD"; const levelText = `LV${state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); }
-        function updateMarqueeDate() { const now = new Date(); const y = now.getFullYear(); const m = String(now.getMonth() + 1).padStart(2, '0'); const d = String(now.getDate()).padStart(2, '0'); const h = String(now.getHours()).padStart(2, '0'); const min = String(now.getMinutes()).padStart(2, '0'); const s = String(now.getSeconds()).padStart(2, '0'); const dateStr = `${y}.${m}.${d} ${h}:${min}:${s}`; document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dateStr); }
         function addFlowerToTreeAt(name, client, project, amount, notes, status, posX, y, posZ, colorHex, isNew = false, id = null) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex), transparent: true, opacity: 1.0 })); f.position.set(posX, y, posZ); f.scale.set(0, 0, 0); f.userData = { id: id, name, client, project, amount, notes, status, colorHex, baseX: posX, baseY: y, baseZ: posZ, phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004 + Math.random()*0.0004 }; treeGroup.add(f); state.flowers.push(f); gsap.to(f.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 1.5, ease: "elastic.out(1, 0.3)" }); }
         function addFlowerFromData(data) { const colorHex = data.colorHex || DESIGN_PALETTE[0]; const seed = data.timestamp || 1; const seededRandom = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); }; const radiusScale = state.isMobile ? 0.8 : 1.0; const heightScale = state.isMobile ? 1.2 : 1.0; const y = (seededRandom(seed * 0.1) - 0.2) * 22 * (state.growthMultiplier) * heightScale + 4; let branchFactor = (y + 6) / 22; if (branchFactor < 0.1) branchFactor = 0.1; const a = seededRandom(seed * 0.2) * Math.PI * 2; const r = (0.5 + seededRandom(seed * 0.3)) * (branchFactor * 10 * state.baseSpreadFactor) * radiusScale; addFlowerToTreeAt(data.name, data.client, data.project, data.amount, data.notes, data.status, Math.cos(a) * r, y, Math.sin(a) * r, colorHex, false, data.id); }
         function addBudsInstanced(count) { if (!state.instancedBuds) return; const matrix = new THREE.Matrix4(), pos = new THREE.Vector3(), quat = new THREE.Quaternion(), sca = new THREE.Vector3(); for (let i = 0; i < count; i++) { if (state.budCount >= state.maxBuds) break; const y = (Math.random() - 0.4) * 24 * state.growthMultiplier + 4; const factor = (y + 8) / 24; const a = Math.random() * Math.PI * 2; const r = 0.8 + Math.random() * (factor * 7 * state.baseSpreadFactor * state.growthMultiplier); pos.set(Math.cos(a) * r, y, Math.sin(a) * r); const s = 0.4 + Math.random() * 0.4; sca.set(s, s, s); matrix.compose(pos, quat, sca); state.instancedBuds.setMatrixAt(state.budCount, matrix); state.budCount++; } state.instancedBuds.count = state.budCount; state.instancedBuds.instanceMatrix.needsUpdate = true; }
@@ -1027,6 +938,9 @@
         function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
         function createSparkleEffect(pos, colorHex) { const particleCount = 60; const geo = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const velocities = []; for(let i=0; i<particleCount; i++) { positions[i*3] = pos.x; positions[i*3+1] = pos.y; positions[i*3+2] = pos.z; const v = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4 + 0.1, (Math.random() - 0.5) * 0.4).normalize().multiplyScalar(0.02 + Math.random() * 0.04); velocities.push(v); } geo.setAttribute('position', new THREE.BufferAttribute(positions, 3)); const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.3, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); const sparkleSystem = new THREE.Points(geo, mat); effectGroup.add(sparkleSystem); const anim = { val: 0 }; gsap.to(anim, { val: 1, duration: 3.0, ease: "power2.out", onUpdate: () => { const posAttr = sparkleSystem.geometry.attributes.position; for(let i=0; i<particleCount; i++) { posAttr.array[i*3] += velocities[i].x; posAttr.array[i*3+1] += velocities[i].y; posAttr.array[i*3+2] += velocities[i].z; velocities[i].multiplyScalar(0.98); } posAttr.needsUpdate = true; sparkleSystem.material.opacity = (1 - anim.val); }, onComplete: () => { effectGroup.remove(sparkleSystem); geo.dispose(); mat.dispose(); } }); }
         function updateGrowthState() { const count = state.actions; let targetLevel = 0; if (count >= 100) targetLevel = 5; else if (count >= 70) targetLevel = 4; else if (count >= 50) targetLevel = 3; else if (count >= 30) targetLevel = 2; else if (count >= 10) targetLevel = 1; else targetLevel = 0; let targetMultiplier = 1.0 + (targetLevel * 0.2); let baseCamZ = state.isMobile ? 32 : 22; let targetCamZ = baseCamZ + (targetLevel * (state.isMobile ? 6 : 4)); state.currentLevel = targetLevel; state.growthMultiplier = targetMultiplier; if (treeGroup) gsap.to(treeGroup.scale, { x: targetMultiplier, y: targetMultiplier, z: targetMultiplier, duration: 5, ease: "power3.out" }); if (camera) gsap.to(camera.position, { z: targetCamZ, duration: 2, ease: "power2.inOut" }); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(`ACTION_TREE_LOGO_LV${logoLevel}.svg`)) { img.src = newLogoPath; } }); }
+        function animate() { requestAnimationFrame(animate); const time = Date.now(); if (bgUniforms) bgUniforms.uTime.value += 0.01; updateBackgroundColor(); state.currentMouseX += (state.mouseTargetX - state.currentMouseX) * 0.02; state.currentMouseY += (state.mouseTargetY - state.currentMouseY) * 0.02; if (treeGroup) { treeGroup.rotation.y += 0.0005 + (state.currentLevel * 0.0001) + (state.currentMouseX * 0.005); treeGroup.rotation.x = state.currentMouseY * 0.02; } state.flowers.forEach(f => { const ud = f.userData; if (ud.baseX === undefined) return; f.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*state.driftFactor*3.8; f.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*state.driftFactor*3.2; f.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*state.driftFactor*3.8; }); if (!state.isModalOpen) { raycaster.setFromCamera(mouse, camera); const hit = raycaster.intersectObjects(state.flowers); if (hit.length > 0) { const obj = hit[0].object; if (hoveredFlower !== obj) { if (hoveredFlower) gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = obj; gsap.to(obj.scale, { x: 2.2, y: 2.2, z: 2.2, duration: 0.6 }); } document.body.style.cursor = 'pointer'; } else { if (hoveredFlower) { gsap.to(hoveredFlower.scale, { x: 1, y: 1, z: 1, duration: 0.6 }); hoveredFlower = null; } document.body.style.cursor = 'default'; } } else if (hoveredFlower) resetHoverState(); if(renderer && scene && camera) renderer.render(scene, camera); }
+        function onWindowResize() { if(camera && renderer) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); const wasMobile = state.isMobile; state.isMobile = window.innerWidth < 768; if (wasMobile !== state.isMobile) { updateGrowthState(); } } }
+        function onMouseMove(e) { mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1; state.mouseTargetX = mouse.x * 0.1; state.mouseTargetY = mouse.y * 0.08; }
         
         // Expose global logic for Firebase module to use
         window.addFlowerWithConvergence = addFlowerWithConvergence;
@@ -1044,10 +958,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // 【重要】Firebase設定をここに記入してください
+        // 【重要】Firebase設定 (再度書き換えてください)
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         const firebaseConfig = {
             apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
@@ -1058,9 +972,9 @@
             appId: "1:471274997168:web:b0479cfc2006b136ad0275"
         };
 
-        async function initFirebase() {
+        async function startFirebase() {
             if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                console.log("Firebase not configured (Dev Mode)");
+                console.log("Firebase API Key missing.");
                 return;
             }
 
@@ -1068,98 +982,87 @@
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                // GitHub Pagesなど独自環境で動かすときは 'actions' コレクションを使う
+                // GitHub Pagesなど独自環境用
                 const collectionRef = collection(db, 'actions');
 
-                // Form Handler Setup (Firebase Mode)
-                // Wait for form to exist just in case
-                const checkForm = setInterval(() => {
-                    const actionForm = document.getElementById('action-form');
-                    if(actionForm) {
-                        clearInterval(checkForm);
-                        actionForm.onsubmit = async (evt) => {
-                            evt.preventDefault();
-                            const status = document.querySelector('input[name="post-status"]:checked').value;
-                            const n = document.getElementById('post-name').value;
-                            const c = document.getElementById('post-client').value;
-                            const p = document.getElementById('post-project').value;
-                            const a = parseInt(document.getElementById('post-amount').value) || 0;
-                            const notes = document.getElementById('post-notes').value;
-
-                            // Validation (Simple check, as visual functions check valid too)
-                            if(!n || !c || !p) {
-                                document.getElementById('form-error-msg').classList.remove('hidden');
-                                // Shake
-                                ['post-name', 'post-client', 'post-project'].forEach(id => {
-                                    const el = document.getElementById(id);
-                                    if(!el.value) el.classList.add('input-error-shake');
-                                });
-                                return;
-                            }
-
-                            const btn = document.getElementById('submit-action-btn');
-                            btn.disabled = true; btn.textContent = "Saving...";
-
-                            // Visual Feedback (Local) - Show immediately
-                            if(window.addFlowerWithConvergence) {
-                                window.addFlowerWithConvergence(n, c, p, a, notes, status, false);
-                                // Increment locally (will be overwritten by sync)
-                                window.state.actions++;
-                                if(status === 'order') window.state.amount += a;
-                                if(window.updateStatsUI) window.updateStatsUI();
-                            }
-
-                            // DB Save
-                            try {
-                                await addDoc(collectionRef, {
-                                    name: n, client: c, project: p, amount: a, notes: notes, status: status,
-                                    colorHex: window.DESIGN_PALETTE ? window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)] : "#fff",
-                                    timestamp: Date.now()
-                                });
-                                window.closeModal();
-                            } catch(err) {
-                                console.error("Save Error:", err);
-                                alert("投稿エラー: " + err.message + "\n権限設定を確認してください。");
-                            } finally {
-                                btn.disabled = false; btn.textContent = "ACTION / 投稿する";
-                            }
-                        };
-                    }
-                }, 500);
-
-                await signInAnonymously(auth);
-
-                // Realtime Sync
-                onSnapshot(query(collectionRef, orderBy('timestamp', 'asc')), (snapshot) => {
-                    // Reset Local State
-                    if (window.state && window.treeGroup && window.refreshLog) {
-                        // Clear existing
-                        window.state.flowers.forEach(f => window.treeGroup.remove(f));
-                        window.state.flowers = []; 
-                        window.state.actions = 0; 
-                        window.state.amount = 0;
+                // Overwrite Form Handler for DB
+                const form = document.getElementById('action-form');
+                if(form) {
+                    form.onsubmit = async (e) => {
+                        e.preventDefault();
+                        const btn = document.getElementById('submit-action-btn');
                         
-                        snapshot.forEach((doc) => {
-                            const d = doc.data(); 
-                            d.id = doc.id;
-                            if(window.addFlowerFromData) window.addFlowerFromData(d);
-                            window.state.actions++;
-                            if(d.status === 'order') window.state.amount += (parseInt(d.amount) || 0);
+                        // Validation shake
+                        let hasError = false;
+                        ['post-name','post-client','post-project'].forEach(id=>{
+                            const el = document.getElementById(id);
+                            if(!el.value) { el.classList.add('input-error-shake'); hasError=true; }
                         });
+                        if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return; }
+
+                        // Visual Update (Immediate)
+                        const n = document.getElementById('post-name').value;
+                        const c = document.getElementById('post-client').value;
+                        const p = document.getElementById('post-project').value;
+                        const a = document.getElementById('post-amount').value || 0;
+                        const notes = document.getElementById('post-notes').value;
+                        const status = document.querySelector('input[name="post-status"]:checked').value;
                         
-                        if(window.updateGrowthState) window.updateGrowthState();
-                        if(window.updateStatsUI) window.updateStatsUI();
-                        if(window.refreshLog) window.refreshLog();
-                    }
+                        window.addFlowerWithConvergence(n,c,p,a,notes,status,false);
+                        window.closeModal();
+
+                        // DB Save
+                        btn.disabled = true; 
+                        btn.innerText = "Saving...";
+                        try {
+                            await addDoc(collectionRef, {
+                                name: n, client: c, project: p, amount: parseInt(a), notes: notes, status: status,
+                                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
+                                timestamp: Date.now()
+                            });
+                        } catch(err) {
+                            alert("保存エラー: " + err.message);
+                        } finally {
+                            btn.disabled = false; btn.innerText = "ACTION / 投稿する";
+                        }
+                    };
+                }
+                
+                // Expose Reset for DB
+                window.firebaseWriteBatch = async () => {
+                    const batch = writeBatch(db);
+                    const q = await getDocs(collectionRef);
+                    q.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    window.location.reload();
+                };
+                window.resetAllData = async () => {
+                    if(!confirm("本当に全てのデータを削除しますか？")) return;
+                    await window.firebaseWriteBatch();
+                };
+
+                // Auth & Sync
+                await signInAnonymously(auth);
+                onSnapshot(query(collectionRef, orderBy('timestamp', 'asc')), (snap) => {
+                    // Refresh Tree with DB Data
+                    window.treeGroup.children.filter(c => c.geometry.type === 'SphereGeometry').forEach(c => window.treeGroup.remove(c));
+                    window.state.flowers = []; window.state.actions = 0; window.state.amount = 0;
+                    
+                    snap.forEach(doc => {
+                        const d = doc.data(); d.id = doc.id;
+                        window.addFlowerFromData(d);
+                        window.state.actions++;
+                        if(d.status === 'order') window.state.amount += (d.amount || 0);
+                    });
+                    window.updateGrowthState();
                 });
 
-            } catch (err) {
-                console.error("Firebase Init Failed:", err);
+            } catch(e) {
+                console.error("Firebase Error:", e);
             }
         }
         
-        // Start Firebase logic
-        initFirebase();
+        startFirebase();
     </script>
 </body>
 </html>
