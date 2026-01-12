@@ -7,7 +7,6 @@
     
     <title>100 ACTION TREE</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -15,7 +14,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
 
-        /* --- Base Settings --- */
+        /* Base Settings */
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0;
@@ -27,7 +26,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- Layout --- */
+        /* Layout */
         #canvas-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 0; background: transparent;
@@ -132,21 +131,18 @@
             position: fixed; inset: 0; z-index: 9999; background: #000807;
             display: flex; align-items: center; justify-content: center; flex-direction: column;
             pointer-events: auto;
-            /* ★最重要: 3.5秒後にCSSだけで強制的に消す（JSエラー対策） */
-            animation: forceHide 0.5s linear 3.5s forwards;
+            animation: forceHide 0.5s linear 3s forwards;
         }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-        /* JSで制御できた場合 */
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
     
     <!-- Safety Script -->
     <script>
-        // UI操作用のグローバル関数を先に定義（エラー時のフリーズ防止）
         window.ui = {};
         window.state = { actions:0, amount:0, isMobile: window.innerWidth<768, currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false };
-        
-        // Safety Loader Disable
+        window.treeGroup = null; window.camera = null; window.renderer = null; window.effectGroup = null;
+
         setTimeout(() => {
             const l = document.getElementById('app-loader');
             if(l) l.classList.add('loaded');
@@ -199,7 +195,6 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-content" id="stats-slider">
-                    <!-- Static Initial Content for Failsafe -->
                     <div class="marquee-item text-white">
                         <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
                         <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value">¥<span class="amount-val">0</span></span></div>
@@ -319,7 +314,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PAGE -->
+        <!-- DASHBOARD -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -428,14 +423,7 @@
 
     <!-- 1. UI Script (No Dependencies) -->
     <script>
-        // Global UI namespace
         window.ui = {};
-        window.state = { actions:0, amount:0, isMobile: window.innerWidth<768, currentLevel:0, simulatedHour:null, flowers:[] };
-        window.treeGroup = null;
-        window.camera = null; // Expose camera global
-        window.renderer = null; // Expose renderer global
-        window.effectGroup = null;
-
         const DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         const TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
@@ -446,88 +434,39 @@
             document.getElementById('nav-menu').style.display='none';
             document.getElementById('menu-toggle').classList.remove('open');
             const h = document.getElementById('main-header');
-            
-            if(id === 'top') { 
-                document.body.style.overflow = 'hidden';
-                h.classList.remove('is-dark'); 
-            } else { 
-                document.body.style.overflow = 'auto';
-                h.classList.add('is-dark'); 
-                window.scrollTo(0,0);
-            }
+            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
+            else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
             if (id === 'log' && window.refreshLog) window.refreshLog();
         };
-
         ui.toggleMenu = () => {
             const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
             const isOpen = nav.style.display === 'flex';
             nav.style.display = isOpen ? 'none' : 'flex';
             toggle.classList.toggle('open');
-            if(!isOpen) {
-                if(header) header.classList.remove('is-dark');
-                // Use safe global function
-                const hex = window.getDynamicColor ? window.getDynamicColor() : "#000";
-                const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0};
-                nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-            } else {
-                const isTop = !document.getElementById('page-top').classList.contains('hidden');
-                if(!isTop && header) header.classList.add('is-dark');
-            }
+            if(!isOpen) { if(header) header.classList.remove('is-dark'); if(window.getDynamicColor) { const hex = window.getDynamicColor(); const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0}; nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`; } }
+            else { const isTop = !document.getElementById('page-top').classList.contains('hidden'); if(!isTop && header) header.classList.add('is-dark'); }
         };
-
-        ui.openModal = () => { 
-            const m = document.getElementById('post-modal'); 
-            if(m) { m.style.display='flex'; window.state.isModalOpen=true; }
-            if(window.resetHoverState) window.resetHoverState();
-            document.getElementById('form-error-msg').classList.add('hidden');
-        };
-        ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; 
-            const form = document.getElementById('action-form'); if(form) form.reset(); 
-            const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible');
-        };
+        ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
+        ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
         ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
         ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
         
-        // Sim Functions with Safety Checks
-        ui.setTestLevel = (v) => { 
-            // Call universal update
-            if(window.updateTreeFromState) {
-                // Mock data for sim
-                window.state.flowers = []; 
-                window.state.actions = v; 
-                window.state.amount = v*1000;
-                for(let i=0; i<v; i++) {
-                     window.state.flowers.push({
-                         userData: { 
-                             name:`Sim${i}`, status:'proposal', colorHex: DESIGN_PALETTE[i%DESIGN_PALETTE.length],
-                             baseX:(Math.random()-0.5)*10, baseY:(Math.random()-0.5)*10+5, baseZ:(Math.random()-0.5)*10
-                         },
-                         position: {x:0, y:0, z:0} // Dummy
-                     });
-                }
-                // Rebuild visuals
-                window.updateTreeFromState();
-            }
-        };
+        // Sim Functions
+        ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateGrowthState && window.updateGrowthState(); } };
         ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
         ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
         ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
         ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
         ui.downloadLogCSV = () => { if(window.downloadLogImpl) window.downloadLogImpl(); };
 
-        // Marquee
         function updateMarquee() {
             const now = new Date();
             const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dateStr);
         }
+        setInterval(updateMarquee, 1000); updateMarquee();
 
-        // Init Everything
-        window.onload = () => {
-            initVisuals();
-            setInterval(updateMarquee, 1000); updateMarquee();
-            
-            // Interaction Setup
+        document.addEventListener('DOMContentLoaded', () => {
             document.getElementsByName('post-status').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const amt = document.getElementById('amount-container');
@@ -536,44 +475,45 @@
                     else { if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); inp.removeAttribute('required'); inp.value=''; }
                 });
             });
-             ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); });
-             if(window.gsap) {
+            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); });
+            if(window.gsap) {
                 document.querySelectorAll('.vivid-cycle-btn').forEach(btn => { gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); const tl = gsap.timeline({ repeat: -1 }); DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" })); });
                 document.querySelectorAll('.breath-animation').forEach(btn => { gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" }); });
             }
             
+            // Default Form Handler (Gets overwritten if Firebase loads)
             const form = document.getElementById('action-form');
             if(form) {
                 form.onsubmit = (e) => {
-                    // Handled by module if active, else fallback here? 
-                    // No, let's keep it simple: If module didn't catch it, fallback logic
-                    if(!window.isSyncStarted) {
-                        e.preventDefault();
-                        const n = document.getElementById('post-name').value;
-                        const c = document.getElementById('post-client').value;
-                        const p = document.getElementById('post-project').value;
-                        const a = parseInt(document.getElementById('post-amount').value) || 0;
-                        const notes = document.getElementById('post-notes').value;
-                        const status = document.querySelector('input[name="post-status"]:checked').value;
-                        
-                        // Local Visuals
+                    if(window.isSyncStarted) return;
+                    e.preventDefault();
+                    let hasError = false;
+                    ['post-name','post-client','post-project'].forEach(id=>{ const el = document.getElementById(id); if(!el.value) { el.classList.add('input-error-shake'); hasError=true; } });
+                    if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return; }
+                    
+                    const n = document.getElementById('post-name').value;
+                    const c = document.getElementById('post-client').value;
+                    const p = document.getElementById('post-project').value;
+                    const a = parseInt(document.getElementById('post-amount').value) || 0;
+                    const notes = document.getElementById('post-notes').value;
+                    const status = document.querySelector('input[name="post-status"]:checked').value;
+                    
+                    if(window.addFlowerWithConvergence) {
                         window.addFlowerWithConvergence(n,c,p,a,notes,status,false);
-                        
-                        // Fake State Update
                         window.state.actions++;
                         if(status === 'order') window.state.amount += a;
-                        
-                        ui.closeModal();
+                        if(window.updateStatsUI) window.updateStatsUI();
+                        if(window.refreshLog) window.refreshLog();
                     }
+                    ui.closeModal();
                 };
             }
-        };
-
+        });
     </script>
     
     <!-- 2. Visual Script (Three.js) -->
     <script>
-        let scene, particles, bgMesh, bgUniforms;
+        let scene, particles, effectGroup, bgMesh, bgUniforms;
 
         window.addEventListener('load', () => {
             try { initThree(); } catch(e) { console.error(e); }
@@ -626,7 +566,6 @@
                 if(window.camera && window.renderer) {
                     window.camera.aspect = window.innerWidth / window.innerHeight; window.camera.updateProjectionMatrix(); window.renderer.setSize(window.innerWidth, window.innerHeight);
                     window.state.isMobile = window.innerWidth < 768; 
-                    // Resize時も色を再計算
                     window.updateBackgroundColor();
                     window.updateGrowthState();
                 }
@@ -651,8 +590,6 @@
             if(bgUniforms) bgUniforms.uTime.value += 0.01;
             window.updateBackgroundColor();
             if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
-            
-            // Flower Float
             const time = Date.now();
             window.treeGroup.children.forEach(obj => {
                 if(obj.geometry.type === 'SphereGeometry' && obj.userData && obj.userData.baseX !== undefined) {
@@ -665,7 +602,6 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        // Global Utility Functions
         window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
         window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
@@ -682,44 +618,26 @@
             if (bgUniforms) { bgUniforms.uColorA.value.set(colors.base); bgUniforms.uColorB.value.set(colors.accent); }
         };
         
-        // --- CENTRAL UPDATE LOGIC ---
-        // This function syncs visual tree with data array (from Firebase or Sim)
         window.updateTreeFromState = () => {
             if(!window.treeGroup) return;
-            
-            // Clear existing flowers
             window.treeGroup.children.filter(c => c.geometry.type === 'SphereGeometry').forEach(c => window.treeGroup.remove(c));
-            
-            // Rebuild from state.flowers data (which now holds just data objects, not meshes)
             window.state.flowers.forEach(d => {
-                 // Convert data to mesh
                  const color = d.userData.colorHex || '#fff';
                  const geo = new THREE.SphereGeometry(0.25,16,16);
                  const mat = new THREE.MeshBasicMaterial({color:color});
                  const mesh = new THREE.Mesh(geo,mat);
-                 
-                 // If data has position, use it, else rand
-                 let x = d.userData.baseX;
-                 let y = d.userData.baseY;
-                 let z = d.userData.baseZ;
-                 
+                 let x = d.userData.baseX; let y = d.userData.baseY; let z = d.userData.baseZ;
                  if(x === undefined) {
-                     // Generate pos
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // Store back to data for consistency if needed
-                     d.userData.baseX=x; d.userData.baseY=y; d.userData.baseZ=z;
-                     d.userData.phaseX=Math.random()*Math.PI*2;
-                     d.userData.floatSpeed=0.0004;
+                     d.userData.baseX=x; d.userData.baseY=y; d.userData.baseZ=z; d.userData.phaseX=Math.random()*Math.PI*2; d.userData.phaseY=Math.random()*Math.PI*2; d.userData.phaseZ=Math.random()*Math.PI*2; d.userData.floatSpeed=0.0004;
                  }
-                 
                  mesh.position.set(x,y,z);
-                 mesh.userData = d.userData; // Keep all data
+                 mesh.userData = d.userData;
                  window.treeGroup.add(mesh);
             });
-            
             window.updateGrowthState();
         };
 
@@ -727,25 +645,16 @@
             const color = DESIGN_PALETTE[Math.floor(Math.random()*DESIGN_PALETTE.length)];
             const target = getGuaranteedVisibleTarget();
             if(isInstant) { 
-                // Just add data to state and render
                 window.state.flowers.push({userData:{name:n,client:c,project:p,amount:a,notes:not,status:s,colorHex:color}});
                 window.updateTreeFromState();
                 return; 
             }
-            
-            // Animation
             const startPos = new THREE.Vector3(0, -8, 25); if (window.state.isMobile) startPos.z = 35;
             const projectile = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 }));
             projectile.position.copy(startPos); window.effectGroup.add(projectile);
-            
-            const trailGeo = new THREE.BufferGeometry(); const trailLen = 30; const trailPos = new Float32Array(trailLen * 3);
-            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
-            const trailMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
-            const trailLine = new THREE.Line(trailGeo, trailMat); trailLine.frustumCulled = false; window.effectGroup.add(trailLine);
-            
+            const trailGeo = new THREE.BufferGeometry(); const trailLen = 30; const trailPos = new Float32Array(trailLen * 3); trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3)); const trailMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending }); const trailLine = new THREE.Line(trailGeo, trailMat); trailLine.frustumCulled = false; window.effectGroup.add(trailLine);
             const controlPos = new THREE.Vector3().addVectors(startPos, target.world).multiplyScalar(0.5); controlPos.y += 6.0;
             const getBezierPoint = (t, p0, p1, p2) => { const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x; const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y; const z = (1 - t) * (1 - t) * p0.z + 2 * (1 - t) * t * p1.z + t * t * p2.z; return new THREE.Vector3(x, y, z); };
-            
             const animObj = { t: 0 };
             gsap.to(animObj, { t: 1, duration: 2.5, ease: "power1.inOut", onUpdate: () => {
                 const currentPos = getBezierPoint(animObj.t, startPos, controlPos, target.world); projectile.position.copy(currentPos);
@@ -757,8 +666,6 @@
                 window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
                 createSparkleEffect(target.world, color); flashTreeParticles();
                 
-                // Add actual data now
-                // Generate pos based on target local
                 window.state.flowers.push({
                     userData: {name:n, client:c, project:p, amount:a, notes:not, status:s, colorHex:color, baseX:target.local.x, baseY:target.local.y, baseZ:target.local.z, phaseX:Math.random(), phaseY:Math.random(), phaseZ:Math.random(), floatSpeed:0.0004}
                 });
@@ -806,7 +713,6 @@
                 if(form) {
                     form.onsubmit = async (e) => {
                         e.preventDefault();
-                        const btn = document.getElementById('submit-action-btn');
                         
                         let hasError = false;
                         ['post-name','post-client','post-project'].forEach(id=>{
@@ -850,25 +756,29 @@
                     await batch.commit();
                     window.location.reload();
                 };
+                
+                window.downloadLogImpl = () => {
+                    if (window.state.flowers.length === 0) return;
+                    let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n";
+                    window.state.flowers.forEach(f => {
+                        const d = f.userData;
+                        csvContent += `"${d.name}","${d.status}","${d.client}","${d.project}",${d.amount},"${d.notes}"\n`;
+                    });
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log.csv`; link.click();
+                };
 
                 await signInAnonymously(auth);
-                
-                // IMPORTANT: Listen to changes and update GLOBAL STATE, then RENDER
                 onSnapshot(query(collectionRef, orderBy('timestamp', 'asc')), (snap) => {
-                    window.state.flowers = []; 
-                    window.state.actions = 0; 
-                    window.state.amount = 0;
-                    
+                    window.state.flowers = []; window.state.actions = 0; window.state.amount = 0;
                     snap.forEach(doc => {
-                        const d = doc.data(); 
-                        d.id = doc.id;
-                        // Push simple data object to state
-                        window.state.flowers.push({ userData: d }); 
+                        const d = doc.data(); d.id = doc.id;
+                        window.state.flowers.push({userData: d});
                         window.state.actions++;
                         if(d.status === 'order') window.state.amount += (d.amount || 0);
                     });
                     
-                    // Call the universal render function
+                    // Central Update Call
                     if(window.updateTreeFromState) window.updateTreeFromState();
                     if(window.updateStatsUI) window.updateStatsUI();
                     if(window.refreshLog) window.refreshLog();
