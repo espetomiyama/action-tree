@@ -15,7 +15,7 @@
     
     <!-- Global Init Script -->
     <script>
-        // グローバル変数の初期化（エラー防止）
+        // グローバル変数の初期化
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
@@ -31,7 +31,7 @@
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
-        // ★フォーム送信ハンドラ（リロード防止＆データ処理）
+        // ★フォーム送信ハンドラ
         window.handleFormSubmit = function(event) {
             event.preventDefault(); // リロードを絶対阻止
             
@@ -80,12 +80,10 @@
             } else {
                 // Demo Mode
                 console.log("Demo Post:", data);
-                // ★重要: データ構造をFirebase取得時と統一する ({ userData: data })
                 window.state.flowers.push({ userData: data });
                 window.state.actions++;
                 if(data.status === 'order') window.state.amount += data.amount;
                 
-                // 画面更新
                 if(window.updateTreeFromState) window.updateTreeFromState();
                 if(window.updateStatsUI) window.updateStatsUI();
                 if(window.refreshLog) window.refreshLog();
@@ -96,20 +94,17 @@
             return false;
         };
 
-        // 送信後の後始末（フォームクリア・モーダル閉じ・ボタン復帰）
+        // 送信後の後始末
         function finalizePost() {
             const btn = document.getElementById('submit-action-btn');
             if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
             
-            // ★フォームのリセット
             const form = document.getElementById('action-form');
             if(form) form.reset();
             
-            // 金額欄を隠す
             const amt = document.getElementById('amount-container');
             if(amt) amt.classList.add('invisible');
             
-            // モーダルを閉じる
             if(window.ui && window.ui.closeModal) window.ui.closeModal();
         }
         
@@ -221,8 +216,6 @@
         .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 300; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
-        
-        /* ★未入力時の揺れと黒下線 */
         .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
@@ -237,13 +230,12 @@
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
 
-        /* Loader Safety System */
+        /* Loader */
         #app-loader {
             position: fixed; inset: 0; z-index: 9999; background: #000807;
             display: flex; align-items: center; justify-content: center; flex-direction: column;
             pointer-events: auto;
-            /* 3.5秒後にCSSだけで強制的に消す */
-            animation: forceHide 0.5s linear 3.5s forwards;
+            animation: forceHide 0.5s linear 3s forwards;
         }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
@@ -295,7 +287,7 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-content" id="stats-slider">
-                    <!-- Static Initial Content -->
+                    <!-- Static Content -->
                     <div class="marquee-item text-white">
                         <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
                         <div class="stats-group"><span class="stats-label">Total Amount</span><span class="stats-value">¥<span class="amount-val">0</span></span></div>
@@ -415,7 +407,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PAGE -->
+        <!-- DASHBOARD -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -475,7 +467,7 @@
         </div>
     </main>
 
-    <!-- Post Modal (Direct Submit to Global Handler) -->
+    <!-- Post Modal -->
     <div id="post-modal" class="modal-overlay" onclick="if(event.target === this) ui.closeModal()">
         <div class="bg-white text-black w-full max-w-lg p-4 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[90dvh] relative">
             <button onclick="ui.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
@@ -483,7 +475,7 @@
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
                 <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">ACTIONを投稿して、100の木を育てましょう。</p>
             </div>
-            <!-- ★★★ Form Uses Global Handler to Prevent Reload Loop ★★★ -->
+            <!-- Form uses global handler -->
             <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" onsubmit="return window.handleFormSubmit(event)" novalidate>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label><input type="text" id="post-name" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label><input type="text" id="post-client" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
@@ -510,7 +502,6 @@
 
     <!-- UI Logic -->
     <script>
-        // Init logic
         document.addEventListener('DOMContentLoaded', () => {
             // UI Toggle & Animations
             ui.toggleMenu = () => {
@@ -557,14 +548,12 @@
             document.getElementById('nav-menu').style.display='none';
             document.getElementById('menu-toggle').classList.remove('open');
             const h = document.getElementById('main-header');
-            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); } else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
-            if(id === 'log' && window.refreshLog) window.refreshLog();
+            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
+            else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
+            if (id === 'log' && window.refreshLog) window.refreshLog();
         };
         ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
-        ui.closeModal = () => { 
-            document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; 
-            // Form Reset Logic in finalizePost handles this usually, but safe to clear
-        };
+        ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
         ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
         ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
         
@@ -624,7 +613,9 @@
             const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
             window.state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, window.state.maxBuds); window.state.instancedBuds.count = 0; window.treeGroup.add(window.state.instancedBuds);
             
+            addBudsInstanced(2000);
             animate();
+            
             window.updateBackgroundColor();
             window.updateStatsUI();
             
@@ -644,7 +635,9 @@
                     m.x = (e.clientX / window.innerWidth) * 2 - 1; m.y = -(e.clientY / window.innerHeight) * 2 + 1;
                     rc.setFromCamera(m, window.camera);
                     const intersects = rc.intersectObjects(window.treeGroup.children.filter(obj => obj.geometry.type === 'SphereGeometry')); 
-                    if (intersects.length > 0) window.showDetail(intersects[0].object.userData);
+                    if (intersects.length > 0) {
+                        window.ui.showDetail(intersects[0].object.userData);
+                    }
                 }); 
             }
         }
@@ -654,7 +647,6 @@
             if(bgUniforms) bgUniforms.uTime.value += 0.01;
             window.updateBackgroundColor();
             if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
-            
             const time = Date.now();
             window.treeGroup.children.forEach(obj => {
                 if(obj.geometry.type === 'SphereGeometry' && obj.userData && obj.userData.baseX !== undefined) {
@@ -664,11 +656,13 @@
                      obj.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*window.state.driftFactor*3.8;
                 }
             });
-
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        // --- Shared Utils ---
+        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
             if(h<5) return window.TIME_PERIODS.NIGHT; if(h<12) return window.TIME_PERIODS.MORNING; if(h<17) return window.TIME_PERIODS.DAY; return window.TIME_PERIODS.EVENING;
@@ -681,19 +675,18 @@
             if (bgUniforms) { bgUniforms.uColorA.value.set(colors.base); bgUniforms.uColorB.value.set(colors.accent); }
         };
         
+        // ★重要: データ同期用の関数（これで表示される）
         window.updateTreeFromState = () => {
             if(!window.treeGroup) return;
-            // Clear existing
             window.treeGroup.children.filter(c => c.geometry.type === 'SphereGeometry').forEach(c => window.treeGroup.remove(c));
             
-            // Rebuild
             window.state.flowers.forEach(d => {
                  const color = d.userData.colorHex || '#fff';
                  const geo = new THREE.SphereGeometry(0.25,16,16);
                  const mat = new THREE.MeshBasicMaterial({color:color});
                  const mesh = new THREE.Mesh(geo,mat);
-                 let x = d.userData.baseX; let y = d.userData.baseY; let z = d.userData.baseZ;
                  
+                 let x = d.userData.baseX; let y = d.userData.baseY; let z = d.userData.baseZ;
                  if(x === undefined) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
@@ -705,6 +698,7 @@
                  mesh.position.set(x,y,z);
                  mesh.userData = d.userData;
                  window.treeGroup.add(mesh);
+                 // 念のためアニメーション無しで即表示（エラー回避）
                  mesh.scale.set(1,1,1);
             });
             window.updateGrowthState();
@@ -712,44 +706,46 @@
 
         window.addFlowerWithConvergence = (n,c,p,a,not,s,isInstant) => {
             const color = window.DESIGN_PALETTE[Math.floor(Math.random()*window.DESIGN_PALETTE.length)];
+            const target = getGuaranteedVisibleTarget();
             
             // Animation only
             const startPos = new THREE.Vector3(0, -8, 25); if (window.state.isMobile) startPos.z = 35;
             const projectile = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 }));
             projectile.position.copy(startPos); window.effectGroup.add(projectile);
             const trailGeo = new THREE.BufferGeometry(); const trailLen = 30; const trailPos = new Float32Array(trailLen * 3); trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3)); const trailMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending }); const trailLine = new THREE.Line(trailGeo, trailMat); trailLine.frustumCulled = false; window.effectGroup.add(trailLine);
-            const targetPos = new THREE.Vector3(0, 10, 0); // Simplified target for anim
-            
+            const controlPos = new THREE.Vector3().addVectors(startPos, target.world).multiplyScalar(0.5); controlPos.y += 6.0;
+            const getBezierPoint = (t, p0, p1, p2) => { const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x; const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y; const z = (1 - t) * (1 - t) * p0.z + 2 * (1 - t) * t * p1.z + t * t * p2.z; return new THREE.Vector3(x, y, z); };
             const animObj = { t: 0 };
             gsap.to(animObj, { t: 1, duration: 2.5, ease: "power1.inOut", onUpdate: () => {
-                const x = (1 - animObj.t) * (1 - animObj.t) * startPos.x + 2 * (1 - animObj.t) * animObj.t * (startPos.x + targetPos.x)/2 + animObj.t * animObj.t * targetPos.x;
-                const y = (1 - animObj.t) * (1 - animObj.t) * startPos.y + 2 * (1 - animObj.t) * animObj.t * (startPos.y + 6) + animObj.t * animObj.t * targetPos.y;
-                const z = (1 - animObj.t) * (1 - animObj.t) * startPos.z + 2 * (1 - animObj.t) * animObj.t * (startPos.z + targetPos.z)/2 + animObj.t * animObj.t * targetPos.z;
-                projectile.position.set(x,y,z);
-                
+                const currentPos = getBezierPoint(animObj.t, startPos, controlPos, target.world); projectile.position.copy(currentPos);
+                if (animObj.t > 0.8) { projectile.scale.setScalar(1.0 - (animObj.t - 0.8) * 5); }
                 const positions = trailLine.geometry.attributes.position.array;
                 for (let i = 0; i < trailLen - 1; i++) { positions[i * 3] = positions[(i + 1) * 3]; positions[i * 3 + 1] = positions[(i + 1) * 3 + 1]; positions[i * 3 + 2] = positions[(i + 1) * 3 + 2]; }
-                positions[(trailLen - 1) * 3] = x; positions[(trailLen - 1) * 3 + 1] = y; positions[(trailLen - 1) * 3 + 2] = z; trailLine.geometry.attributes.position.needsUpdate = true;
+                positions[(trailLen - 1) * 3] = currentPos.x; positions[(trailLen - 1) * 3 + 1] = currentPos.y; positions[(trailLen - 1) * 3 + 2] = currentPos.z; trailLine.geometry.attributes.position.needsUpdate = true;
             }, onComplete: () => {
                 window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
-                // Tree update happens via data sync
+                createSparkleEffect(target.world, color); flashTreeParticles();
+                // データの反映は updateTreeFromState に任せる
             }});
         };
         
-        window.showDetail = (data) => { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; window.resetHoverState(); modal.style.display = 'flex'; window.state.isModalOpen = true; };
+        function getGuaranteedVisibleTarget() { const vector = new THREE.Vector3(); let attempts = 0; window.treeGroup.updateMatrixWorld(); while (attempts < 50) { const posY = (Math.random() - 0.2) * 18 * window.state.growthMultiplier + 5; const branchFactor = (posY + 6) / 22; const a = Math.random() * Math.PI * 2; const r = 1.5 + Math.random() * (branchFactor * 6 * window.state.baseSpreadFactor * window.state.growthMultiplier); const posX = Math.cos(a) * r, posZ = Math.sin(a) * r; vector.set(posX, posY, posZ).applyMatrix4(window.treeGroup.matrixWorld); vector.project(window.camera); if (Math.abs(vector.x) < 0.5 && Math.abs(vector.y) < 0.5 && vector.z < 1 && vector.z > 0) return { local: { x: posX, y: posY, z: posZ }, world: new THREE.Vector3(posX, posY, posZ).applyMatrix4(window.treeGroup.matrixWorld) }; attempts++; } return { local: { x: 0, y: 10, z: 0 }, world: new THREE.Vector3(0, 10, 0) }; }
+        function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
+        function createSparkleEffect(pos, colorHex) { const particleCount = 60; const geo = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const velocities = []; for(let i=0; i<particleCount; i++) { positions[i*3] = pos.x; positions[i*3+1] = pos.y; positions[i*3+2] = pos.z; const v = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4 + 0.1, (Math.random() - 0.5) * 0.4).normalize().multiplyScalar(0.02 + Math.random() * 0.04); velocities.push(v); } geo.setAttribute('position', new THREE.BufferAttribute(positions, 3)); const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.3, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); const sparkleSystem = new THREE.Points(geo, mat); window.effectGroup.add(sparkleSystem); const anim = { val: 0 }; gsap.to(anim, { val: 1, duration: 3.0, ease: "power2.out", onUpdate: () => { const posAttr = sparkleSystem.geometry.attributes.position; for(let i=0; i<particleCount; i++) { posAttr.array[i*3] += velocities[i].x; posAttr.array[i*3+1] += velocities[i].y; posAttr.array[i*3+2] += velocities[i].z; velocities[i].multiplyScalar(0.98); } posAttr.needsUpdate = true; sparkleSystem.material.opacity = (1 - anim.val); }, onComplete: () => { window.effectGroup.remove(sparkleSystem); geo.dispose(); mat.dispose(); } }); }
+        function addBudsInstanced(c) { if(!window.state.instancedBuds) return; const matrix = new THREE.Matrix4(), pos = new THREE.Vector3(), quat = new THREE.Quaternion(), sca = new THREE.Vector3(); for (let i = 0; i < c; i++) { if (window.state.budCount >= window.state.maxBuds) break; const y = (Math.random() - 0.4) * 24 * window.state.growthMultiplier + 4; const factor = (y + 8) / 24; const a = Math.random() * Math.PI * 2; const r = 0.8 + Math.random() * (factor * 7 * window.state.baseSpreadFactor * window.state.growthMultiplier); pos.set(Math.cos(a) * r, y, Math.sin(a) * r); const s = 0.4 + Math.random() * 0.4; sca.set(s, s, s); matrix.compose(pos, quat, sca); window.state.instancedBuds.setMatrixAt(window.state.budCount, matrix); window.state.budCount++; } window.state.instancedBuds.count = window.state.budCount; window.state.instancedBuds.instanceMatrix.needsUpdate = true; }
         window.updateGrowthState = () => { const count = window.state.actions; let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; window.state.currentLevel = lv; let mult = 1.0 + lv*0.2; let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } }); };
-        window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
-        window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.showDetail(f.userData); const amountDisplay = f.userData.status === 'order' ? `¥${(parseInt(f.userData.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${f.userData.colorHex}"></span>${f.userData.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${f.userData.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${f.userData.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
+        
+        window.ui.showDetail = (data) => { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; window.resetHoverState(); modal.style.display = 'flex'; window.state.isModalOpen = true; };
     </script>
     
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // 【重要】Firebase設定をここに記入してください
+        // 【重要】Firebase設定 (必ず書き換えてください)
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         const firebaseConfig = {
             apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
@@ -769,12 +765,12 @@
                 const db = getFirestore(app);
                 const collectionRef = collection(db, 'actions');
 
-                // Expose Submit Function
+                // Global Submit
                 window.submitToFirebase = async (data) => {
                     await addDoc(collectionRef, data);
                 };
                 
-                // Expose Reset
+                // Reset
                 window.resetDataImpl = async () => {
                     if(!confirm("DBデータを全削除しますか？")) return;
                     const q = await getDocs(collectionRef);
@@ -784,7 +780,7 @@
                     window.location.reload();
                 };
                 
-                // Expose CSV
+                // CSV
                 window.downloadLogImpl = () => {
                     if (window.state.flowers.length === 0) return;
                     let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n";
@@ -798,7 +794,7 @@
 
                 await signInAnonymously(auth);
                 
-                // Realtime Listener -> Updates Global State -> Triggers Render
+                // Listen & Sync
                 onSnapshot(query(collectionRef, orderBy('timestamp', 'asc')), (snap) => {
                     window.state.flowers = []; 
                     window.state.actions = 0; 
@@ -807,12 +803,12 @@
                     snap.forEach(doc => {
                         const d = doc.data(); 
                         d.id = doc.id;
+                        // Unified Data Structure: { userData: d }
                         window.state.flowers.push({ userData: d });
                         window.state.actions++;
                         if(d.status === 'order') window.state.amount += (d.amount || 0);
                     });
                     
-                    // Central Update Call
                     if(window.updateTreeFromState) window.updateTreeFromState();
                     if(window.updateStatsUI) window.updateStatsUI();
                     if(window.refreshLog) window.refreshLog();
