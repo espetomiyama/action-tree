@@ -730,15 +730,16 @@
             <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" novalidate>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label>
-                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
+                    <!-- SP版は text-base (16px) にして自動ズームを防止。PC版は md:text-sm で小さく。 -->
+                    <input type="text" id="post-name" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-base md:text-sm rounded-none transition-colors" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label>
-                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
+                    <input type="text" id="post-client" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-base md:text-sm rounded-none transition-colors" required>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label>
-                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors" required>
+                    <input type="text" id="post-project" maxlength="50" placeholder="" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-base md:text-sm rounded-none transition-colors" required>
                 </div>
 
                 <!-- Status Selection -->
@@ -764,7 +765,7 @@
                 <div class="h-14 md:h-20 relative overflow-hidden flex flex-col justify-end">
                     <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-1 md:pt-2 transition-all duration-300">
                         <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">AMOUNT / 受注額</label>
-                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-1 md:py-2 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors">
+                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" placeholder="" class="w-full border-b py-1 md:py-2 focus:outline-none text-black font-bold text-base md:text-sm rounded-none transition-colors">
                     </div>
                 </div>
 
@@ -774,7 +775,7 @@
                         <span id="char-count-display" class="text-[9px] font-bold text-gray-400">0 / 300</span>
                     </div>
                     <!-- Reduced height for SP -->
-                    <textarea id="post-notes" maxlength="300" oninput="window.updateCharCount(this)" placeholder="" class="w-full border-b py-1 md:py-2 h-16 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors"></textarea>
+                    <textarea id="post-notes" maxlength="300" oninput="window.updateCharCount(this)" placeholder="" class="w-full border-b py-1 md:py-2 h-16 md:h-24 resize-none text-black font-bold text-base md:text-xs rounded-none focus:outline-none transition-colors"></textarea>
                 </div>
                 
                 <!-- Error Msg -->
@@ -804,6 +805,7 @@
 
         try {
             if (typeof __firebase_config !== 'undefined') {
+                // Canvas環境（プレビュー）での自動設定
                 firebaseConfig = JSON.parse(__firebase_config);
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
             } else {
@@ -811,15 +813,17 @@
             }
         } catch (e) {
             // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-            // 【重要】ここをご自身のFirebase設定に書き換えてください！
+            // 【重要】ご自身のサーバー等にアップロードして使用する場合は、
+            // 以下のFirebase設定をご自身のプロジェクトのものに書き換えてください。
+            // これを行わないと、データベースへの保存・共有機能は動作しません。
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-             firebaseConfig = {
+            firebaseConfig = {
                 apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
                 authDomain: "action-tree.firebaseapp.com",
                 projectId: "action-tree",
                 storageBucket: "action-tree.firebasestorage.app",
-                messagingSenderId: "471274997168",
-                appId: "1:471274997168:web:b0479cfc2006b136ad0275"
+                messagingSenderId: "1:471274997168:web:b0479cfc2006b136ad0275",
+                appId: "YOUR_APP_ID"
             };
             appId = 'action-tree-platform';
         }
