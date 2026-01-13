@@ -13,6 +13,7 @@
     
     <!-- UI & State Setup -->
     <script>
+        // Global UI namespace
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
@@ -24,13 +25,68 @@
         window.camera = null; 
         window.renderer = null; 
         window.effectGroup = null;
-        
+        window.isThreeReady = false; // 描画準備完了フラグ
+
+        // Config
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
+        // ★実を生成・更新する最重要関数
+        window.updateTreeFromState = function() {
+            // ツリーがまだないなら何もしない（initThreeの最後で再度呼ばれる）
+            if(!window.treeGroup) return;
+
+            // 1. 既存の実（action_flower）だけを削除（つぼみや粒子は消さない）
+            for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
+                const obj = window.treeGroup.children[i];
+                if (obj.name === 'action_flower') {
+                    window.treeGroup.remove(obj);
+                    if(obj.geometry) obj.geometry.dispose();
+                    if(obj.material) obj.material.dispose();
+                }
+            }
+            
+            // 2. データを元に再生成
+            window.state.flowers.forEach(d => {
+                 const userData = d.userData || d;
+                 const color = userData.colorHex || '#fff';
+                 
+                 // 発光マテリアル（MeshBasicMaterial）
+                 const geo = new THREE.SphereGeometry(0.35, 16, 16); 
+                 const mat = new THREE.MeshBasicMaterial({ color: color }); 
+                 const mesh = new THREE.Mesh(geo, mat);
+                 mesh.name = 'action_flower'; // 識別タグ
+                 
+                 // 座標の復元または生成
+                 let x = userData.baseX; 
+                 let y = userData.baseY; 
+                 let z = userData.baseZ;
+                 
+                 // 座標がない場合は生成
+                 if(x === undefined || x === null) {
+                     const rY = (Math.random()-0.2)*20 + 5;
+                     const rR = (rY+6)/22 * 10 * Math.random();
+                     const phi = Math.random()*Math.PI*2;
+                     x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
+                     // 次回のために保存（メモリ上のみ）
+                     userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
+                     userData.phaseX=Math.random()*Math.PI*2; 
+                     userData.floatSpeed=0.0004;
+                 }
+                 
+                 mesh.position.set(x, y, z);
+                 mesh.userData = userData; 
+                 
+                 window.treeGroup.add(mesh);
+            });
+            
+            // 成長状態の更新
+            if(window.updateGrowthState) window.updateGrowthState();
+        };
+
         // Form Submit Handler
         window.handleFormSubmit = function(event) {
-            event.preventDefault();
+            event.preventDefault(); // リロード阻止
             
             const n = document.getElementById('post-name').value;
             const c = document.getElementById('post-client').value;
@@ -57,21 +113,18 @@
             const rY = (Math.random()-0.2)*20 + 5;
             const rR = (rY+6)/22 * 10 * Math.random();
             const phi = Math.random()*Math.PI*2;
-            const x = Math.cos(phi)*rR; 
-            const y = rY; 
-            const z = Math.sin(phi)*rR;
+            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
 
             const data = {
                 name: n, client: c, project: p, amount: a, notes: notes, status: status,
                 colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
                 timestamp: Date.now(),
-                baseX: x, baseY: y, baseZ: z,
+                baseX: x, baseY: y, baseZ: z, // 座標固定
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
             // 1. 演出実行
             if(window.addFlowerWithConvergence) {
-                // アニメーションターゲット
                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
                 if(window.treeGroup) {
                     const vec = new THREE.Vector3(x,y,z);
@@ -92,15 +145,14 @@
                     finalizePost();
                 });
             } else {
-                // Demo
+                // Demo Mode
                 console.log("Demo Post:", data);
                 window.state.flowers.push({ userData: data });
                 window.state.actions++;
                 if(data.status === 'order') window.state.amount += data.amount;
                 
-                // 即時反映（実を作る）
-                if(window.createActionFruit) window.createActionFruit(data);
-                
+                // 即時反映
+                window.updateTreeFromState();
                 if(window.updateStatsUI) window.updateStatsUI();
                 if(window.refreshLog) window.refreshLog();
                 
@@ -153,23 +205,15 @@
         .action-button { position: fixed; bottom: 80px; right: 20px; z-index: 90; width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000; box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; text-transform: uppercase; font-weight: 800; pointer-events: auto; }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
         
-        /* Marquee (Fixed for SP) */
-        .marquee-container { 
-            position: fixed; /* Absolute -> Fixed for stability */
-            bottom: 0; width: 100%; 
-            padding: 2.5rem 0; 
-            overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; 
-            /* SP Safe Area + padding */
-            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
-        }
-        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
+        /* Marquee */
+        .marquee-container { position: absolute; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; }
+        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; bottom: 10px; } }
         .marquee-track { display: flex; width: max-content; animation: marquee 120s linear infinite; will-change: transform; transform: translate3d(0,0,0); }
         .marquee-content { display: flex; align-items: center; }
-        @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-50%, 0, 0); } }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
-        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2.5rem; }
-        /* Font styles restored */
-        .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: none; }
+        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 1.5rem; }
+        .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
         .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 140px; text-align: left; }
@@ -182,6 +226,7 @@
         .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
         .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
         .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
+        
         .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 600; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
@@ -198,10 +243,17 @@
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
 
+        /* Actions Log Font */
         .stat-card-value { font-size: 1.5rem; font-weight: 900 !important; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
         @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
 
-        #app-loader { position: fixed; inset: 0; z-index: 9999; background: #000807; display: flex; align-items: center; justify-content: center; flex-direction: column; pointer-events: auto; animation: forceHide 0.5s linear 3s forwards; }
+        /* Loader */
+        #app-loader {
+            position: fixed; inset: 0; z-index: 9999; background: #000807;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            pointer-events: auto;
+            animation: forceHide 0.5s linear 3s forwards;
+        }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
@@ -251,6 +303,7 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
+                    <!-- Static Content -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -261,12 +314,13 @@
                     </div>
                 </div>
             </div>
+            <!-- ACTION BUTTON -->
             <button id="main-action-button" onclick="window.ui.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
 
-        <!-- ABOUT -->
+        <!-- ABOUT PAGE -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -295,7 +349,7 @@
             </div>
         </div>
 
-        <!-- RULES -->
+        <!-- RULES PAGE -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
@@ -323,7 +377,7 @@
             </div>
         </div>
 
-        <!-- LOG -->
+        <!-- LOG PAGE -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -364,7 +418,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD -->
+        <!-- DASHBOARD PAGE -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -404,7 +458,7 @@
                 <div class="border-t border-black pt-16 mb-20">
                     <h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3>
                     <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。</p>
+                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。</p>
                         <button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button>
                     </div>
                 </div>
@@ -637,10 +691,9 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        // Utils
-        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
@@ -675,7 +728,6 @@
                  mesh.name = 'action_flower'; // ID tag
                  
                  let x = userData.baseX; let y = userData.baseY; let z = userData.baseZ;
-                 // Fix position if missing
                  if(x === undefined) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
