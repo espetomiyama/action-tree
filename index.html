@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- 検索インデックス除外 -->
     <meta name="robots" content="noindex, nofollow">
     
     <title>100 ACTION TREE</title>
@@ -12,9 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- UI & State Setup -->
     <script>
-        // Global UI namespace
+        // --- Global Setup ---
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
@@ -26,17 +24,16 @@
         window.camera = null; 
         window.renderer = null; 
         window.effectGroup = null;
-
+        
         // Config
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
-        // ★最重要: 描画更新関数（エラー耐性強化版）
+        // --- ★データ修復＆表示関数 ---
         window.updateTreeFromState = function() {
-            // ツリーが未準備ならリトライ
             if(!window.treeGroup) return;
 
-            // 1. 既存の実を一旦クリア（ID管理が複雑なため全再描画が確実）
+            // 1. 既存の実を全削除
             for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
                 const obj = window.treeGroup.children[i];
                 if (obj.name === 'action_flower') {
@@ -46,59 +43,43 @@
                 }
             }
             
-            // 2. データを元に再生成（データ修復機能付き）
+            // 2. データを元に再生成（強制修復付き）
             window.state.flowers.forEach(d => {
                  const userData = d.userData || d;
-                 const color = userData.colorHex || '#fff';
+                 const color = userData.colorHex || window.DESIGN_PALETTE[0];
                  
-                 // ★MeshBasicMaterial: ライト不要で確実に発色
-                 const geo = new THREE.SphereGeometry(0.4, 16, 16); 
+                 // マテリアル（発光）
+                 const geo = new THREE.SphereGeometry(0.6, 16, 16); // サイズアップ
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
                  mesh.name = 'action_flower';
                  
-                 // 座標データの検証と修復
-                 let x = userData.baseX; 
-                 let y = userData.baseY; 
-                 let z = userData.baseZ;
+                 // 座標データの検証と強制修復
+                 let x = parseFloat(userData.baseX); 
+                 let y = parseFloat(userData.baseY); 
+                 let z = parseFloat(userData.baseZ);
                  
-                 // 数値でない、または未定義の場合は再生成
-                 if(typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+                 // 座標が壊れていたら再計算
+                 if(isNaN(x) || isNaN(y) || isNaN(z)) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // データを修復して保存（メモリ上）
-                     userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
-                     userData.phaseX=Math.random()*Math.PI*2; 
-                     userData.floatSpeed=0.0004;
                  }
                  
                  mesh.position.set(x, y, z);
                  mesh.userData = userData; 
                  
                  window.treeGroup.add(mesh);
-                 mesh.scale.set(1,1,1); // サイズ保証
+                 mesh.scale.set(1,1,1); // サイズ1固定
             });
             
             if(window.updateGrowthState) window.updateGrowthState();
         };
 
-        // 監視タイマー（念のため定期的にチェック）
-        setInterval(() => {
-            if(window.treeGroup && window.state.flowers.length > 0) {
-                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
-                // 表示数が足りなければ強制更新
-                if(visibleCount !== window.state.flowers.length) {
-                    console.log("Sync mismatch detected, refreshing tree...");
-                    window.updateTreeFromState();
-                }
-            }
-        }, 2000);
-
-        // Form Submit Handler
+        // --- Form Handler ---
         window.handleFormSubmit = function(event) {
-            event.preventDefault(); 
+            event.preventDefault();
             
             const n = document.getElementById('post-name').value;
             const c = document.getElementById('post-client').value;
@@ -135,7 +116,17 @@
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
-            // 1. 演出実行
+            // ★修正: ローカルで即座にリストに追加して表示（通信待ちをしない）
+            window.state.flowers.push({ userData: data });
+            window.state.actions++;
+            if(data.status === 'order') window.state.amount += data.amount;
+            
+            // 即時描画
+            if(window.updateTreeFromState) window.updateTreeFromState();
+            if(window.updateStatsUI) window.updateStatsUI();
+            if(window.refreshLog) window.refreshLog();
+            
+            // 演出実行
             if(window.addFlowerWithConvergence) {
                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
                 if(window.treeGroup) {
@@ -148,25 +139,16 @@
             }
             ui.closeModal();
 
-            // 2. データ保存
+            // 2. データ保存（バックグラウンドで実行）
             if (window.submitToFirebase) {
                 window.submitToFirebase(data).then(() => {
                     finalizePost();
                 }).catch(e => {
-                    alert("Error: " + e.message);
+                    // エラーでも画面上の実は消さない（UX優先）
+                    console.error(e);
                     finalizePost();
                 });
             } else {
-                // Demo Mode
-                console.log("Demo Post:", data);
-                window.state.flowers.push({ userData: data });
-                window.state.actions++;
-                if(data.status === 'order') window.state.amount += data.amount;
-                
-                if(window.updateTreeFromState) window.updateTreeFromState();
-                if(window.updateStatsUI) window.updateStatsUI();
-                if(window.refreshLog) window.refreshLog();
-                
                 finalizePost();
             }
             return false;
@@ -181,7 +163,6 @@
             if(amt) amt.classList.add('invisible');
         }
         
-        // Loader Safety
         setTimeout(() => {
             const l = document.getElementById('app-loader');
             if(l) l.classList.add('loaded');
@@ -223,7 +204,7 @@
         .marquee-content { display: flex; align-items: center; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
-        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 1.5rem; }
+        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
         .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: none; }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
@@ -252,7 +233,6 @@
         
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
-
         .stat-card-value { font-size: 1.5rem; font-weight: 900 !important; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
         @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
 
@@ -306,7 +286,6 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Static Content -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -323,7 +302,7 @@
             </button>
         </div>
 
-        <!-- ABOUT PAGE -->
+        <!-- ABOUT -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -352,7 +331,7 @@
             </div>
         </div>
 
-        <!-- RULES PAGE -->
+        <!-- RULES -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
@@ -380,7 +359,7 @@
             </div>
         </div>
 
-        <!-- LOG PAGE -->
+        <!-- LOG -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -421,7 +400,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PAGE -->
+        <!-- DASHBOARD -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -511,6 +490,21 @@
                 <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">未入力の項目があります</div>
                 <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-3 md:py-5 font-bold uppercase mt-2 mb-2 md:mt-4 md:mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none clickable">ACTION / 投稿する</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.ui.closeDetailModal()">
+        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
+            <button onclick="window.ui.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
+            <div class="mb-8 md:mb-10 text-black"><div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div><h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3></div>
+            <div class="space-y-5 md:space-y-6 text-black">
+                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span><p id="detail-name" class="text-sm font-bold break-words text-black">Name</p></div>
+                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span><p id="detail-client" class="text-sm font-bold break-words text-black">Client</p></div>
+                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span><p id="detail-project" class="text-sm font-bold break-words text-black">Project</p></div>
+                <div class="grid grid-cols-2 gap-4"><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span><p id="detail-status" class="text-sm font-bold break-words text-black">---</p></div><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span><p id="detail-amount" class="text-sm font-bold break-words text-black">---</p></div></div>
+                <div class="pt-4 border-t border-gray-100"><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span><p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black"></p></div>
+            </div>
         </div>
     </div>
 
@@ -696,43 +690,6 @@
         };
         window.resetHoverState = () => { document.body.style.cursor = 'default'; };
         
-        // ★★★ REBUILD TREE FROM DATA (Correct Logic) ★★★
-        window.updateTreeFromState = () => {
-            if(!window.treeGroup) return;
-            // Clear existing flowers (Name check is safer)
-            for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
-                const obj = window.treeGroup.children[i];
-                if (obj.name === 'action_flower') window.treeGroup.remove(obj);
-            }
-            
-            window.state.flowers.forEach(d => {
-                 const userData = d.userData || d; // Handle both structures
-                 const color = userData.colorHex || '#fff';
-                 
-                 // ★修正: BasicMaterial (No Light Required)
-                 const geo = new THREE.SphereGeometry(0.35,16,16); // Size up
-                 const mat = new THREE.MeshBasicMaterial({ color: color }); 
-                 const mesh = new THREE.Mesh(geo,mat);
-                 mesh.name = 'action_flower'; // ID tag
-                 
-                 let x = userData.baseX; let y = userData.baseY; let z = userData.baseZ;
-                 if(x === undefined) {
-                     const rY = (Math.random()-0.2)*20 + 5;
-                     const rR = (rY+6)/22 * 10 * Math.random();
-                     const phi = Math.random()*Math.PI*2;
-                     x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
-                     userData.phaseX=Math.random()*Math.PI*2; userData.phaseY=Math.random()*Math.PI*2; userData.phaseZ=Math.random()*Math.PI*2; userData.floatSpeed=0.0004;
-                 }
-                 
-                 mesh.position.set(x,y,z);
-                 mesh.userData = userData;
-                 window.treeGroup.add(mesh);
-                 mesh.scale.set(1,1,1);
-            });
-            window.updateGrowthState();
-        };
-
         window.updateGrowthState = () => { const count = window.state.actions; let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; window.state.currentLevel = lv; let mult = 1.0 + lv*0.2; let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } }); };
         window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
         window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { const d = f.userData || f; const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
@@ -757,7 +714,9 @@
             }, onComplete: () => {
                 window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
                 createSparkleEffect(tPos, color); flashTreeParticles();
-                // Note: The actual tree update happens via data sync
+                
+                // アニメーション完了時に確実に実を表示（フェイルセーフ）
+                if(window.updateTreeFromState) window.updateTreeFromState();
             }});
         };
         function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
