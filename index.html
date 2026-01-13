@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <script>
-        // --- Global Setup ---
+        // --- 1. Global Setup ---
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
@@ -29,11 +29,13 @@
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
-        // --- ★データ修復＆表示関数 ---
+        // ★★★ データ修復＆表示関数（最強版） ★★★
         window.updateTreeFromState = function() {
+            // ツリーがまだないなら何もしない（番犬が後でまた呼んでくれる）
             if(!window.treeGroup) return;
 
-            // 1. 既存の実を全削除
+            // 1. 既存の実（action_flower）だけを削除
+            // 逆ループで安全に削除
             for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
                 const obj = window.treeGroup.children[i];
                 if (obj.name === 'action_flower') {
@@ -43,43 +45,61 @@
                 }
             }
             
-            // 2. データを元に再生成（強制修復付き）
+            // 2. データを元に再生成（データ修復機能付き）
             window.state.flowers.forEach(d => {
                  const userData = d.userData || d;
                  const color = userData.colorHex || window.DESIGN_PALETTE[0];
                  
-                 // マテリアル（発光）
-                 const geo = new THREE.SphereGeometry(0.6, 16, 16); // サイズアップ
+                 // ★MeshBasicMaterial: ライト不要で確実に発色
+                 const geo = new THREE.SphereGeometry(0.6, 16, 16); // サイズ大きめで視認性確保
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
-                 mesh.name = 'action_flower';
+                 mesh.name = 'action_flower'; // 識別タグ
                  
                  // 座標データの検証と強制修復
                  let x = parseFloat(userData.baseX); 
                  let y = parseFloat(userData.baseY); 
                  let z = parseFloat(userData.baseZ);
                  
-                 // 座標が壊れていたら再計算
+                 // 座標がない、またはNaNの場合は再生成してデータ自体を更新
                  if(isNaN(x) || isNaN(y) || isNaN(z)) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
+                     
+                     // データを修復して保存（次回以降のため）
+                     userData.baseX = x; 
+                     userData.baseY = y; 
+                     userData.baseZ = z;
+                     userData.phaseX = Math.random()*Math.PI*2;
+                     userData.floatSpeed = 0.0004;
                  }
                  
                  mesh.position.set(x, y, z);
                  mesh.userData = userData; 
                  
                  window.treeGroup.add(mesh);
-                 mesh.scale.set(1,1,1); // サイズ1固定
             });
             
             if(window.updateGrowthState) window.updateGrowthState();
         };
 
+        // ★★★ 番犬（ウォッチドッグ）タイマー ★★★
+        // 2秒ごとにチェックし、データの数と表示されている実の数が違えば強制再描画
+        setInterval(() => {
+            if(window.treeGroup && window.state.flowers.length > 0) {
+                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
+                if(visibleCount !== window.state.flowers.length) {
+                    console.log("Sync mismatch detected! Force updating tree...", visibleCount, window.state.flowers.length);
+                    window.updateTreeFromState();
+                }
+            }
+        }, 2000);
+
         // --- Form Handler ---
         window.handleFormSubmit = function(event) {
-            event.preventDefault();
+            event.preventDefault(); // リロード阻止
             
             const n = document.getElementById('post-name').value;
             const c = document.getElementById('post-client').value;
@@ -106,7 +126,9 @@
             const rY = (Math.random()-0.2)*20 + 5;
             const rR = (rY+6)/22 * 10 * Math.random();
             const phi = Math.random()*Math.PI*2;
-            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
+            const x = Math.cos(phi)*rR; 
+            const y = rY; 
+            const z = Math.sin(phi)*rR;
 
             const data = {
                 name: n, client: c, project: p, amount: a, notes: notes, status: status,
@@ -116,17 +138,7 @@
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
-            // ★修正: ローカルで即座にリストに追加して表示（通信待ちをしない）
-            window.state.flowers.push({ userData: data });
-            window.state.actions++;
-            if(data.status === 'order') window.state.amount += data.amount;
-            
-            // 即時描画
-            if(window.updateTreeFromState) window.updateTreeFromState();
-            if(window.updateStatsUI) window.updateStatsUI();
-            if(window.refreshLog) window.refreshLog();
-            
-            // 演出実行
+            // 1. 演出実行
             if(window.addFlowerWithConvergence) {
                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
                 if(window.treeGroup) {
@@ -139,16 +151,26 @@
             }
             ui.closeModal();
 
-            // 2. データ保存（バックグラウンドで実行）
+            // 2. データ保存
             if (window.submitToFirebase) {
                 window.submitToFirebase(data).then(() => {
                     finalizePost();
                 }).catch(e => {
-                    // エラーでも画面上の実は消さない（UX優先）
-                    console.error(e);
+                    alert("Error: " + e.message);
                     finalizePost();
                 });
             } else {
+                // Demo Mode
+                console.log("Demo Post:", data);
+                window.state.flowers.push({ userData: data });
+                window.state.actions++;
+                if(data.status === 'order') window.state.amount += data.amount;
+                
+                // 即時反映（番犬を待たずに実行）
+                if(window.updateTreeFromState) window.updateTreeFromState();
+                if(window.updateStatsUI) window.updateStatsUI();
+                if(window.refreshLog) window.refreshLog();
+                
                 finalizePost();
             }
             return false;
@@ -163,6 +185,7 @@
             if(amt) amt.classList.add('invisible');
         }
         
+        // ローダー安全装置
         setTimeout(() => {
             const l = document.getElementById('app-loader');
             if(l) l.classList.add('loaded');
@@ -204,7 +227,7 @@
         .marquee-content { display: flex; align-items: center; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
-        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
+        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 1.5rem; }
         .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: none; }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
@@ -218,7 +241,7 @@
         .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
         .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
         .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
-        .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 600; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
+        .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 300; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
         .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
@@ -233,6 +256,7 @@
         
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
+
         .stat-card-value { font-size: 1.5rem; font-weight: 900 !important; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
         @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
 
@@ -286,6 +310,7 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
+                    <!-- Template -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -302,7 +327,7 @@
             </button>
         </div>
 
-        <!-- ABOUT -->
+        <!-- ABOUT PAGE -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -331,7 +356,7 @@
             </div>
         </div>
 
-        <!-- RULES -->
+        <!-- RULES PAGE -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
@@ -359,7 +384,7 @@
             </div>
         </div>
 
-        <!-- LOG -->
+        <!-- LOG PAGE -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -400,7 +425,7 @@
             </div>
         </div>
 
-        <!-- DASHBOARD -->
+        <!-- DASHBOARD PAGE -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -653,7 +678,7 @@
             }
 
             // ★重要: 初期化完了時に強制描画を走らせる
-            if(window.updateTreeFromState) window.updateTreeFromState();
+            window.updateTreeFromState();
         }
 
         function animate() {
@@ -673,9 +698,10 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        // Utils
+        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
@@ -690,6 +716,9 @@
         };
         window.resetHoverState = () => { document.body.style.cursor = 'default'; };
         
+        // ★★★ REBUILD TREE FROM DATA (Correct Logic) ★★★
+        // updateTreeFromStateは上で定義済み
+
         window.updateGrowthState = () => { const count = window.state.actions; let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; window.state.currentLevel = lv; let mult = 1.0 + lv*0.2; let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } }); };
         window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
         window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { const d = f.userData || f; const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
@@ -715,7 +744,7 @@
                 window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
                 createSparkleEffect(tPos, color); flashTreeParticles();
                 
-                // アニメーション完了時に確実に実を表示（フェイルセーフ）
+                // アニメーション完了後に再度更新をかける
                 if(window.updateTreeFromState) window.updateTreeFromState();
             }});
         };
