@@ -13,30 +13,30 @@
     
     <!-- UI & State Setup -->
     <script>
-        // Global UI namespace
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
             currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
         };
         
-        // 3D Globals
         window.treeGroup = null; 
         window.camera = null; 
         window.renderer = null; 
         window.effectGroup = null;
-        window.isThreeReady = false; // 描画準備完了フラグ
 
-        // Config
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
-        // ★実を生成・更新する最重要関数
+        // ★★★ 最重要修正: リトライ機能付きの描画更新関数 ★★★
         window.updateTreeFromState = function() {
-            // ツリーがまだないなら何もしない（initThreeの最後で再度呼ばれる）
-            if(!window.treeGroup) return;
+            // ツリーがまだ準備できていなければ、0.5秒後に再トライ（これで読み込み順序問題を解決）
+            if(!window.treeGroup) {
+                console.log("Tree not ready, retrying in 500ms...");
+                setTimeout(window.updateTreeFromState, 500);
+                return;
+            }
 
-            // 1. 既存の実（action_flower）だけを削除（つぼみや粒子は消さない）
+            // 1. 既存の実だけをクリア
             for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
                 const obj = window.treeGroup.children[i];
                 if (obj.name === 'action_flower') {
@@ -51,13 +51,12 @@
                  const userData = d.userData || d;
                  const color = userData.colorHex || '#fff';
                  
-                 // 発光マテリアル（MeshBasicMaterial）
-                 const geo = new THREE.SphereGeometry(0.35, 16, 16); 
+                 // 明るく発光するマテリアル
+                 const geo = new THREE.SphereGeometry(0.5, 16, 16); // サイズを少し大きくして視認性アップ
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
-                 mesh.name = 'action_flower'; // 識別タグ
+                 mesh.name = 'action_flower';
                  
-                 // 座標の復元または生成
                  let x = userData.baseX; 
                  let y = userData.baseY; 
                  let z = userData.baseZ;
@@ -68,7 +67,7 @@
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // 次回のために保存（メモリ上のみ）
+                     // 一時保存
                      userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
                      userData.phaseX=Math.random()*Math.PI*2; 
                      userData.floatSpeed=0.0004;
@@ -78,9 +77,10 @@
                  mesh.userData = userData; 
                  
                  window.treeGroup.add(mesh);
+                 // 確実に表示させるためスケール1にセット
+                 mesh.scale.set(1,1,1);
             });
             
-            // 成長状態の更新
             if(window.updateGrowthState) window.updateGrowthState();
         };
 
@@ -119,7 +119,7 @@
                 name: n, client: c, project: p, amount: a, notes: notes, status: status,
                 colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
                 timestamp: Date.now(),
-                baseX: x, baseY: y, baseZ: z, // 座標固定
+                baseX: x, baseY: y, baseZ: z,
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
@@ -145,7 +145,6 @@
                     finalizePost();
                 });
             } else {
-                // Demo Mode
                 console.log("Demo Post:", data);
                 window.state.flowers.push({ userData: data });
                 window.state.actions++;
@@ -226,7 +225,6 @@
         .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
         .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
         .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
-        
         .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 600; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
@@ -691,9 +689,10 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        // Utils
+        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
@@ -710,7 +709,12 @@
         
         // ★★★ REBUILD TREE FROM DATA (Correct Logic) ★★★
         window.updateTreeFromState = () => {
-            if(!window.treeGroup) return;
+            // ツリーがまだないならリトライ
+            if(!window.treeGroup) {
+                setTimeout(window.updateTreeFromState, 500);
+                return;
+            }
+
             // Clear existing flowers (Name check is safer)
             for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
                 const obj = window.treeGroup.children[i];
