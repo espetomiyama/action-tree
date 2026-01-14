@@ -48,6 +48,7 @@
                  const userData = d.userData || d;
                  const color = userData.colorHex || window.DESIGN_PALETTE[0];
                  
+                 // 発光マテリアル（MeshBasicMaterial）
                  const geo = new THREE.SphereGeometry(0.6, 16, 16); 
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
@@ -292,7 +293,7 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Static Content -->
+                    <!-- Template -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
