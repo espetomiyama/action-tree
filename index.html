@@ -11,14 +11,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- UI & State Setup -->
     <script>
-        // Global Setup
+        // --- 1. Global Setup ---
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
-            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false,
-            driftFactor: 0.1 // 揺らぎ係数
+            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
         };
         
         // 3D Globals
@@ -31,7 +29,7 @@
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
-        // ★★★ データ修復＆表示関数（完全版） ★★★
+        // --- ★データ修復＆表示関数 ---
         window.updateTreeFromState = function() {
             if(!window.treeGroup) return;
 
@@ -45,38 +43,33 @@
                 }
             }
             
-            // 2. データを元に再生成（データ完全修復機能付き）
+            // 2. データを元に再生成（データ修復機能付き）
             window.state.flowers.forEach(d => {
                  const userData = d.userData || d;
                  const color = userData.colorHex || window.DESIGN_PALETTE[0];
                  
-                 // マテリアル（発光）
-                 const geo = new THREE.SphereGeometry(0.7, 16, 16); // サイズ0.7で見やすく
+                 // 発光マテリアル（MeshBasicMaterial）
+                 const geo = new THREE.SphereGeometry(0.6, 16, 16); 
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
                  mesh.name = 'action_flower';
                  
-                 // --- データのサニタイズ（重要） ---
-                 // 座標
                  let x = parseFloat(userData.baseX); 
                  let y = parseFloat(userData.baseY); 
                  let z = parseFloat(userData.baseZ);
                  
-                 // 座標がない場合は再生成
+                 // 座標がない場合は強制生成
                  if(isNaN(x) || isNaN(y) || isNaN(z)) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     userData.baseX = x; userData.baseY = y; userData.baseZ = z;
+                     // データ修復
+                     userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
+                     userData.phaseX=Math.random()*Math.PI*2; 
+                     userData.floatSpeed=0.0004;
                  }
                  
-                 // アニメーション用パラメータがない場合は補填（これが原因で消えていた）
-                 if(typeof userData.phaseX !== 'number') userData.phaseX = Math.random() * Math.PI * 2;
-                 if(typeof userData.phaseY !== 'number') userData.phaseY = Math.random() * Math.PI * 2;
-                 if(typeof userData.phaseZ !== 'number') userData.phaseZ = Math.random() * Math.PI * 2;
-                 if(typeof userData.floatSpeed !== 'number') userData.floatSpeed = 0.0004;
-
                  mesh.position.set(x, y, z);
                  mesh.userData = userData; 
                  
@@ -95,9 +88,9 @@
                     window.updateTreeFromState();
                 }
             }
-        }, 2000);
+        }, 1500);
 
-        // --- Form Handler ---
+        // --- Form Handler (Optimistic UI) ---
         window.handleFormSubmit = function(event) {
             event.preventDefault(); 
             
@@ -118,9 +111,6 @@
             const a = parseInt(document.getElementById('post-amount').value) || 0;
             const notes = document.getElementById('post-notes').value;
             const status = document.querySelector('input[name="post-status"]:checked').value;
-            const btn = document.getElementById('submit-action-btn');
-            
-            btn.disabled = true; btn.textContent = "Sending...";
 
             // 座標決定
             const rY = (Math.random()-0.2)*20 + 5;
@@ -136,51 +126,46 @@
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
-            // 1. 演出実行
+            // ★重要: ここですぐにUIを閉じてリセット（通信を待たない）
+            ui.closeModal();
+            finalizePost();
+
+            // 1. 即時画面反映（自分だけ先に見える）
+            window.state.flowers.push({ userData: data });
+            window.state.actions++;
+            if(data.status === 'order') window.state.amount += data.amount;
+            
             if(window.addFlowerWithConvergence) {
-                const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
-                if(window.treeGroup) {
+                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
+                 if(window.treeGroup) {
                     const vec = new THREE.Vector3(x,y,z);
                     window.treeGroup.updateMatrixWorld(true);
                     vec.applyMatrix4(window.treeGroup.matrixWorld);
                     target.world.copy(vec);
-                }
-                window.addFlowerWithConvergence(data, target);
+                 }
+                 window.addFlowerWithConvergence(data, target);
             }
-            ui.closeModal();
+            if(window.updateStatsUI) window.updateStatsUI();
+            if(window.refreshLog) window.refreshLog();
 
-            // 2. データ保存
+            // 2. 裏でデータ送信
             if (window.submitToFirebase) {
-                window.submitToFirebase(data).then(() => {
-                    finalizePost();
-                }).catch(e => {
-                    alert("Error: " + e.message);
-                    finalizePost();
+                window.submitToFirebase(data).catch(e => {
+                    console.error("Save failed (Background):", e);
+                    // 失敗してもアラートは出さず、コンソールに残すのみ（UX優先）
                 });
-            } else {
-                // Demo Mode
-                console.log("Demo Post:", data);
-                window.state.flowers.push({ userData: data });
-                window.state.actions++;
-                if(data.status === 'order') window.state.amount += data.amount;
-                
-                // 即時反映
-                if(window.updateTreeFromState) window.updateTreeFromState();
-                if(window.updateStatsUI) window.updateStatsUI();
-                if(window.refreshLog) window.refreshLog();
-                
-                finalizePost();
             }
+            
             return false;
         };
 
         function finalizePost() {
-            const btn = document.getElementById('submit-action-btn');
-            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
             const form = document.getElementById('action-form');
             if(form) form.reset(); 
             const amt = document.getElementById('amount-container');
             if(amt) amt.classList.add('invisible');
+            const btn = document.getElementById('submit-action-btn');
+            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
         }
         
         // Loader Safety
@@ -219,14 +204,13 @@
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
         
         /* Marquee */
-        .marquee-container { position: absolute; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; }
-        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; bottom: 10px; } }
+        .marquee-container { position: fixed; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
+        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
         .marquee-track { display: flex; width: max-content; animation: marquee 120s linear infinite; will-change: transform; transform: translate3d(0,0,0); }
         .marquee-content { display: flex; align-items: center; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
         .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
-        /* Font styles restored */
         .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: none; }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
@@ -628,7 +612,7 @@
             window.effectGroup = new THREE.Group(); scene.add(window.effectGroup);
             
             bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000") }, uColorB: { value: new THREE.Color("#330066") } };
-            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
+            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
             const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
 
             const pCount = window.innerWidth < 768 ? 15000 : 25000;
@@ -687,32 +671,20 @@
             if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
             const time = Date.now();
             window.treeGroup.children.forEach(obj => {
-                if(obj.name === 'action_flower' && obj.userData) {
+                if(obj.name === 'action_flower' && obj.userData && obj.userData.baseX !== undefined) {
                      const ud = obj.userData;
-                     
-                     // Animation Params Safety
-                     const speed = ud.floatSpeed || 0.0004;
-                     const pX = ud.phaseX || 0;
-                     const pY = ud.phaseY || 0;
-                     const pZ = ud.phaseZ || 0;
-                     const bx = parseFloat(ud.baseX);
-                     const by = parseFloat(ud.baseY);
-                     const bz = parseFloat(ud.baseZ);
-                     const drift = window.state.driftFactor || 0.1;
-
-                     if(!isNaN(bx)) {
-                         obj.position.x = bx + Math.sin(time*speed + pX)*drift*3.8;
-                         obj.position.y = by + Math.sin(time*(speed*0.7) + pY)*drift*3.2;
-                         obj.position.z = bz + Math.cos(time*speed*1.1 + pZ)*drift*3.8;
-                     }
+                     obj.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*window.state.driftFactor*3.8;
+                     obj.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*window.state.driftFactor*3.2;
+                     obj.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*window.state.driftFactor*3.8;
                 }
             });
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        // Utils
+        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
