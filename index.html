@@ -11,12 +11,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
+    <!-- UI & State Setup -->
     <script>
-        // --- 1. Global Setup ---
+        // Global Setup
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
-            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
+            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false,
+            driftFactor: 0.1 // 揺らぎ係数
         };
         
         // 3D Globals
@@ -24,12 +26,12 @@
         window.camera = null; 
         window.renderer = null; 
         window.effectGroup = null;
-        
+
         // Config
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
 
-        // --- ★データ修復＆表示関数 ---
+        // ★★★ データ修復＆表示関数（完全版） ★★★
         window.updateTreeFromState = function() {
             if(!window.treeGroup) return;
 
@@ -43,33 +45,38 @@
                 }
             }
             
-            // 2. データを元に再生成（データ修復機能付き）
+            // 2. データを元に再生成（データ完全修復機能付き）
             window.state.flowers.forEach(d => {
                  const userData = d.userData || d;
                  const color = userData.colorHex || window.DESIGN_PALETTE[0];
                  
-                 // 発光マテリアル（MeshBasicMaterial）
-                 const geo = new THREE.SphereGeometry(0.6, 16, 16); 
+                 // マテリアル（発光）
+                 const geo = new THREE.SphereGeometry(0.7, 16, 16); // サイズ0.7で見やすく
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
                  mesh.name = 'action_flower';
                  
+                 // --- データのサニタイズ（重要） ---
+                 // 座標
                  let x = parseFloat(userData.baseX); 
                  let y = parseFloat(userData.baseY); 
                  let z = parseFloat(userData.baseZ);
                  
-                 // 座標がない場合は強制生成
+                 // 座標がない場合は再生成
                  if(isNaN(x) || isNaN(y) || isNaN(z)) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // データ修復
-                     userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
-                     userData.phaseX=Math.random()*Math.PI*2; 
-                     userData.floatSpeed=0.0004;
+                     userData.baseX = x; userData.baseY = y; userData.baseZ = z;
                  }
                  
+                 // アニメーション用パラメータがない場合は補填（これが原因で消えていた）
+                 if(typeof userData.phaseX !== 'number') userData.phaseX = Math.random() * Math.PI * 2;
+                 if(typeof userData.phaseY !== 'number') userData.phaseY = Math.random() * Math.PI * 2;
+                 if(typeof userData.phaseZ !== 'number') userData.phaseZ = Math.random() * Math.PI * 2;
+                 if(typeof userData.floatSpeed !== 'number') userData.floatSpeed = 0.0004;
+
                  mesh.position.set(x, y, z);
                  mesh.userData = userData; 
                  
@@ -88,9 +95,9 @@
                     window.updateTreeFromState();
                 }
             }
-        }, 1500);
+        }, 2000);
 
-        // --- Form Handler (Optimistic UI) ---
+        // --- Form Handler ---
         window.handleFormSubmit = function(event) {
             event.preventDefault(); 
             
@@ -111,6 +118,9 @@
             const a = parseInt(document.getElementById('post-amount').value) || 0;
             const notes = document.getElementById('post-notes').value;
             const status = document.querySelector('input[name="post-status"]:checked').value;
+            const btn = document.getElementById('submit-action-btn');
+            
+            btn.disabled = true; btn.textContent = "Sending...";
 
             // 座標決定
             const rY = (Math.random()-0.2)*20 + 5;
@@ -126,46 +136,51 @@
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
-            // ★重要: ここですぐにUIを閉じてリセット（通信を待たない）
-            ui.closeModal();
-            finalizePost();
-
-            // 1. 即時画面反映（自分だけ先に見える）
-            window.state.flowers.push({ userData: data });
-            window.state.actions++;
-            if(data.status === 'order') window.state.amount += data.amount;
-            
+            // 1. 演出実行
             if(window.addFlowerWithConvergence) {
-                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
-                 if(window.treeGroup) {
+                const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
+                if(window.treeGroup) {
                     const vec = new THREE.Vector3(x,y,z);
                     window.treeGroup.updateMatrixWorld(true);
                     vec.applyMatrix4(window.treeGroup.matrixWorld);
                     target.world.copy(vec);
-                 }
-                 window.addFlowerWithConvergence(data, target);
+                }
+                window.addFlowerWithConvergence(data, target);
             }
-            if(window.updateStatsUI) window.updateStatsUI();
-            if(window.refreshLog) window.refreshLog();
+            ui.closeModal();
 
-            // 2. 裏でデータ送信
+            // 2. データ保存
             if (window.submitToFirebase) {
-                window.submitToFirebase(data).catch(e => {
-                    console.error("Save failed (Background):", e);
-                    // 失敗してもアラートは出さず、コンソールに残すのみ（UX優先）
+                window.submitToFirebase(data).then(() => {
+                    finalizePost();
+                }).catch(e => {
+                    alert("Error: " + e.message);
+                    finalizePost();
                 });
+            } else {
+                // Demo Mode
+                console.log("Demo Post:", data);
+                window.state.flowers.push({ userData: data });
+                window.state.actions++;
+                if(data.status === 'order') window.state.amount += data.amount;
+                
+                // 即時反映
+                if(window.updateTreeFromState) window.updateTreeFromState();
+                if(window.updateStatsUI) window.updateStatsUI();
+                if(window.refreshLog) window.refreshLog();
+                
+                finalizePost();
             }
-            
             return false;
         };
 
         function finalizePost() {
+            const btn = document.getElementById('submit-action-btn');
+            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
             const form = document.getElementById('action-form');
             if(form) form.reset(); 
             const amt = document.getElementById('amount-container');
             if(amt) amt.classList.add('invisible');
-            const btn = document.getElementById('submit-action-btn');
-            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
         }
         
         // Loader Safety
@@ -204,13 +219,14 @@
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
         
         /* Marquee */
-        .marquee-container { position: fixed; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
-        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
+        .marquee-container { position: absolute; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; }
+        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; bottom: 10px; } }
         .marquee-track { display: flex; width: max-content; animation: marquee 120s linear infinite; will-change: transform; transform: translate3d(0,0,0); }
         .marquee-content { display: flex; align-items: center; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
         .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
+        /* Font styles restored */
         .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: none; }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
@@ -293,7 +309,7 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Template -->
+                    <!-- Static Content -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -671,11 +687,24 @@
             if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
             const time = Date.now();
             window.treeGroup.children.forEach(obj => {
-                if(obj.name === 'action_flower' && obj.userData && obj.userData.baseX !== undefined) {
+                if(obj.name === 'action_flower' && obj.userData) {
                      const ud = obj.userData;
-                     obj.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*window.state.driftFactor*3.8;
-                     obj.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*window.state.driftFactor*3.2;
-                     obj.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*window.state.driftFactor*3.8;
+                     
+                     // Animation Params Safety
+                     const speed = ud.floatSpeed || 0.0004;
+                     const pX = ud.phaseX || 0;
+                     const pY = ud.phaseY || 0;
+                     const pZ = ud.phaseZ || 0;
+                     const bx = parseFloat(ud.baseX);
+                     const by = parseFloat(ud.baseY);
+                     const bz = parseFloat(ud.baseZ);
+                     const drift = window.state.driftFactor || 0.1;
+
+                     if(!isNaN(bx)) {
+                         obj.position.x = bx + Math.sin(time*speed + pX)*drift*3.8;
+                         obj.position.y = by + Math.sin(time*(speed*0.7) + pY)*drift*3.2;
+                         obj.position.z = bz + Math.cos(time*speed*1.1 + pZ)*drift*3.8;
+                     }
                 }
             });
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
