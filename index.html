@@ -11,25 +11,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
+    <!-- ★ Global Config & Setup ★ -->
     <script>
-        // --- 1. Global Setup ---
+        window.APP_VERSION = "Final-0114-Fixed";
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
             currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
         };
         
-        // 3D Globals
         window.treeGroup = null; 
         window.camera = null; 
         window.renderer = null; 
         window.effectGroup = null;
 
-        // Config
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
+        
+        // ロゴ画像のパス定義
+        window.LOGO_FILES = [
+            "images/ACTION_TREE_LOGO_LV1.svg",
+            "images/ACTION_TREE_LOGO_LV2.svg",
+            "images/ACTION_TREE_LOGO_LV3.svg",
+            "images/ACTION_TREE_LOGO_LV4.svg",
+            "images/ACTION_TREE_LOGO_LV5.svg",
+            "images/ACTION_TREE_LOGO_LV6.svg"
+        ];
 
-        // --- ★データ修復＆表示関数 ---
+        // --- ★ツリー描画更新関数（決定版） ---
         window.updateTreeFromState = function() {
             if(!window.treeGroup) return;
 
@@ -43,20 +52,24 @@
                 }
             }
             
-            // 2. データを元に再生成（データ修復機能付き）
-            window.state.flowers.forEach(d => {
-                 const userData = d.userData || d;
-                 const color = userData.colorHex || window.DESIGN_PALETTE[0];
+            // 2. データを元に再生成
+            window.state.flowers.forEach(data => {
+                 // データの正規化（フラットにする）
+                 // もし data.userData があれば中身を使う、なければ data そのものを使う
+                 const d = data.userData || data;
+
+                 const color = d.colorHex || window.DESIGN_PALETTE[0];
                  
-                 // 発光マテリアル（MeshBasicMaterial）
-                 const geo = new THREE.SphereGeometry(0.6, 16, 16); 
+                 // ★MeshBasicMaterial（発光）
+                 const geo = new THREE.SphereGeometry(0.5, 16, 16); 
                  const mat = new THREE.MeshBasicMaterial({ color: color }); 
                  const mesh = new THREE.Mesh(geo, mat);
                  mesh.name = 'action_flower';
                  
-                 let x = parseFloat(userData.baseX); 
-                 let y = parseFloat(userData.baseY); 
-                 let z = parseFloat(userData.baseZ);
+                 // 座標データの検証
+                 let x = parseFloat(d.baseX); 
+                 let y = parseFloat(d.baseY); 
+                 let z = parseFloat(d.baseZ);
                  
                  // 座標がない場合は強制生成
                  if(isNaN(x) || isNaN(y) || isNaN(z)) {
@@ -64,14 +77,14 @@
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // データ修復
-                     userData.baseX=x; userData.baseY=y; userData.baseZ=z; 
-                     userData.phaseX=Math.random()*Math.PI*2; 
-                     userData.floatSpeed=0.0004;
+                     // 一時保存
+                     d.baseX = x; d.baseY = y; d.baseZ = z;
+                     d.phaseX = Math.random()*Math.PI*2;
+                     d.floatSpeed = 0.0004;
                  }
                  
                  mesh.position.set(x, y, z);
-                 mesh.userData = userData; 
+                 mesh.userData = d; // クリック判定用に埋め込む
                  
                  window.treeGroup.add(mesh);
                  mesh.scale.set(1,1,1);
@@ -80,19 +93,9 @@
             if(window.updateGrowthState) window.updateGrowthState();
         };
 
-        // 監視タイマー
-        setInterval(() => {
-            if(window.treeGroup && window.state.flowers.length > 0) {
-                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
-                if(visibleCount !== window.state.flowers.length) {
-                    window.updateTreeFromState();
-                }
-            }
-        }, 1500);
-
-        // --- Form Handler (Optimistic UI) ---
+        // --- Form Handler ---
         window.handleFormSubmit = function(event) {
-            event.preventDefault(); 
+            event.preventDefault();
             
             const n = document.getElementById('post-name').value;
             const c = document.getElementById('post-client').value;
@@ -111,6 +114,9 @@
             const a = parseInt(document.getElementById('post-amount').value) || 0;
             const notes = document.getElementById('post-notes').value;
             const status = document.querySelector('input[name="post-status"]:checked').value;
+            const btn = document.getElementById('submit-action-btn');
+            
+            btn.disabled = true; btn.textContent = "Sending...";
 
             // 座標決定
             const rY = (Math.random()-0.2)*20 + 5;
@@ -118,6 +124,7 @@
             const phi = Math.random()*Math.PI*2;
             const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
 
+            // フラットなデータ構造
             const data = {
                 name: n, client: c, project: p, amount: a, notes: notes, status: status,
                 colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
@@ -126,47 +133,60 @@
                 phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
 
-            // ★重要: ここですぐにUIを閉じてリセット（通信を待たない）
-            ui.closeModal();
-            finalizePost();
-
-            // 1. 即時画面反映（自分だけ先に見える）
-            window.state.flowers.push({ userData: data });
-            window.state.actions++;
-            if(data.status === 'order') window.state.amount += data.amount;
-            
+            // 1. 演出実行
             if(window.addFlowerWithConvergence) {
-                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
-                 if(window.treeGroup) {
+                const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
+                if(window.treeGroup) {
                     const vec = new THREE.Vector3(x,y,z);
                     window.treeGroup.updateMatrixWorld(true);
                     vec.applyMatrix4(window.treeGroup.matrixWorld);
                     target.world.copy(vec);
-                 }
-                 window.addFlowerWithConvergence(data, target);
+                }
+                window.addFlowerWithConvergence(data, target);
             }
-            if(window.updateStatsUI) window.updateStatsUI();
-            if(window.refreshLog) window.refreshLog();
+            ui.closeModal();
 
-            // 2. 裏でデータ送信
+            // 2. データ保存
             if (window.submitToFirebase) {
-                window.submitToFirebase(data).catch(e => {
-                    console.error("Save failed (Background):", e);
-                    // 失敗してもアラートは出さず、コンソールに残すのみ（UX優先）
+                window.submitToFirebase(data).then(() => {
+                    finalizePost();
+                }).catch(e => {
+                    alert("Error: " + e.message);
+                    finalizePost();
                 });
+            } else {
+                // Demo Mode
+                window.state.flowers.push(data);
+                window.state.actions++;
+                if(data.status === 'order') window.state.amount += data.amount;
+                
+                if(window.updateTreeFromState) window.updateTreeFromState();
+                if(window.updateStatsUI) window.updateStatsUI();
+                if(window.refreshLog) window.refreshLog();
+                
+                finalizePost();
             }
-            
             return false;
         };
 
         function finalizePost() {
+            const btn = document.getElementById('submit-action-btn');
+            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
             const form = document.getElementById('action-form');
             if(form) form.reset(); 
             const amt = document.getElementById('amount-container');
             if(amt) amt.classList.add('invisible');
-            const btn = document.getElementById('submit-action-btn');
-            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
         }
+        
+        // 監視タイマー (表示漏れ防止)
+        setInterval(() => {
+            if(window.treeGroup && window.state.flowers.length > 0) {
+                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
+                if(visibleCount !== window.state.flowers.length) {
+                    window.updateTreeFromState();
+                }
+            }
+        }, 2000);
         
         // Loader Safety
         setTimeout(() => {
@@ -258,7 +278,8 @@
     <!-- Header -->
     <header id="main-header" class="px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper clickable flex-shrink-0" onclick="window.ui.showPage('top')">
-            <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-6 h-6 md:w-8 md:h-8 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <!-- ★ class="dynamic-logo" を追加（一括更新用） -->
+            <img id="header-logo-img" class="dynamic-logo w-6 h-6 md:w-8 md:h-8 object-contain" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div class="logo-fallback"></div>
         </div>
         <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap clickable" onclick="window.ui.showPage('top')">
@@ -293,7 +314,7 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Static Content -->
+                    <!-- Template -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -332,7 +353,7 @@
                         <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
@@ -360,7 +381,7 @@
                         <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
@@ -401,7 +422,7 @@
                         <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
@@ -460,7 +481,7 @@
                         <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
                     </nav>
                     <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" class="w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0">
+                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
                     </div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
                 </footer>
@@ -612,7 +633,7 @@
             window.effectGroup = new THREE.Group(); scene.add(window.effectGroup);
             
             bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000") }, uColorB: { value: new THREE.Color("#330066") } };
-            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
+            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
             const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
 
             const pCount = window.innerWidth < 768 ? 15000 : 25000;
@@ -681,10 +702,9 @@
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
         }
 
-        // Utils
-        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        const interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
+        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
+        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
         
         window.getGradientColors = () => {
             const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
@@ -701,9 +721,36 @@
         
         // updateTreeFromStateは上で定義済み
 
-        window.updateGrowthState = () => { const count = window.state.actions; let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; window.state.currentLevel = lv; let mult = 1.0 + lv*0.2; let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); window.updateStatsUI(); const logoLevel = targetLevel + 1; const newLogoPath = `images/ACTION_TREE_LOGO_LV${logoLevel}.svg`; const headerLogo = document.querySelector('#main-header img'); if (headerLogo && !headerLogo.src.includes(newLogoPath)) { headerLogo.src = newLogoPath; } document.querySelectorAll('.app-footer img').forEach(img => { if (!img.src.includes(newLogoPath)) { img.src = newLogoPath; } }); };
+        window.updateGrowthState = () => { 
+            const count = window.state.actions; 
+            let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; 
+            window.state.currentLevel = lv; 
+            
+            // Camera & Scale
+            let mult = 1.0 + lv*0.2; 
+            let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); 
+            if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
+            if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
+            
+            // ★修正: ロゴ画像切り替えロジック (class=dynamic-logo を全て更新)
+            const logoIndex = lv; 
+            const newLogoPath = window.LOGO_FILES[logoIndex] || window.LOGO_FILES[0];
+            
+            const logos = document.querySelectorAll('.dynamic-logo');
+            logos.forEach(img => {
+                // 同じ画像なら再設定しない（ちらつき防止）
+                if (!img.src.includes(newLogoPath)) {
+                    img.src = newLogoPath;
+                }
+            });
+
+            window.updateStatsUI(); 
+        };
+
         window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
-        window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { const d = f.userData || f; const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
+        window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { 
+            const d = f.userData || f; // フラット化対応
+            const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
 
         window.addFlowerWithConvergence = (n,c,p,a,not,s,isInstant, target=null) => {
             const color = window.DESIGN_PALETTE[Math.floor(Math.random()*window.DESIGN_PALETTE.length)];
@@ -777,13 +824,15 @@
                     window.location.reload();
                 };
                 
-                // CSV
+                // ★修正: CSV出力（日時追加）
                 window.downloadLogImpl = () => {
                     if (window.state.flowers.length === 0) return;
-                    let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes\n";
+                    let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes,Date\n";
                     window.state.flowers.forEach(f => {
+                        // データ構造の揺らぎを吸収
                         const d = f.userData || f;
-                        csvContent += `"${d.name}","${d.status}","${d.client}","${d.project}",${d.amount},"${d.notes}"\n`;
+                        const dateStr = d.timestamp ? new Date(d.timestamp).toLocaleString('ja-JP') : "";
+                        csvContent += `"${d.name}","${d.status}","${d.client}","${d.project}",${d.amount},"${d.notes}","${dateStr}"\n`;
                     });
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log.csv`; link.click();
@@ -800,7 +849,7 @@
                     snap.forEach(doc => {
                         const d = doc.data(); 
                         d.id = doc.id;
-                        // Unified Data Structure: { userData: d }
+                        // フラットなデータとして保存
                         window.state.flowers.push({ userData: d });
                         window.state.actions++;
                         if(d.status === 'order') window.state.amount += (d.amount || 0);
