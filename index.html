@@ -11,204 +11,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- ★ Global Config & Setup ★ -->
-    <script>
-        window.APP_VERSION = "Final-0114-Fixed";
-        window.ui = {};
-        window.state = { 
-            actions:0, amount:0, isMobile: window.innerWidth<768, 
-            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
-        };
-        
-        window.treeGroup = null; 
-        window.camera = null; 
-        window.renderer = null; 
-        window.effectGroup = null;
-
-        window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
-        window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
-        
-        // ロゴ画像のパス定義
-        window.LOGO_FILES = [
-            "images/ACTION_TREE_LOGO_LV1.svg",
-            "images/ACTION_TREE_LOGO_LV2.svg",
-            "images/ACTION_TREE_LOGO_LV3.svg",
-            "images/ACTION_TREE_LOGO_LV4.svg",
-            "images/ACTION_TREE_LOGO_LV5.svg",
-            "images/ACTION_TREE_LOGO_LV6.svg"
-        ];
-
-        // --- ★ツリー描画更新関数（決定版） ---
-        window.updateTreeFromState = function() {
-            if(!window.treeGroup) return;
-
-            // 1. 既存の実を全削除
-            for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
-                const obj = window.treeGroup.children[i];
-                if (obj.name === 'action_flower') {
-                    window.treeGroup.remove(obj);
-                    if(obj.geometry) obj.geometry.dispose();
-                    if(obj.material) obj.material.dispose();
-                }
-            }
-            
-            // 2. データを元に再生成
-            window.state.flowers.forEach(data => {
-                 // データの正規化（フラットにする）
-                 // もし data.userData があれば中身を使う、なければ data そのものを使う
-                 const d = data.userData || data;
-
-                 const color = d.colorHex || window.DESIGN_PALETTE[0];
-                 
-                 // ★MeshBasicMaterial（発光）
-                 const geo = new THREE.SphereGeometry(0.5, 16, 16); 
-                 const mat = new THREE.MeshBasicMaterial({ color: color }); 
-                 const mesh = new THREE.Mesh(geo, mat);
-                 mesh.name = 'action_flower';
-                 
-                 // 座標データの検証
-                 let x = parseFloat(d.baseX); 
-                 let y = parseFloat(d.baseY); 
-                 let z = parseFloat(d.baseZ);
-                 
-                 // 座標がない場合は強制生成
-                 if(isNaN(x) || isNaN(y) || isNaN(z)) {
-                     const rY = (Math.random()-0.2)*20 + 5;
-                     const rR = (rY+6)/22 * 10 * Math.random();
-                     const phi = Math.random()*Math.PI*2;
-                     x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // 一時保存
-                     d.baseX = x; d.baseY = y; d.baseZ = z;
-                     d.phaseX = Math.random()*Math.PI*2;
-                     d.floatSpeed = 0.0004;
-                 }
-                 
-                 mesh.position.set(x, y, z);
-                 mesh.userData = d; // クリック判定用に埋め込む
-                 
-                 window.treeGroup.add(mesh);
-                 mesh.scale.set(1,1,1);
-            });
-            
-            if(window.updateGrowthState) window.updateGrowthState();
-        };
-
-        // --- Form Handler ---
-        window.handleFormSubmit = function(event) {
-            event.preventDefault();
-            
-            const n = document.getElementById('post-name').value;
-            const c = document.getElementById('post-client').value;
-            const p = document.getElementById('post-project').value;
-            
-            let hasError = false;
-            if(!n) { document.getElementById('post-name').classList.add('input-error-shake'); hasError=true; }
-            if(!c) { document.getElementById('post-client').classList.add('input-error-shake'); hasError=true; }
-            if(!p) { document.getElementById('post-project').classList.add('input-error-shake'); hasError=true; }
-            
-            if(hasError) {
-                document.getElementById('form-error-msg').classList.remove('hidden');
-                return false;
-            }
-
-            const a = parseInt(document.getElementById('post-amount').value) || 0;
-            const notes = document.getElementById('post-notes').value;
-            const status = document.querySelector('input[name="post-status"]:checked').value;
-            const btn = document.getElementById('submit-action-btn');
-            
-            btn.disabled = true; btn.textContent = "Sending...";
-
-            // 座標決定
-            const rY = (Math.random()-0.2)*20 + 5;
-            const rR = (rY+6)/22 * 10 * Math.random();
-            const phi = Math.random()*Math.PI*2;
-            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
-
-            // フラットなデータ構造
-            const data = {
-                name: n, client: c, project: p, amount: a, notes: notes, status: status,
-                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
-                timestamp: Date.now(),
-                baseX: x, baseY: y, baseZ: z,
-                phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
-            };
-
-            // 1. 演出実行
-            if(window.addFlowerWithConvergence) {
-                const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
-                if(window.treeGroup) {
-                    const vec = new THREE.Vector3(x,y,z);
-                    window.treeGroup.updateMatrixWorld(true);
-                    vec.applyMatrix4(window.treeGroup.matrixWorld);
-                    target.world.copy(vec);
-                }
-                window.addFlowerWithConvergence(data, target);
-            }
-            ui.closeModal();
-
-            // 2. データ保存
-            if (window.submitToFirebase) {
-                window.submitToFirebase(data).then(() => {
-                    finalizePost();
-                }).catch(e => {
-                    alert("Error: " + e.message);
-                    finalizePost();
-                });
-            } else {
-                // Demo Mode
-                window.state.flowers.push(data);
-                window.state.actions++;
-                if(data.status === 'order') window.state.amount += data.amount;
-                
-                if(window.updateTreeFromState) window.updateTreeFromState();
-                if(window.updateStatsUI) window.updateStatsUI();
-                if(window.refreshLog) window.refreshLog();
-                
-                finalizePost();
-            }
-            return false;
-        };
-
-        function finalizePost() {
-            const btn = document.getElementById('submit-action-btn');
-            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
-            const form = document.getElementById('action-form');
-            if(form) form.reset(); 
-            const amt = document.getElementById('amount-container');
-            if(amt) amt.classList.add('invisible');
-        }
-        
-        // 監視タイマー (表示漏れ防止)
-        setInterval(() => {
-            if(window.treeGroup && window.state.flowers.length > 0) {
-                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
-                if(visibleCount !== window.state.flowers.length) {
-                    window.updateTreeFromState();
-                }
-            }
-        }, 2000);
-        
-        // Loader Safety
-        setTimeout(() => {
-            const l = document.getElementById('app-loader');
-            if(l) l.classList.add('loaded');
-        }, 3000);
-    </script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Inter', 'Noto Sans JP', sans-serif; margin: 0; overflow-x: hidden; background: linear-gradient(to bottom, #000807, #001a15); color: #fff; letter-spacing: 0.1em; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
         #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: transparent; }
         .full-screen-section { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
         .clickable, a, button, input, label, textarea, .nav-icon { pointer-events: auto !important; cursor: pointer; }
-        
         header { position: fixed; top: 0; left: 0; width: 100%; z-index: 500; pointer-events: none; transition: all 0.4s ease; }
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
         header.is-dark img { filter: brightness(0); }
         .logo-main-text { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
-        
         .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .nav-icon-inner { width: 24px; height: 10px; position: relative; pointer-events: none; }
         @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
@@ -217,13 +31,10 @@
         .nav-icon-inner span:nth-child(2) { bottom: 0px; }
         .nav-icon.open .nav-icon-inner span:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
         .nav-icon.open .nav-icon-inner span:nth-child(2) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
-        
         .menu-overlay { display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0, 40, 30, 0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(12px); pointer-events: auto; }
         .menu-link { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; color: #fff; margin: 10px 0; transition: opacity 0.3s; }
         .action-button { position: fixed; bottom: 80px; right: 20px; z-index: 90; width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000; box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; text-transform: uppercase; font-weight: 800; pointer-events: auto; }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
-        
-        /* Marquee */
         .marquee-container { position: fixed; bottom: 0; width: 100%; padding: 2.5rem 0; overflow: hidden; white-space: nowrap; z-index: 10; pointer-events: none; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
         @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
         .marquee-track { display: flex; width: max-content; animation: marquee 120s linear infinite; will-change: transform; transform: translate3d(0,0,0); }
@@ -235,7 +46,6 @@
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
         .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 140px; text-align: left; }
-        
         .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
         .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
         .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
@@ -249,24 +59,206 @@
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
         .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
         .status-radio:checked + div { color: #000; opacity: 1; }
         .status-radio:checked + div .status-dot { background-color: #000; border-color: #000; }
         .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #ccc; margin-right: 8px; transition: all 0.3s; background-color: transparent; }
         .status-option { color: #ccc; transition: all 0.3s; font-size: 14px; font-weight: 800; display: flex; align-items: center; }
         .status-radio:not(:checked) + div:hover { color: #999; }
         .status-radio:not(:checked) + div:hover .status-dot { border-color: #999; }
-        
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
-
         .stat-card-value { font-size: 1.5rem; font-weight: 900 !important; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
         @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
-
         #app-loader { position: fixed; inset: 0; z-index: 9999; background: #000807; display: flex; align-items: center; justify-content: center; flex-direction: column; pointer-events: auto; animation: forceHide 0.5s linear 3s forwards; }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
         #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
+
+    <!-- ★ CORE SCRIPT: 機能をすべてここに集約 ★ -->
+    <script>
+        // 1. グローバル変数の定義
+        window.ui = {};
+        window.state = { 
+            actions:0, amount:0, isMobile: window.innerWidth<768, 
+            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
+        };
+        window.treeGroup = null; window.camera = null; window.renderer = null; window.effectGroup = null;
+
+        // 2. 定数設定
+        window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
+        window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
+        // ロゴ画像パス
+        window.LOGO_FILES = [
+            "images/ACTION_TREE_LOGO_LV1.svg",
+            "images/ACTION_TREE_LOGO_LV2.svg",
+            "images/ACTION_TREE_LOGO_LV3.svg",
+            "images/ACTION_TREE_LOGO_LV4.svg",
+            "images/ACTION_TREE_LOGO_LV5.svg",
+            "images/ACTION_TREE_LOGO_LV6.svg"
+        ];
+
+        // --- 3. UI Functions (即時利用可能) ---
+        window.ui.showPage = function(id) {
+            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById('nav-menu').style.display = 'none';
+            document.getElementById('menu-toggle').classList.remove('open');
+            const h = document.getElementById('main-header');
+            if(id === 'top') { document.body.style.overflow = 'hidden'; h.classList.remove('is-dark'); }
+            else { document.body.style.overflow = 'auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
+            if (id === 'log' && window.refreshLog) window.refreshLog();
+        };
+
+        window.ui.toggleMenu = function() {
+            const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
+            const isOpen = nav.style.display === 'flex';
+            if (!isOpen) {
+                nav.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                if(header) header.classList.remove('is-dark');
+                if(window.getDynamicColor) {
+                    const hex = window.getDynamicColor();
+                    const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0};
+                    nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+                }
+                toggle.classList.add('open');
+            } else { 
+                nav.style.display = 'none';
+                toggle.classList.remove('open');
+                const isTop = !document.getElementById('page-top').classList.contains('hidden');
+                document.body.style.overflow = isTop ? 'hidden' : 'auto';
+                if(!isTop && header) header.classList.add('is-dark'); 
+            }
+        };
+
+        window.ui.openModal = function() { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
+        window.ui.closeModal = function() { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; const form = document.getElementById('action-form'); if(form) form.reset(); const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible'); };
+        window.ui.closeDetailModal = function() { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
+        window.ui.updateCharCount = function(el) { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
+
+        window.ui.showDetail = function(data) { 
+            const modal = document.getElementById('detail-modal'); if (!modal) return; 
+            document.getElementById('detail-name').textContent = data.name; 
+            document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; 
+            const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; 
+            document.getElementById('detail-amount').textContent = amtDisplay; 
+            document.getElementById('detail-client').textContent = data.client || "---"; 
+            document.getElementById('detail-project').textContent = data.project || "---"; 
+            document.getElementById('detail-notes').textContent = data.notes || ""; 
+            document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; 
+            if(window.resetHoverState) window.resetHoverState(); 
+            modal.style.display = 'flex'; window.state.isModalOpen = true; 
+        };
+
+        // --- 4. CSV Download Function (Date Added) ---
+        window.ui.downloadLogCSV = function() {
+            if (window.state.flowers.length === 0) return;
+            // ヘッダーにDateを追加
+            let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes,Date\n";
+            window.state.flowers.forEach(data => {
+                // データ構造の揺らぎを吸収
+                const d = data.userData || data;
+                
+                // 日時フォーマット (yyyy/mm/dd hh:mm:ss)
+                let dateStr = "";
+                if (d.timestamp) {
+                    const date = new Date(d.timestamp);
+                    dateStr = date.toLocaleString('ja-JP');
+                }
+                
+                // CSVエスケープ処理
+                const escape = (txt) => { return txt ? `"${txt.toString().replace(/"/g, '""')}"` : ""; };
+                
+                csvContent += `${escape(d.name)},${escape(d.status)},${escape(d.client)},${escape(d.project)},${d.amount},${escape(d.notes)},${escape(dateStr)}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a"); 
+            link.href = URL.createObjectURL(blob); 
+            link.download = `ActionTree_Log.csv`; 
+            link.click();
+        };
+
+        // --- 5. Form Handler ---
+        window.handleFormSubmit = function(event) {
+            event.preventDefault();
+            const n = document.getElementById('post-name').value;
+            const c = document.getElementById('post-client').value;
+            const p = document.getElementById('post-project').value;
+            
+            let hasError = false;
+            if(!n) { document.getElementById('post-name').classList.add('input-error-shake'); hasError=true; }
+            if(!c) { document.getElementById('post-client').classList.add('input-error-shake'); hasError=true; }
+            if(!p) { document.getElementById('post-project').classList.add('input-error-shake'); hasError=true; }
+            if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return false; }
+
+            const a = parseInt(document.getElementById('post-amount').value) || 0;
+            const notes = document.getElementById('post-notes').value;
+            const status = document.querySelector('input[name="post-status"]:checked').value;
+            const btn = document.getElementById('submit-action-btn');
+            btn.disabled = true; btn.textContent = "Sending...";
+
+            // 座標計算
+            const rY = (Math.random()-0.2)*20 + 5; const rR = (rY+6)/22 * 10 * Math.random(); const phi = Math.random()*Math.PI*2;
+            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
+
+            // フラットデータ構造
+            const data = {
+                name: n, client: c, project: p, amount: a, notes: notes, status: status,
+                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
+                timestamp: Date.now(),
+                baseX: x, baseY: y, baseZ: z,
+                phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
+            };
+
+            ui.closeModal();
+
+            // 即時反映（デモ）
+            window.state.flowers.push(data); // フラットにpush
+            window.state.actions++;
+            if(data.status === 'order') window.state.amount += data.amount;
+            
+            if(window.updateTreeFromState) window.updateTreeFromState();
+            if(window.updateStatsUI) window.updateStatsUI();
+            if(window.refreshLog) window.refreshLog();
+            
+            // 演出
+            if(window.addFlowerWithConvergence) {
+                 const target = { local: {x:x, y:y, z:z}, world: new THREE.Vector3(x,y,z) }; 
+                 if(window.treeGroup) {
+                    const vec = new THREE.Vector3(x,y,z);
+                    window.treeGroup.updateMatrixWorld(true);
+                    vec.applyMatrix4(window.treeGroup.matrixWorld);
+                    target.world.copy(vec);
+                 }
+                 window.addFlowerWithConvergence(data, target);
+            }
+            
+            finalizePost();
+
+            // Firebase送信
+            if (window.submitToFirebase) {
+                window.submitToFirebase(data).catch(e => console.error("Save failed:", e));
+            }
+            return false;
+        };
+
+        function finalizePost() {
+            const btn = document.getElementById('submit-action-btn');
+            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
+            const form = document.getElementById('action-form'); if(form) form.reset(); 
+            const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible');
+        }
+        
+        // Sim Functions
+        window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
+        window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
+        window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
+        window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
+        window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
+        
+        // Safety Loader
+        setTimeout(() => { const l = document.getElementById('app-loader'); if(l) l.classList.add('loaded'); }, 3000);
+    </script>
 </head>
 <body style="overflow: hidden;">
 
@@ -278,7 +270,6 @@
     <!-- Header -->
     <header id="main-header" class="px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper clickable flex-shrink-0" onclick="window.ui.showPage('top')">
-            <!-- ★ class="dynamic-logo" を追加（一括更新用） -->
             <img id="header-logo-img" class="dynamic-logo w-6 h-6 md:w-8 md:h-8 object-contain" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div class="logo-fallback"></div>
         </div>
@@ -314,7 +305,6 @@
             <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Template -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -692,11 +682,24 @@
             if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
             const time = Date.now();
             window.treeGroup.children.forEach(obj => {
-                if(obj.name === 'action_flower' && obj.userData && obj.userData.baseX !== undefined) {
+                if(obj.name === 'action_flower' && obj.userData) {
                      const ud = obj.userData;
-                     obj.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*window.state.driftFactor*3.8;
-                     obj.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*window.state.driftFactor*3.2;
-                     obj.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*window.state.driftFactor*3.8;
+                     
+                     // Animation Params Safety
+                     const speed = ud.floatSpeed || 0.0004;
+                     const pX = ud.phaseX || 0;
+                     const pY = ud.phaseY || 0;
+                     const pZ = ud.phaseZ || 0;
+                     const bx = parseFloat(ud.baseX);
+                     const by = parseFloat(ud.baseY);
+                     const bz = parseFloat(ud.baseZ);
+                     const drift = 0.1;
+
+                     if(!isNaN(bx)) {
+                         obj.position.x = bx + Math.sin(time*speed + pX)*drift*3.8;
+                         obj.position.y = by + Math.sin(time*(speed*0.7) + pY)*drift*3.2;
+                         obj.position.z = bz + Math.cos(time*speed*1.1 + pZ)*drift*3.8;
+                     }
                 }
             });
             if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
@@ -738,7 +741,6 @@
             
             const logos = document.querySelectorAll('.dynamic-logo');
             logos.forEach(img => {
-                // 同じ画像なら再設定しない（ちらつき防止）
                 if (!img.src.includes(newLogoPath)) {
                     img.src = newLogoPath;
                 }
