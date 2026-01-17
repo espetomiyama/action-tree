@@ -7,41 +7,31 @@
     
     <title>100 ACTION TREE</title>
     
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
         
-        /* Base Settings */
-        body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            margin: 0; padding: 0; overflow-x: hidden;
-            background: linear-gradient(to bottom, #000807, #001a15);
-            color: #fff; letter-spacing: 0.1em;
-            -webkit-font-smoothing: antialiased;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        /* Canvas */
+        /* Base */
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; margin: 0; overflow-x: hidden; background: linear-gradient(to bottom, #000807, #001a15); color: #fff; letter-spacing: 0.1em; -webkit-font-smoothing: antialiased; padding-bottom: env(safe-area-inset-bottom); }
         #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: auto; }
+        .full-screen-section { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
         
         /* UI Elements */
         .clickable, a, button, input, label, textarea, .nav-icon { pointer-events: auto !important; cursor: pointer; }
         
         /* Header */
-        header { 
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 500; 
-            pointer-events: none; transition: all 0.4s ease;
-        }
+        header { position: fixed; top: 0; left: 0; width: 100%; z-index: 500; pointer-events: none; transition: all 0.4s ease; display: flex; justify-content: space-between; align-items: center; }
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
         header.is-dark img { filter: brightness(0); }
-        
         .logo-main-text { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
         
+        /* Nav Icon */
         .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .nav-icon-inner { width: 24px; height: 10px; position: relative; }
         .nav-icon span { display: block; position: absolute; height: 2px; width: 100%; background: #fff; left: 0; transition: all 0.4s; }
@@ -55,20 +45,14 @@
         .menu-link { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; color: #fff; margin: 10px 0; transition: opacity 0.3s; }
         
         /* Action Button */
-        .action-button { 
-            position: fixed; bottom: 80px; right: 20px; z-index: 100; 
-            width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; 
-            text-transform: uppercase; font-weight: 800; pointer-events: auto; cursor: pointer; 
-        }
+        .action-button { position: fixed; bottom: 80px; right: 20px; z-index: 100; width: 74px; height: 74px; border-radius: 9999px; background-color: #fff; color: #000; box-shadow: 0 0 30px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; text-transform: uppercase; font-weight: 800; pointer-events: auto; cursor: pointer; }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
 
-        /* Marquee (修正：シャドウ・背景削除) */
+        /* Marquee */
         .marquee-container { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
             padding: 2.5rem 0; overflow: hidden; white-space: nowrap; 
             z-index: 10; pointer-events: none; 
-            background: transparent; /* 背景削除 */
             padding-bottom: calc(2rem + env(safe-area-inset-bottom));
         }
         @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
@@ -77,32 +61,26 @@
         .marquee-content { display: flex; align-items: center; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         
+        .marquee-item { display: flex; align-items: center; padding-right: 0; }
         .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
-        /* 文字シャドウ削除 */
-        .stats-label, .stats-value { 
-            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; 
-            text-shadow: none; 
-        }
+        .stats-label, .stats-value { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: none; }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
+        .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 140px; text-align: left; }
         
-        /* Modal & Form */
+        /* Modal */
         .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 600; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
         .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         
-        /* Status Radio (文字ウェイト修正：800) */
-        .status-option { 
-            color: #ccc; transition: all 0.3s; 
-            font-size: 14px; 
-            font-weight: 800; /* 太く戻す */
-            display: flex; align-items: center; 
-        }
+        /* Status Radio - Weight 800 */
+        .status-option { color: #ccc; transition: all 0.3s; font-size: 14px; font-weight: 800; display: flex; align-items: center; }
         .status-radio:checked + div { color: #000; opacity: 1; }
         .status-radio:checked + div .status-dot { background-color: #000; border-color: #000; }
         .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #ccc; margin-right: 8px; transition: all 0.3s; background-color: transparent; }
+        .status-radio:not(:checked) + div:hover { color: #999; }
         
         /* Pages */
         .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
@@ -111,10 +89,22 @@
         .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
         .app-footer { padding: 4rem 0 3rem; text-align: center; }
         .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
+        .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
+        .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
         
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
-        
+
+        /* Stats Card Value (修正: 太すぎないように戻す) */
+        .stat-card-value { 
+            font-size: 1.5rem; 
+            font-weight: 800; /* 900 -> 800 */
+            font-family: 'Inter', sans-serif; 
+            line-height: 1; 
+            letter-spacing: -0.02em; 
+        }
+        @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
+
         /* Loader */
         #app-loader { position: fixed; inset: 0; z-index: 9999; background: #000807; display: flex; align-items: center; justify-content: center; flex-direction: column; pointer-events: auto; animation: forceHide 0.5s linear 3s forwards; }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
@@ -123,14 +113,14 @@
 
     <!-- ★ CORE SCRIPT ★ -->
     <script>
+        // Init
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
             currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
         };
         window.treeGroup = null; window.camera = null; window.renderer = null; 
-        
-        // Config
+
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
         window.LOGO_FILES = [
@@ -138,18 +128,16 @@
             "images/ACTION_TREE_LOGO_LV4.svg", "images/ACTION_TREE_LOGO_LV5.svg", "images/ACTION_TREE_LOGO_LV6.svg"
         ];
 
-        // --- ★データ修復＆表示関数★ ---
+        // --- Core Functions ---
+        
+        // ツリー表示更新（データ正規化機能付き）
         window.updateTreeFromState = function() {
             if(!window.treeGroup) return;
 
             // 1. 既存の実を削除
             for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
                 const obj = window.treeGroup.children[i];
-                if (obj.name === 'action_flower') {
-                    window.treeGroup.remove(obj);
-                    if(obj.geometry) obj.geometry.dispose();
-                    if(obj.material) obj.material.dispose();
-                }
+                if (obj.name === 'action_flower') window.treeGroup.remove(obj);
             }
             
             // 2. データを元に再生成（フラット処理）
@@ -168,20 +156,20 @@
                  let y = parseFloat(data.baseY); 
                  let z = parseFloat(data.baseZ);
                  
-                 // 座標がない場合は強制生成
+                 // 座標がない場合は強制生成して補正
                  if(isNaN(x) || isNaN(y) || isNaN(z)) {
                      const rY = (Math.random()-0.2)*20 + 5;
                      const rR = (rY+6)/22 * 10 * Math.random();
                      const phi = Math.random()*Math.PI*2;
                      x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // 修復
+                     
                      data.baseX=x; data.baseY=y; data.baseZ=z; 
                      data.phaseX=Math.random()*Math.PI*2; 
                      data.floatSpeed=0.0004;
                  }
                  
                  mesh.position.set(x, y, z);
-                 mesh.userData = data; 
+                 mesh.userData = data; // クリック用
                  window.treeGroup.add(mesh);
                  mesh.scale.set(1,1,1);
             });
@@ -189,17 +177,7 @@
             if(window.updateGrowthState) window.updateGrowthState();
         };
 
-        // 監視タイマー
-        setInterval(() => {
-            if(window.treeGroup && window.state.flowers.length > 0) {
-                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
-                if(visibleCount !== window.state.flowers.length) {
-                    window.updateTreeFromState();
-                }
-            }
-        }, 2000);
-
-        // --- Growth & Logo ---
+        // 状態更新とロゴ連動
         window.updateGrowthState = function() { 
             const count = window.state.actions; 
             let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; 
@@ -210,10 +188,12 @@
             if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
             if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
             
-            // ロゴ更新
+            // ロゴ切り替え
             const logoPath = window.LOGO_FILES[lv] || window.LOGO_FILES[0];
             const logos = document.querySelectorAll('.dynamic-logo');
-            logos.forEach(img => { if (!img.src.includes(logoPath)) img.src = logoPath; });
+            logos.forEach(img => {
+                if (!img.src.includes(logoPath)) img.src = logoPath;
+            });
 
             if(window.updateStatsUI) window.updateStatsUI(); 
         };
@@ -222,11 +202,11 @@
         window.ui.showPage = function(id) {
             document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
             document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('nav-menu').style.display='none';
+            document.getElementById('nav-menu').style.display = 'none';
             document.getElementById('menu-toggle').classList.remove('open');
             const h = document.getElementById('main-header');
-            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
-            else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
+            if(id === 'top') { document.body.style.overflow = 'hidden'; h.classList.remove('is-dark'); }
+            else { document.body.style.overflow = 'auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
             if (id === 'log' && window.refreshLog) window.refreshLog();
         };
 
@@ -257,7 +237,6 @@
         window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
         window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
         
-        // CSV出力 (日時追加)
         window.ui.downloadLogCSV = function() {
             if (window.state.flowers.length === 0) return;
             let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes,Date\n";
@@ -513,7 +492,7 @@
                     <div>
                         <span class="page-section-label">Tree Growth Verification</span>
                         <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
-                            <button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset (0)</button>
+                            <button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset</button>
                             <button onclick="window.ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button>
                             <button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button>
                             <button onclick="window.ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button>
@@ -570,6 +549,7 @@
                 <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
                 <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">ACTIONを投稿して、100の木を育てましょう。</p>
             </div>
+            <!-- Global Handler -->
             <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" onsubmit="return window.handleFormSubmit(event)" novalidate>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label><input type="text" id="post-name" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
                 <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label><input type="text" id="post-client" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
@@ -591,6 +571,21 @@
                 <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">未入力の項目があります</div>
                 <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-3 md:py-5 font-bold uppercase mt-2 mb-2 md:mt-4 md:mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none clickable">ACTION / 投稿する</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.ui.closeDetailModal()">
+        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
+            <button onclick="window.ui.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
+            <div class="mb-8 md:mb-10 text-black"><div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div><h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3></div>
+            <div class="space-y-5 md:space-y-6 text-black">
+                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span><p id="detail-name" class="text-sm font-bold break-words text-black">Name</p></div>
+                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span><p id="detail-client" class="text-sm font-bold break-words text-black">Client</p></div>
+                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span><p id="detail-project" class="text-sm font-bold break-words text-black">Project</p></div>
+                <div class="grid grid-cols-2 gap-4"><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span><p id="detail-status" class="text-sm font-bold break-words text-black">---</p></div><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span><p id="detail-amount" class="text-sm font-bold break-words text-black">---</p></div></div>
+                <div class="pt-4 border-t border-gray-100"><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span><p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black"></p></div>
+            </div>
         </div>
     </div>
 
@@ -654,10 +649,7 @@
                 const track = document.getElementById('stats-slider-track');
                 const content = document.getElementById('stats-content-source');
                 if(track && content && track.children.length < 5) {
-                    track.appendChild(content.cloneNode(true));
-                    track.appendChild(content.cloneNode(true));
-                    track.appendChild(content.cloneNode(true));
-                    track.appendChild(content.cloneNode(true));
+                    for(let i=0; i<4; i++) track.appendChild(content.cloneNode(true));
                 }
             }
             setInterval(updateMarquee, 1000); updateMarquee();
@@ -693,15 +685,11 @@
             const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
             const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
 
-            const pCount = window.innerWidth < 768 ? 15000 : 25000;
-            const pPos = new Float32Array(pCount*3), pCol = new Float32Array(pCount*3);
+            const pCount = 20000; const pPos = new Float32Array(pCount*3), pCol = new Float32Array(pCount*3);
             for(let i=0; i<pCount; i++) {
-                const y = (Math.random()-0.3)*38 * (window.state.isMobile?1.2:1.0);
-                let br = (y+12)/35; if(br<0)br=0;
-                const r = br * 14 * Math.pow(Math.random(),0.7) * (window.state.isMobile?0.8:1.0);
-                const a = y*0.1 + Math.random()*Math.PI*2;
+                const y=(Math.random()-0.3)*38, r=Math.random()*15, a=Math.random()*Math.PI*2;
                 pPos[i*3]=Math.cos(a)*r; pPos[i*3+1]=y; pPos[i*3+2]=Math.sin(a)*r;
-                const c = 0.5 + Math.random()*0.5; pCol[i*3]=c; pCol[i*3+1]=c; pCol[i*3+2]=c;
+                const c=0.5+Math.random()*0.5; pCol[i*3]=c; pCol[i*3+1]=c; pCol[i*3+2]=c;
             }
             const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3)); pGeo.setAttribute('color', new THREE.BufferAttribute(pCol,3));
             particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ size:0.12, vertexColors:true, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending }));
@@ -789,7 +777,7 @@
             if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
             if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
             
-            // ★ロゴ切り替えロジック (class=dynamic-logo を全て更新)
+            // ★修正: ロゴ画像切り替えロジック (class=dynamic-logo を全て更新)
             const logoIndex = lv; 
             const newLogoPath = window.LOGO_FILES[logoIndex] || window.LOGO_FILES[0];
             
