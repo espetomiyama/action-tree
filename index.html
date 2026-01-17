@@ -7,15 +7,14 @@
     
     <title>100 ACTION TREE</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
-    <!-- --- Styles --- -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
         
+        /* Base Settings */
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0; padding: 0; overflow-x: hidden;
@@ -25,17 +24,16 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
+        /* Canvas */
         #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: auto; }
-        .full-screen-section { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
-
+        
         /* UI Elements */
         .clickable, a, button, input, label, textarea, .nav-icon { pointer-events: auto !important; cursor: pointer; }
-
+        
         /* Header */
         header { 
             position: fixed; top: 0; left: 0; width: 100%; z-index: 500; 
             pointer-events: none; transition: all 0.4s ease;
-            display: flex; justify-content: space-between; align-items: center;
         }
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
@@ -43,11 +41,9 @@
         
         .logo-main-text { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
-
-        /* Nav Icon */
+        
         .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .nav-icon-inner { width: 24px; height: 10px; position: relative; }
-        @media (min-width: 768px) { .nav-icon-inner { width: 30px; height: 12px; } }
         .nav-icon span { display: block; position: absolute; height: 2px; width: 100%; background: #fff; left: 0; transition: all 0.4s; }
         .nav-icon-inner span:nth-child(1) { top: 0px; }
         .nav-icon-inner span:nth-child(2) { bottom: 0px; }
@@ -57,8 +53,7 @@
         /* Menu */
         .menu-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0, 40, 30, 0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(12px); pointer-events: auto; }
         .menu-link { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; color: #fff; margin: 10px 0; transition: opacity 0.3s; }
-        .menu-link:hover { opacity: 0.7; }
-
+        
         /* Action Button */
         .action-button { 
             position: fixed; bottom: 80px; right: 20px; z-index: 100; 
@@ -68,55 +63,58 @@
         }
         @media (min-width: 768px) { .action-button { bottom: 100px; right: 40px; width: 100px; height: 100px; } }
 
-        /* Marquee - Fixed & Adjusted */
+        /* Marquee (修正：シャドウ・背景削除) */
         .marquee-container { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            padding: 1.5rem 0; /* 少し狭く */
-            overflow: hidden; white-space: nowrap; 
+            padding: 2.5rem 0; overflow: hidden; white-space: nowrap; 
             z-index: 10; pointer-events: none; 
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); /* 視認性向上のためのグラデーション */
-            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+            background: transparent; /* 背景削除 */
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
         }
-        @media (min-width: 768px) { .marquee-container { padding: 2.5rem 0; padding-bottom: 2.5rem; } }
+        @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
         
-        .marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; transform: translate3d(0,0,0); }
+        .marquee-track { display: flex; width: max-content; animation: marquee 120s linear infinite; transform: translate3d(0,0,0); }
         .marquee-content { display: flex; align-items: center; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .marquee-item { display: flex; align-items: center; }
-        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 3vw; } /* 間隔調整 */
-        .stats-label, .stats-value { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        
+        .stats-group { display: flex; align-items: baseline; gap: 1rem; padding: 0 2rem; }
+        /* 文字シャドウ削除 */
+        .stats-label, .stats-value { 
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 0.2em; 
+            text-shadow: none; 
+        }
         @media (min-width: 768px) { .stats-label, .stats-value { font-size: 1rem; letter-spacing: 0.4em; } }
         .tabular { font-variant-numeric: tabular-nums; }
-        .countdown-stable { font-variant-numeric: tabular-nums; display: inline-block; min-width: 140px; text-align: left; }
-
-        /* Pages & Footer */
-        .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
-        .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
-        .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
-        .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
-        .app-footer { padding: 4rem 0 3rem; text-align: center; }
-        .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
-        .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
-        .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
         
-        /* Modal */
+        /* Modal & Form */
         .modal-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; position: fixed; inset: 0; z-index: 600; align-items: center; justify-content: center; padding: 1rem; pointer-events: auto; }
         input, textarea { background: transparent; outline: none; border-radius: 0; -webkit-appearance: none; }
         .date-input-custom { border-bottom: 1px solid #000; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; padding: 4px 0; }
         .input-error-shake { animation: shake 0.3s ease-in-out; border-bottom-color: #000 !important; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         
+        /* Status Radio (文字ウェイト修正：800) */
+        .status-option { 
+            color: #ccc; transition: all 0.3s; 
+            font-size: 14px; 
+            font-weight: 800; /* 太く戻す */
+            display: flex; align-items: center; 
+        }
         .status-radio:checked + div { color: #000; opacity: 1; }
         .status-radio:checked + div .status-dot { background-color: #000; border-color: #000; }
         .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #ccc; margin-right: 8px; transition: all 0.3s; background-color: transparent; }
-        .status-radio:not(:checked) + div:hover { color: #999; }
-        .status-radio:not(:checked) + div:hover .status-dot { border-color: #999; }
+        
+        /* Pages */
+        .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
+        .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
+        .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
+        .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
+        .app-footer { padding: 4rem 0 3rem; text-align: center; }
+        .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
         
         .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
-        .stat-card-value { font-size: 1.5rem; font-weight: 900 !important; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
-        @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
-
+        
         /* Loader */
         #app-loader { position: fixed; inset: 0; z-index: 9999; background: #000807; display: flex; align-items: center; justify-content: center; flex-direction: column; pointer-events: auto; animation: forceHide 0.5s linear 3s forwards; }
         @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
@@ -125,69 +123,110 @@
 
     <!-- ★ CORE SCRIPT ★ -->
     <script>
-        // Init Globals
         window.ui = {};
         window.state = { 
             actions:0, amount:0, isMobile: window.innerWidth<768, 
             currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
         };
-        window.treeGroup = null; window.camera = null; window.renderer = null; window.effectGroup = null;
-
+        window.treeGroup = null; window.camera = null; window.renderer = null; 
+        
+        // Config
         window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
         window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
-        
         window.LOGO_FILES = [
-            "images/ACTION_TREE_LOGO_LV1.svg",
-            "images/ACTION_TREE_LOGO_LV2.svg",
-            "images/ACTION_TREE_LOGO_LV3.svg",
-            "images/ACTION_TREE_LOGO_LV4.svg",
-            "images/ACTION_TREE_LOGO_LV5.svg",
-            "images/ACTION_TREE_LOGO_LV6.svg"
+            "images/ACTION_TREE_LOGO_LV1.svg", "images/ACTION_TREE_LOGO_LV2.svg", "images/ACTION_TREE_LOGO_LV3.svg",
+            "images/ACTION_TREE_LOGO_LV4.svg", "images/ACTION_TREE_LOGO_LV5.svg", "images/ACTION_TREE_LOGO_LV6.svg"
         ];
 
-        // --- Data Normalizer (重要: データを常に同じ形にする) ---
-        window.normalizeData = function(rawData) {
-            // 入れ子になっている場合も、なっていない場合も、フラットなオブジェクトを返す
-            const d = rawData.userData || rawData;
-            
-            // 必須パラメータの補完
-            if (!d.colorHex) d.colorHex = window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)];
-            
-            // 座標チェックと自動生成
-            let x = parseFloat(d.baseX);
-            let y = parseFloat(d.baseY);
-            let z = parseFloat(d.baseZ);
-            
-            if (isNaN(x) || isNaN(y) || isNaN(z)) {
-                // 座標がない場合は生成してデータに書き込む
-                const rY = (Math.random()-0.2)*20 + 5;
-                const rR = (rY+6)/22 * 10 * Math.random();
-                const phi = Math.random()*Math.PI*2;
-                x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                
-                d.baseX = x; d.baseY = y; d.baseZ = z;
-                d.phaseX = Math.random()*Math.PI*2;
-                d.floatSpeed = 0.0004;
+        // --- ★データ修復＆表示関数★ ---
+        window.updateTreeFromState = function() {
+            if(!window.treeGroup) return;
+
+            // 1. 既存の実を削除
+            for (let i = window.treeGroup.children.length - 1; i >= 0; i--) {
+                const obj = window.treeGroup.children[i];
+                if (obj.name === 'action_flower') {
+                    window.treeGroup.remove(obj);
+                    if(obj.geometry) obj.geometry.dispose();
+                    if(obj.material) obj.material.dispose();
+                }
             }
             
-            return d;
+            // 2. データを元に再生成（フラット処理）
+            window.state.flowers.forEach(d => {
+                 // データ正規化：userDataの有無を問わずフラットに
+                 const data = d.userData || d;
+                 const color = data.colorHex || window.DESIGN_PALETTE[0];
+                 
+                 // マテリアル (BasicMaterialで確実に発色)
+                 const geo = new THREE.SphereGeometry(0.25, 16, 16); 
+                 const mat = new THREE.MeshBasicMaterial({ color: color }); 
+                 const mesh = new THREE.Mesh(geo, mat);
+                 mesh.name = 'action_flower';
+                 
+                 let x = parseFloat(data.baseX); 
+                 let y = parseFloat(data.baseY); 
+                 let z = parseFloat(data.baseZ);
+                 
+                 // 座標がない場合は強制生成
+                 if(isNaN(x) || isNaN(y) || isNaN(z)) {
+                     const rY = (Math.random()-0.2)*20 + 5;
+                     const rR = (rY+6)/22 * 10 * Math.random();
+                     const phi = Math.random()*Math.PI*2;
+                     x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
+                     // 修復
+                     data.baseX=x; data.baseY=y; data.baseZ=z; 
+                     data.phaseX=Math.random()*Math.PI*2; 
+                     data.floatSpeed=0.0004;
+                 }
+                 
+                 mesh.position.set(x, y, z);
+                 mesh.userData = data; 
+                 window.treeGroup.add(mesh);
+                 mesh.scale.set(1,1,1);
+            });
+            
+            if(window.updateGrowthState) window.updateGrowthState();
+        };
+
+        // 監視タイマー
+        setInterval(() => {
+            if(window.treeGroup && window.state.flowers.length > 0) {
+                const visibleCount = window.treeGroup.children.filter(o => o.name === 'action_flower').length;
+                if(visibleCount !== window.state.flowers.length) {
+                    window.updateTreeFromState();
+                }
+            }
+        }, 2000);
+
+        // --- Growth & Logo ---
+        window.updateGrowthState = function() { 
+            const count = window.state.actions; 
+            let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; 
+            window.state.currentLevel = lv; 
+            
+            let mult = 1.0 + lv*0.2; 
+            let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); 
+            if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
+            if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
+            
+            // ロゴ更新
+            const logoPath = window.LOGO_FILES[lv] || window.LOGO_FILES[0];
+            const logos = document.querySelectorAll('.dynamic-logo');
+            logos.forEach(img => { if (!img.src.includes(logoPath)) img.src = logoPath; });
+
+            if(window.updateStatsUI) window.updateStatsUI(); 
         };
 
         // --- UI Functions ---
         window.ui.showPage = function(id) {
             document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
             document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('nav-menu').style.display = 'none';
+            document.getElementById('nav-menu').style.display='none';
             document.getElementById('menu-toggle').classList.remove('open');
             const h = document.getElementById('main-header');
-            if(id === 'top') { 
-                document.body.style.overflow = 'hidden'; 
-                h.classList.remove('is-dark'); 
-            } else { 
-                document.body.style.overflow = 'auto'; 
-                h.classList.add('is-dark'); 
-                window.scrollTo(0,0); 
-            }
+            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
+            else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
             if (id === 'log' && window.refreshLog) window.refreshLog();
         };
 
@@ -197,7 +236,7 @@
             if(!isOpen) { 
                 nav.style.display='flex'; document.body.style.overflow='hidden'; toggle.classList.add('open');
                 if(header) header.classList.remove('is-dark');
-                if(window.getDynamicColor) { const hex = window.getDynamicColor(); const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0}; nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`; } 
+                if(window.getDynamicColor) { const hex=window.getDynamicColor(); const rgb=window.hexToRgb(hex); if(rgb) nav.style.backgroundColor=`rgba(${rgb.r},${rgb.g},${rgb.b},0.95)`; }
             } else { 
                 nav.style.display='none'; toggle.classList.remove('open');
                 const isTop = !document.getElementById('page-top').classList.contains('hidden');
@@ -218,10 +257,12 @@
         window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
         window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
         
+        // CSV出力 (日時追加)
         window.ui.downloadLogCSV = function() {
             if (window.state.flowers.length === 0) return;
             let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes,Date\n";
-            window.state.flowers.forEach(d => {
+            window.state.flowers.forEach(rawData => {
+                const d = rawData.userData || rawData;
                 const dateStr = d.timestamp ? new Date(d.timestamp).toLocaleString('ja-JP') : "";
                 const escape = (t) => t ? `"${t.toString().replace(/"/g, '""')}"` : "";
                 csvContent += `${escape(d.name)},${escape(d.status)},${escape(d.client)},${escape(d.project)},${d.amount},${escape(d.notes)},${escape(dateStr)}\n`;
@@ -230,7 +271,12 @@
             const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log.csv`; link.click();
         };
 
-        // --- Form Handler ---
+        window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
+        window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { 
+            const d = f.userData || f;
+            const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
+
+        // Form Submit
         window.handleFormSubmit = function(event) {
             event.preventDefault();
             const n = document.getElementById('post-name').value;
@@ -248,21 +294,21 @@
             const btn = document.getElementById('submit-action-btn');
             btn.disabled = true; btn.textContent = "Sending...";
 
-            // Create flat data
-            const rawData = {
+            const rY = (Math.random()-0.2)*20 + 5; const rR = (rY+6)/22 * 10 * Math.random(); const phi = Math.random()*Math.PI*2;
+            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
+
+            // フラットデータ
+            const data = {
                 name: n, client: c, project: p, amount: a, notes: notes, status: status,
                 colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
                 timestamp: Date.now(),
-                // Init Coords
-                baseX: null, baseY: null, baseZ: null 
+                baseX: x, baseY: y, baseZ: z,
+                phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
             };
-            
-            // Normalize here to generate coords immediately
-            const data = window.normalizeData(rawData);
 
             ui.closeModal();
 
-            // Local Update
+            // 即時反映
             window.state.flowers.push(data);
             window.state.actions++;
             if(data.status === 'order') window.state.amount += data.amount;
@@ -303,6 +349,7 @@
         <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing...</span>
     </div>
 
+    <!-- Header -->
     <header id="main-header" class="px-5 py-6 md:px-10 md:py-12 flex items-center">
         <div class="logo-symbol-wrapper clickable flex-shrink-0" onclick="window.ui.showPage('top')">
             <img id="header-logo-img" class="dynamic-logo w-6 h-6 md:w-8 md:h-8 object-contain" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -318,6 +365,7 @@
         </div>
     </header>
 
+    <!-- Menu -->
     <div id="nav-menu" class="menu-overlay">
         <div class="flex-grow flex flex-col justify-center items-center gap-6 md:gap-10">
             <a onclick="window.ui.showPage('top')" class="menu-link clickable">Top</a>
@@ -331,11 +379,15 @@
         </div>
     </div>
 
+    <!-- Content -->
     <main id="app-content">
+        <!-- TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
+            <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
+                    <!-- Template -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -346,12 +398,13 @@
                     </div>
                 </div>
             </div>
+            <!-- ACTION BUTTON -->
             <button id="main-action-button" onclick="window.ui.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
 
-        <!-- ABOUT -->
+        <!-- ABOUT PAGE -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-32">
@@ -380,7 +433,7 @@
             </div>
         </div>
 
-        <!-- RULES -->
+        <!-- RULES PAGE -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
                 <div class="mb-20 md:mb-24">
@@ -408,7 +461,7 @@
             </div>
         </div>
 
-        <!-- LOG -->
+        <!-- LOG PAGE -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
                 <div class="mb-16 md:mb-24">
@@ -449,9 +502,63 @@
             </div>
         </div>
 
-        <!-- DASHBOARD -->
+        <!-- DASHBOARD PAGE -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
-             <div class="max-w-5xl mx-auto px-6 md:px-10"><div class="mb-16 md:mb-24"><span class="page-section-label">System Management</span><h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2></div><div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black"><div><span class="page-section-label">Tree Growth Verification</span><div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black"><button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset (0)</button><button onclick="window.ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button><button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button><button onclick="window.ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button><button onclick="window.ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button><button onclick="window.ui.setTestLevel(75)" class="sim-btn clickable">LV4 (75)</button><button onclick="window.ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button></div></div><div><span class="page-section-label text-black">Environmental Atmosphere</span><div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center"><button onclick="window.ui.setTestTime(2)" class="sim-btn clickable">Night</button><button onclick="window.ui.setTestTime(9)" class="sim-btn clickable">Morning</button><button onclick="window.ui.setTestTime(15)" class="sim-btn clickable">Day</button><button onclick="window.ui.setTestTime(20)" class="sim-btn clickable">Evening</button><button onclick="window.ui.resetTimeSim()" class="sim-btn text-black clickable">Sync</button><div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200"><input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors clickable" onkeydown="if(event.key==='Enter') window.ui.applyCustomTime()"><button onclick="window.ui.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70 clickable">SET</button></div></div></div></div><div class="border-t border-black pt-16 mb-20"><h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3><div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6"><p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。</p><button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button></div></div><footer class="app-footer"><nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12"><a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a><a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a><a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a><a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a></nav><div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center"><img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo"></div><p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p></footer></div>
+            <div class="max-w-5xl mx-auto px-6 md:px-10">
+                <div class="mb-16 md:mb-24">
+                    <span class="page-section-label">System Management</span>
+                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2>
+                </div>
+                <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black">
+                    <div>
+                        <span class="page-section-label">Tree Growth Verification</span>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
+                            <button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset (0)</button>
+                            <button onclick="window.ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button>
+                            <button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button>
+                            <button onclick="window.ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button>
+                            <button onclick="window.ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button>
+                            <button onclick="window.ui.setTestLevel(75)" class="sim-btn clickable">LV4 (75)</button>
+                            <button onclick="window.ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="page-section-label text-black">Environmental Atmosphere</span>
+                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center">
+                            <button onclick="window.ui.setTestTime(2)" class="sim-btn clickable">Night</button>
+                            <button onclick="window.ui.setTestTime(9)" class="sim-btn clickable">Morning</button>
+                            <button onclick="window.ui.setTestTime(15)" class="sim-btn clickable">Day</button>
+                            <button onclick="window.ui.setTestTime(20)" class="sim-btn clickable">Evening</button>
+                            <button onclick="window.ui.resetTimeSim()" class="sim-btn text-black clickable">Sync</button>
+                            <div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200">
+                                <input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" 
+                                       class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors clickable"
+                                       onkeydown="if(event.key==='Enter') window.ui.applyCustomTime()">
+                                <button onclick="window.ui.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70 clickable">SET</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-black pt-16 mb-20">
+                    <h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3>
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。</p>
+                        <button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button>
+                    </div>
+                </div>
+                <footer class="app-footer">
+                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
+                        <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
+                        <a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a>
+                        <a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
+                        <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
+                    </nav>
+                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
+                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
+                </footer>
+            </div>
         </div>
     </main>
 
@@ -487,50 +594,73 @@
         </div>
     </div>
 
-    <!-- Details Modal -->
-    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.ui.closeDetailModal()">
-        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
-            <button onclick="window.ui.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
-            <div class="mb-8 md:mb-10 text-black"><div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div><h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3></div>
-            <div class="space-y-5 md:space-y-6 text-black">
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span><p id="detail-name" class="text-sm font-bold break-words text-black">Name</p></div>
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span><p id="detail-client" class="text-sm font-bold break-words text-black">Client</p></div>
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span><p id="detail-project" class="text-sm font-bold break-words text-black">Project</p></div>
-                <div class="grid grid-cols-2 gap-4"><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span><p id="detail-status" class="text-sm font-bold break-words text-black">---</p></div><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span><p id="detail-amount" class="text-sm font-bold break-words text-black">---</p></div></div>
-                <div class="pt-4 border-t border-gray-100"><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span><p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black"></p></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Logic Script (Immediate) -->
+    <!-- 1. UI Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Inputs
-            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { 
-                const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); 
-            });
+            // UI Toggle
+            window.ui.toggleMenu = () => {
+                const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
+                const isOpen = nav.style.display === 'flex';
+                nav.style.display = isOpen ? 'none' : 'flex';
+                toggle.classList.toggle('open');
+                if(!isOpen) { if(header) header.classList.remove('is-dark'); if(window.getDynamicColor) { const hex = window.getDynamicColor(); const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0}; nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`; } }
+                else { const isTop = !document.getElementById('page-top').classList.contains('hidden'); if(!isTop && header) header.classList.add('is-dark'); }
+            };
+            window.ui.showPage = (id) => {
+                document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+                document.getElementById(`page-${id}`).classList.remove('hidden');
+                document.getElementById('nav-menu').style.display='none';
+                document.getElementById('menu-toggle').classList.remove('open');
+                const h = document.getElementById('main-header');
+                if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
+                else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
+                if (id === 'log' && window.refreshLog) window.refreshLog();
+            };
+            window.ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
+            window.ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
+            window.ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
+            window.ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
+            window.ui.showDetail = (data) => { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; window.resetHoverState(); modal.style.display = 'flex'; window.state.isModalOpen = true; };
+            
+            // Sim Functions
+            window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
+            window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
+            window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
+            window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
+            window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
+            window.ui.downloadLogCSV = () => { if(window.downloadLogImpl) window.downloadLogImpl(); };
+
+            // Form Interactions
             document.getElementsByName('post-status').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const amt = document.getElementById('amount-container');
-                    if(e.target.value === 'order') { amt.classList.remove('invisible', 'opacity-0'); if(window.gsap) gsap.to(amt, {opacity:1, duration:0.3}); document.getElementById('post-amount').setAttribute('required', 'true'); }
-                    else { if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); document.getElementById('post-amount').removeAttribute('required'); document.getElementById('post-amount').value=''; }
+                    const inp = document.getElementById('post-amount');
+                    if(e.target.value === 'order') { amt.classList.remove('invisible', 'opacity-0'); if(window.gsap) gsap.to(amt, {opacity:1, duration:0.3}); inp.setAttribute('required', 'true'); }
+                    else { if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); inp.removeAttribute('required'); inp.value=''; }
                 });
             });
+            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); });
             if(window.gsap) {
                 document.querySelectorAll('.vivid-cycle-btn').forEach(btn => { gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); const tl = gsap.timeline({ repeat: -1 }); window.DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" })); });
                 document.querySelectorAll('.breath-animation').forEach(btn => { gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" }); });
             }
-            // Loop Marquee
-            const track = document.getElementById('stats-slider-track');
-            const content = document.getElementById('stats-content-source');
-            if(track && content && track.children.length < 5) {
-                for(let i=0; i<4; i++) track.appendChild(content.cloneNode(true));
-            }
-            setInterval(() => {
+            
+            function updateMarquee() {
                 const now = new Date();
                 const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
                 document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dStr);
-            }, 1000);
+                
+                // Clone for Loop
+                const track = document.getElementById('stats-slider-track');
+                const content = document.getElementById('stats-content-source');
+                if(track && content && track.children.length < 5) {
+                    track.appendChild(content.cloneNode(true));
+                    track.appendChild(content.cloneNode(true));
+                    track.appendChild(content.cloneNode(true));
+                    track.appendChild(content.cloneNode(true));
+                }
+            }
+            setInterval(updateMarquee, 1000); updateMarquee();
         });
     </script>
     
@@ -607,8 +737,8 @@
                     }
                 }); 
             }
-            
-            // 重要: ツリー準備完了時に一度更新
+
+            // ★重要: 初期化完了時に強制描画を走らせる
             if(window.updateTreeFromState) window.updateTreeFromState();
         }
 
@@ -659,12 +789,15 @@
             if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
             if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
             
-            // ★ロゴ切り替えロジック (dynamic-logoクラスの画像を全て更新)
+            // ★ロゴ切り替えロジック (class=dynamic-logo を全て更新)
             const logoIndex = lv; 
             const newLogoPath = window.LOGO_FILES[logoIndex] || window.LOGO_FILES[0];
+            
             const logos = document.querySelectorAll('.dynamic-logo');
             logos.forEach(img => {
-                if (!img.src.includes(newLogoPath)) img.src = newLogoPath;
+                if (!img.src.includes(newLogoPath)) {
+                    img.src = newLogoPath;
+                }
             });
 
             window.updateStatsUI(); 
@@ -672,13 +805,13 @@
 
         window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
         window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { 
-            // フラットなデータを前提
-            const d = f.userData || f;
+            const d = f.userData || f; // フラット化対応
             const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
 
         window.addFlowerWithConvergence = (n,c,p,a,not,s,isInstant, target=null) => {
             const color = window.DESIGN_PALETTE[Math.floor(Math.random()*window.DESIGN_PALETTE.length)];
             const tPos = target ? target.world : new THREE.Vector3(0,10,0);
+            
             const startPos = new THREE.Vector3(0, -8, 25); if (window.state.isMobile) startPos.z = 35;
             const projectile = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 }));
             projectile.position.copy(startPos); window.effectGroup.add(projectile);
@@ -695,6 +828,8 @@
             }, onComplete: () => {
                 window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
                 createSparkleEffect(tPos, color); flashTreeParticles();
+                
+                // アニメーション完了後に再度更新をかける
                 if(window.updateTreeFromState) window.updateTreeFromState();
             }});
         };
