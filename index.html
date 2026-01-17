@@ -7,23 +7,25 @@
     
     <title>100 ACTION TREE</title>
     
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
         
+        /* Base Settings */
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             margin: 0; padding: 0; overflow-x: hidden;
-            background: #000807;
+            background: linear-gradient(to bottom, #000807, #001a15);
             color: #fff; letter-spacing: 0.1em;
             -webkit-font-smoothing: antialiased;
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: transparent; }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: auto; }
         .full-screen-section { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
         .clickable, a, button, input, label, textarea, .nav-icon { pointer-events: auto !important; cursor: pointer; }
 
@@ -36,11 +38,10 @@
         header.is-dark .logo-main-text { color: #000 !important; }
         header.is-dark .nav-icon span { background: #000 !important; }
         header.is-dark img { filter: brightness(0); }
-        
         .logo-main-text { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
         @media (min-width: 768px) { .logo-main-text { font-size: 24px; letter-spacing: 0.4em; } }
         
-        /* Navigation Icon */
+        /* Nav Icon */
         .nav-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .nav-icon-inner { width: 24px; height: 10px; position: relative; }
         .nav-icon span { display: block; position: absolute; height: 2px; width: 100%; background: #fff; left: 0; transition: all 0.4s; }
@@ -67,11 +68,9 @@
             position: fixed; bottom: 0; left: 0; width: 100%; 
             padding: 2.5rem 0; overflow: hidden; white-space: nowrap; 
             z-index: 10; pointer-events: none; 
-            background: transparent;
             padding-bottom: calc(2rem + env(safe-area-inset-bottom));
         }
         @media (max-width: 768px) { .marquee-container { padding: 1.5rem 0; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
-
         .marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; transform: translate3d(0,0,0); }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-item { display: flex; align-items: center; padding-right: 0; }
@@ -91,16 +90,12 @@
         .status-radio:checked + div { color: #000; opacity: 1; }
         .status-radio:checked + div .status-dot { background-color: #000; border-color: #000; }
         .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #ccc; margin-right: 8px; transition: all 0.3s; background-color: transparent; }
-        .status-option { color: #ccc; transition: all 0.3s; font-size: 14px; font-weight: 800; display: flex; align-items: center; }
+        .status-option { color: #ccc; transition: all 0.3s; font-size: 14px; font-weight: 800; display: flex; align-items: center; } /* Weight 800 */
         .status-radio:not(:checked) + div:hover { color: #999; }
         .status-radio:not(:checked) + div:hover .status-dot { border-color: #999; }
-        
-        /* Utils */
-        .hidden { display: none !important; }
+
+        /* Pages */
         .mono-page { background: #fff; color: #000; pointer-events: auto; position: relative; z-index: 20; }
-        .stat-card-value { font-size: 1.5rem; font-weight: 800; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
-        @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
-        
         .page-section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4em; color: #999; margin-bottom: 0.5rem; display: block; }
         .statement-text-container { line-height: 1.8; letter-spacing: 0.12em; font-size: 14px; color: #333; }
         .rule-card { border-left: 1px solid #f0f0f0; padding-left: 1.25rem; }
@@ -108,246 +103,32 @@
         .footer-nav-link { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #000; margin: 0 10px; }
         .csv-btn, .sim-btn { font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; padding: 8px 16px; border-radius: 999px; transition: all 0.3s; cursor: pointer; }
         .csv-btn:hover, .sim-btn:hover { background: #000; color: #fff; }
+        
+        .hidden { display: none !important; }
         .logo-fallback { display: none; width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid currentColor; }
+        .stat-card-value { font-size: 1.5rem; font-weight: 800; font-family: 'Inter', sans-serif; line-height: 1; letter-spacing: -0.02em; }
+        @media (min-width: 768px) { .stat-card-value { font-size: 2.5rem; } }
 
-        /* Loader */
-        #app-loader { position: fixed; inset: 0; z-index: 9999; background: #000807; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease; }
-        #app-loader.loaded { opacity: 0; pointer-events: none; }
+        /* ★CSS Safety Net: JSが止まっても3秒後にローダーを強制消去★ */
+        #app-loader {
+            position: fixed; inset: 0; z-index: 9999; background: #000807;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            pointer-events: auto;
+            animation: forceHide 0.5s linear 3s forwards;
+        }
+        @keyframes forceHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+        #app-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.5s ease; animation: none; }
     </style>
-
-    <!-- Global Logic -->
-    <script>
-        // Init
-        window.ui = {};
-        window.state = { 
-            actions:0, amount:0, isMobile: window.innerWidth<768, 
-            currentLevel:0, simulatedHour:null, flowers:[], isModalOpen:false 
-        };
-        window.treeGroup = null; window.camera = null; window.renderer = null; window.effectGroup = null;
-
-        // Config from index_20.html
-        window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
-        window.TIME_PERIODS = { NIGHT: { base: "#000205", accent: "#220066" }, MORNING: { base: "#aaccdd", accent: "#ff88bb" }, DAY: { base: "#002a5c", accent: "#00cca3" }, EVENING: { base: "#1a0526", accent: "#cc2900" } };
-        
-        // ロゴ画像
-        window.LOGO_FILES = [
-            "images/ACTION_TREE_LOGO_LV1.svg",
-            "images/ACTION_TREE_LOGO_LV2.svg",
-            "images/ACTION_TREE_LOGO_LV3.svg",
-            "images/ACTION_TREE_LOGO_LV4.svg",
-            "images/ACTION_TREE_LOGO_LV5.svg",
-            "images/ACTION_TREE_LOGO_LV6.svg"
-        ];
-        
-        // Shader Code from index_20.html
-        window.vertexShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-        window.fragmentShader = `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`;
-
-        // --- Core Functions ---
-        
-        // ★重要: index_20.htmlのロジックで再構築
-        window.updateTreeFromState = function() {
-            if(!window.treeGroup) return;
-
-            // 1. 既存の実を削除
-            const toRemove = [];
-            window.treeGroup.children.forEach(obj => {
-                if(obj.name === 'action_flower') toRemove.push(obj);
-            });
-            toRemove.forEach(obj => window.treeGroup.remove(obj));
-            
-            // 2. データを元に再生成
-            window.state.flowers.forEach(d => {
-                 // フラット化
-                 const data = d.userData || d;
-                 const color = data.colorHex || window.DESIGN_PALETTE[0];
-                 
-                 // index_20.htmlと同じMeshBasicMaterialを使用
-                 const geo = new THREE.SphereGeometry(0.25, 12, 12); 
-                 const mat = new THREE.MeshBasicMaterial({ color: color }); 
-                 const mesh = new THREE.Mesh(geo, mat);
-                 mesh.name = 'action_flower';
-                 
-                 let x = parseFloat(data.baseX); 
-                 let y = parseFloat(data.baseY); 
-                 let z = parseFloat(data.baseZ);
-                 
-                 // 座標がない場合は強制生成
-                 if(isNaN(x) || isNaN(y) || isNaN(z)) {
-                     const rY = (Math.random()-0.2)*20 + 5;
-                     const rR = (rY+6)/22 * 10 * Math.random();
-                     const phi = Math.random()*Math.PI*2;
-                     x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
-                     // データを更新
-                     data.baseX=x; data.baseY=y; data.baseZ=z; 
-                     data.phaseX=Math.random()*Math.PI*2; 
-                     data.floatSpeed=0.0004;
-                 }
-                 
-                 mesh.position.set(x, y, z);
-                 mesh.userData = data; 
-                 
-                 window.treeGroup.add(mesh);
-            });
-            
-            if(window.updateGrowthState) window.updateGrowthState();
-        };
-
-        // 状態更新とロゴ連動
-        window.updateGrowthState = function() { 
-            const count = window.state.actions; 
-            let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; 
-            window.state.currentLevel = lv; 
-            
-            // Camera
-            let mult = 1.0 + lv*0.2; 
-            let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); 
-            if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
-            if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
-            
-            // ★ロゴ切り替え
-            const logoPath = window.LOGO_FILES[lv] || window.LOGO_FILES[0];
-            document.querySelectorAll('.dynamic-logo').forEach(img => {
-                if (!img.src.includes(logoPath)) img.src = logoPath;
-            });
-
-            if(window.updateStatsUI) window.updateStatsUI(); 
-        };
-
-        // --- UI Functions ---
-        window.ui.showPage = function(id) {
-            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('nav-menu').style.display = 'none';
-            document.getElementById('menu-toggle').classList.remove('open');
-            const h = document.getElementById('main-header');
-            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
-            else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
-            if (id === 'log' && window.refreshLog) window.refreshLog();
-        };
-
-        window.ui.toggleMenu = function() {
-            const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
-            const isOpen = nav.style.display === 'flex';
-            if(!isOpen) { 
-                nav.style.display='flex'; document.body.style.overflow='hidden'; toggle.classList.add('open');
-                if(header) header.classList.remove('is-dark');
-                if(window.getDynamicColor) { const hex=window.getDynamicColor(); const rgb=window.hexToRgb(hex); if(rgb) nav.style.backgroundColor=`rgba(${rgb.r},${rgb.g},${rgb.b},0.95)`; }
-            } else { 
-                nav.style.display='none'; toggle.classList.remove('open');
-                const isTop = !document.getElementById('page-top').classList.contains('hidden');
-                document.body.style.overflow = isTop ? 'hidden' : 'auto';
-                if(!isTop && header) header.classList.add('is-dark'); 
-            }
-        };
-
-        window.ui.openModal = function() { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
-        window.ui.closeModal = function() { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; const form = document.getElementById('action-form'); if(form) form.reset(); const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible'); };
-        window.ui.closeDetailModal = function() { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
-        window.ui.updateCharCount = function(el) { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
-        window.ui.showDetail = (data) => { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; if(window.resetHoverState) window.resetHoverState(); modal.style.display = 'flex'; window.state.isModalOpen = true; };
-        
-        // Sim Functions
-        window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
-        window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
-        window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
-        window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
-        window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
-        
-        // ★CSV出力 (日時追加)
-        window.ui.downloadLogCSV = function() {
-            if (window.state.flowers.length === 0) return;
-            let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes,Date\n";
-            window.state.flowers.forEach(rawData => {
-                const d = rawData.userData || rawData;
-                const dateStr = d.timestamp ? new Date(d.timestamp).toLocaleString('ja-JP') : "";
-                const escape = (t) => t ? `"${t.toString().replace(/"/g, '""')}"` : "";
-                csvContent += `${escape(d.name)},${escape(d.status)},${escape(d.client)},${escape(d.project)},${d.amount},${escape(d.notes)},${escape(dateStr)}\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log.csv`; link.click();
-        };
-
-        window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
-        window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { 
-            const d = f.userData || f;
-            const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
-
-        // Form Submit
-        window.handleFormSubmit = function(event) {
-            event.preventDefault();
-            const n = document.getElementById('post-name').value;
-            const c = document.getElementById('post-client').value;
-            const p = document.getElementById('post-project').value;
-            let hasError = false;
-            if(!n) { document.getElementById('post-name').classList.add('input-error-shake'); hasError=true; }
-            if(!c) { document.getElementById('post-client').classList.add('input-error-shake'); hasError=true; }
-            if(!p) { document.getElementById('post-project').classList.add('input-error-shake'); hasError=true; }
-            if(hasError) { document.getElementById('form-error-msg').classList.remove('hidden'); return false; }
-
-            const a = parseInt(document.getElementById('post-amount').value) || 0;
-            const notes = document.getElementById('post-notes').value;
-            const status = document.querySelector('input[name="post-status"]:checked').value;
-            const btn = document.getElementById('submit-action-btn');
-            btn.disabled = true; btn.textContent = "Sending...";
-
-            const rY = (Math.random()-0.2)*20 + 5; const rR = (rY+6)/22 * 10 * Math.random(); const phi = Math.random()*Math.PI*2;
-            const x = Math.cos(phi)*rR; const y = rY; const z = Math.sin(phi)*rR;
-
-            // フラットデータ
-            const data = {
-                name: n, client: c, project: p, amount: a, notes: notes, status: status,
-                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random() * window.DESIGN_PALETTE.length)],
-                timestamp: Date.now(),
-                baseX: x, baseY: y, baseZ: z,
-                phaseX: Math.random()*Math.PI*2, phaseY: Math.random()*Math.PI*2, phaseZ: Math.random()*Math.PI*2, floatSpeed: 0.0004
-            };
-
-            ui.closeModal();
-
-            // 即時反映
-            window.state.flowers.push(data); // フラットに追加
-            window.state.actions++;
-            if(data.status === 'order') window.state.amount += data.amount;
-            
-            if(window.updateTreeFromState) window.updateTreeFromState();
-            if(window.updateStatsUI) window.updateStatsUI();
-            if(window.refreshLog) window.refreshLog();
-            
-            if(window.addFlowerWithConvergence) {
-                 const target = { local: {x:data.baseX, y:data.baseY, z:data.baseZ}, world: new THREE.Vector3(data.baseX, data.baseY, data.baseZ) }; 
-                 if(window.treeGroup) {
-                    const vec = new THREE.Vector3(data.baseX, data.baseY, data.baseZ);
-                    window.treeGroup.updateMatrixWorld(true);
-                    vec.applyMatrix4(window.treeGroup.matrixWorld);
-                    target.world.copy(vec);
-                 }
-                 window.addFlowerWithConvergence(data, target);
-            }
-            
-            const form = document.getElementById('action-form'); if(form) form.reset(); 
-            const amt = document.getElementById('amount-container'); if(amt) amt.classList.add('invisible');
-            if(btn) { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
-
-            if (window.submitToFirebase) {
-                window.submitToFirebase(data).catch(e => console.error("Save failed:", e));
-            }
-            return false;
-        };
-
-        // Safety
-        setTimeout(() => { const l = document.getElementById('app-loader'); if(l) l.classList.add('loaded'); }, 3000);
-    </script>
 </head>
 <body style="overflow: hidden;">
 
     <div id="app-loader">
         <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-        <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing...</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Preparing Tree...</span>
     </div>
 
     <!-- Header -->
-    <header id="main-header" class="px-5 py-6 md:px-10 md:py-12 flex items-center">
+    <header id="main-header" class="px-5 py-6 md:px-10 md:py-12">
         <div class="logo-symbol-wrapper clickable flex-shrink-0" onclick="window.ui.showPage('top')">
             <img id="header-logo-img" class="dynamic-logo w-6 h-6 md:w-8 md:h-8 object-contain" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div class="logo-fallback"></div>
@@ -381,10 +162,8 @@
         <!-- TOP PAGE -->
         <div id="page-top" class="full-screen-section active">
             <div id="canvas-container"></div>
-            <!-- Slider -->
             <div class="marquee-container">
                 <div class="marquee-track" id="stats-slider-track">
-                    <!-- Template -->
                     <div class="marquee-content" id="stats-content-source">
                         <div class="marquee-item text-white">
                             <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val">0</span></div>
@@ -395,433 +174,273 @@
                     </div>
                 </div>
             </div>
-            <!-- ACTION BUTTON -->
-            <button id="main-action-button" onclick="window.ui.openModal()" class="action-button vivid-cycle-btn breath-animation shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
+            <button id="main-action-button" onclick="window.ui.openModal()" class="action-button shadow-2xl active:scale-95 text-[10px] md:text-xs text-black">
                 ACTION
             </button>
         </div>
 
-        <!-- ABOUT PAGE -->
+        <!-- ABOUT, RULES, LOG, DASHBOARD Pages -->
         <div id="page-about" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
-                <div class="mb-20 md:mb-32">
-                    <span class="page-section-label">About 100 ACTION TREE</span>
-                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">100アクションを目指して</h2>
-                    <div class="statement-text-container space-y-6 md:space-y-8 text-black">
-                        <p>100 ACTION TREEは、個人の「自発的なアクション」を養分にして、組織全体の文化を大きく育てていくためのプラットフォームです。</p>
-                        <p>私たちは、プロフェッショナルとしてデザインを突き詰めることを何より大切にしています。その職人魂は、私たちのアイデンティティであり、永遠に変わることはありません。しかし、AIが多くのことを代替していくこれからの時代、私たち人間にしかできないこと、それは「問いを立て、対話をし、未来への決断を下すこと」ではないでしょうか。</p>
-                        <div class="py-2 md:py-4"><p class="leading-relaxed font-bold">「まずは100個のアクションを」<br>小さな種まきが、やがて大きな森になる。</p></div>
-                        <p>リアルに実行できるのは人の役目であり、実行し、決断することに価値があります。日々の業務の中で生まれる、こうした小さな気づきを、頭の中だけで終わらせないでほしい。</p>
-                        <p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「100 ACTION TREE」を構築しました。</p>
-                    </div>
-                </div>
-                <footer class="app-footer">
-                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
-                    </nav>
-                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
-                    </div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
-                </footer>
+                <div class="mb-20 md:mb-32"><span class="page-section-label">About 100 ACTION TREE</span><h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">100アクションを目指して</h2><div class="statement-text-container space-y-6 md:space-y-8 text-black"><p>100 ACTION TREEは、個人の「自発的なアクション」を養分にして、組織全体の文化を大きく育てていくためのプラットフォームです。</p><p>私たちは、プロフェッショナルとしてデザインを突き詰めることを何より大切にしています。その職人魂は、私たちのアイデンティティであり、永遠に変わることはありません。しかし、AIが多くのことを代替していくこれからの時代、私たち人間にしかできないこと、それは「問いを立て、対話をし、未来への決断を下すこと」ではないでしょうか。</p><div class="py-2 md:py-4"><p class="leading-relaxed font-bold">「まずは100個のアクションを」<br>小さな種まきが、やがて大きな森になる。</p></div><p>リアルに実行できるのは人の役目であり、実行し、決断することに価値があります。日々の業務の中で生まれる、こうした小さな気づきを、頭の中だけで終わらせないでほしい。</p><p>そんな想いから、一人ひとりの「考えるクセ」が目に見える形となって積み重なっていく、共通の土壌として「100 ACTION TREE」を構築しました。</p></div></div>
+                <footer class="app-footer"><div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center"><img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo"></div><p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p></footer>
             </div>
         </div>
-
-        <!-- RULES PAGE -->
         <div id="page-rules" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-3xl mx-auto px-6 md:px-10">
-                <div class="mb-20 md:mb-24">
-                    <span class="page-section-label">Rules</span>
-                    <h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">ルールと活用方法</h2>
-                    <p class="statement-text-container mb-10 md:mb-12">クライアントからの受注案件ではなく、<br class="hidden md:block">「相手のことを思い、考え、見出した提案」が投稿の対象です。</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 md:gap-y-10">
-                        <div class="rule-card"><h4 class="text-sm font-bold mb-2">「種まき」提案も大歓迎</h4><p class="text-gray-500 text-[13px] leading-relaxed">こんな事もできるんだと、クライアントに気付きを与えるのも仕事の間口を広げる立派なアクションです。</p></div>
-                        <div class="rule-card"><h4 class="text-sm font-bold mb-2">「会社への提案」も私たちの栄養</h4><p class="text-gray-500 text-[13px] leading-relaxed">「こんな取り組みしてみます」といった、社内の成長を促すアクションも提案の対象です。</p></div>
-                        <div class="rule-card"><h4 class="text-sm font-bold mb-2">「共創」を楽しみましょう</h4><p class="text-gray-500 text-[13px] leading-relaxed">誰かと一緒に考えたり、協力して進めたりしたアクションは、より太くて丈夫な枝になります。</p></div>
-                    </div>
-                </div>
-                <footer class="app-footer">
-                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
-                    </nav>
-                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
-                    </div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
-                </footer>
+                <div class="mb-20 md:mb-24"><span class="page-section-label">Rules</span><h2 class="text-lg md:text-2xl font-bold tracking-widest mb-8 md:mb-10 text-black">ルールと活用方法</h2><p class="statement-text-container mb-10 md:mb-12">クライアントからの受注案件ではなく、<br class="hidden md:block">「相手のことを思い、考え、見出した提案」が投稿の対象です。</p><div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 md:gap-y-10"><div class="rule-card"><h4 class="text-sm font-bold mb-2">「種まき」提案も大歓迎</h4><p class="text-gray-500 text-[13px] leading-relaxed">こんな事もできるんだと、クライアントに気付きを与えるのも仕事の間口を広げる立派なアクションです。</p></div><div class="rule-card"><h4 class="text-sm font-bold mb-2">「会社への提案」も私たちの栄養</h4><p class="text-gray-500 text-[13px] leading-relaxed">「こんな取り組みしてみます」といった、社内の成長を促すアクションも提案の対象です。</p></div><div class="rule-card"><h4 class="text-sm font-bold mb-2">「共創」を楽しみましょう</h4><p class="text-gray-500 text-[13px] leading-relaxed">誰かと一緒に考えたり、協力して進めたりしたアクションは、より太くて丈夫な枝になります。</p></div></div></div>
+                <footer class="app-footer"><div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center"><img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo"></div><p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p></footer>
             </div>
         </div>
-
-        <!-- LOG PAGE -->
         <div id="page-log" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
             <div class="max-w-5xl mx-auto px-6 md:px-10">
-                <div class="mb-16 md:mb-24">
-                    <span class="page-section-label">Log & Analytics</span>
-                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black">
-                        <div><span class="page-section-label">Total Actions / Goal</span><div class="stat-card-value tabular text-black flex items-baseline font-black"><span class="actions-val">0</span> <span class="text-lg ml-2 text-gray-400 font-bold">/ 100</span></div></div>
-                        <div><span class="page-section-label">Total Amount</span><div class="stat-card-value tabular text-black font-black">¥<span class="amount-val">0</span></div></div>
-                        <div><span class="page-section-label">Tree Level</span><div class="stat-card-value tabular text-black level-val-display font-black">LV0</div></div>
-                    </div>
-                </div>
-                <div class="mb-20 md:mb-24 text-black">
-                    <div class="flex items-baseline justify-between border-b border-black pb-4 mb-6 md:mb-8 text-black">
-                        <h3 class="text-md md:text-xl font-black uppercase text-black">Action History</h3>
-                    </div>
-                    <div class="overflow-x-auto text-black">
-                        <table class="w-full text-left min-w-[500px] md:min-w-0">
-                            <tbody id="dashboard-action-list" class="text-black"></tbody>
-                        </table>
-                        <div id="no-actions-msg" class="py-20 text-center text-gray-300 uppercase text-[10px] tracking-widest hidden text-black">No actions recorded yet.</div>
-                    </div>
-                    <div class="flex justify-end mt-8">
-                         <button onclick="window.ui.downloadLogCSV()" class="csv-btn text-black clickable">Download Log (CSV)</button>
-                    </div>
-                </div>
-                <footer class="app-footer">
-                    <nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12">
-                        <a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a>
-                        <a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a>
-                        <a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a>
-                        <a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a>
-                    </nav>
-                    <div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center">
-                        <img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo">
-                    </div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p>
-                </footer>
+                <div class="mb-16 md:mb-24"><span class="page-section-label">Log & Analytics</span><h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Actions Log</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-16 border-t border-black pt-10 md:pt-12 text-black"><div><span class="page-section-label">Total Actions / Goal</span><div class="stat-card-value tabular text-black flex items-baseline font-black"><span class="actions-val">0</span> <span class="text-lg ml-2 text-gray-400 font-bold">/ 100</span></div></div><div><span class="page-section-label">Total Amount</span><div class="stat-card-value tabular text-black font-black">¥<span class="amount-val">0</span></div></div><div><span class="page-section-label">Tree Level</span><div class="stat-card-value tabular text-black level-val-display font-black">LV0</div></div></div></div>
+                <div class="mb-20 md:mb-24 text-black"><div class="flex items-baseline justify-between border-b border-black pb-4 mb-6 md:mb-8 text-black"><h3 class="text-md md:text-xl font-black uppercase text-black">Action History</h3></div><div class="overflow-x-auto text-black"><table class="w-full text-left min-w-[500px] md:min-w-0"><tbody id="dashboard-action-list" class="text-black"></tbody></table><div id="no-actions-msg" class="py-20 text-center text-gray-300 uppercase text-[10px] tracking-widest hidden text-black">No actions recorded yet.</div></div><div class="flex justify-end mt-8"><button onclick="window.ui.downloadLogCSV()" class="csv-btn text-black clickable">Download Log (CSV)</button></div></div>
+                <footer class="app-footer"><div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center"><img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo"></div><p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p></footer>
             </div>
         </div>
-
-        <!-- DASHBOARD PAGE -->
         <div id="page-dashboard" class="hidden mono-page min-h-screen pt-28 md:pt-48 pb-20 text-black">
-            <div class="max-w-5xl mx-auto px-6 md:px-10">
-                <div class="mb-16 md:mb-24">
-                    <span class="page-section-label">System Management</span>
-                    <h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2>
-                </div>
-                <div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black">
-                    <div>
-                        <span class="page-section-label">Tree Growth Verification</span>
-                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black">
-                            <button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset (0)</button>
-                            <button onclick="window.ui.setTestLevel(5)" class="sim-btn clickable">LV0 (5)</button>
-                            <button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button>
-                            <button onclick="window.ui.setTestLevel(35)" class="sim-btn clickable">LV2 (35)</button>
-                            <button onclick="window.ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button>
-                            <button onclick="window.ui.setTestLevel(75)" class="sim-btn clickable">LV4 (75)</button>
-                            <button onclick="window.ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button>
-                        </div>
-                    </div>
-                    <div>
-                        <span class="page-section-label text-black">Environmental Atmosphere</span>
-                        <div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black items-center">
-                            <button onclick="window.ui.setTestTime(2)" class="sim-btn clickable">Night (02:00)</button>
-                            <button onclick="window.ui.setTestTime(9)" class="sim-btn clickable">Morning (09:00)</button>
-                            <button onclick="window.ui.setTestTime(15)" class="sim-btn clickable">Day (15:00)</button>
-                            <button onclick="window.ui.setTestTime(20)" class="sim-btn clickable">Evening (20:00)</button>
-                            <button onclick="window.ui.resetTimeSim()" class="sim-btn text-black clickable">Real-time sync</button><div class="flex items-center gap-1 ml-1 md:ml-2 pl-2 md:pl-4 border-l border-gray-200"><input type="number" id="custom-time-input" placeholder="H" min="0" max="24" step="0.1" class="w-12 py-1.5 text-center font-bold text-xs bg-transparent border-b border-gray-300 focus:border-black outline-none transition-colors clickable" onkeydown="if(event.key==='Enter') window.ui.applyCustomTime()"><button onclick="window.ui.applyCustomTime()" class="sim-btn !px-3 bg-black text-white border-black hover:opacity-70 clickable">SET</button></div></div></div></div><div class="border-t border-black pt-16 mb-20"><h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3><div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6"><p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。この操作は取り消せません。</p><button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button></div></div><footer class="app-footer"><nav class="flex flex-wrap justify-center gap-x-6 md:gap-x-8 gap-y-4 mb-10 md:mb-12"><a onclick="window.ui.showPage('top')" class="footer-nav-link clickable">Top</a><a onclick="window.ui.showPage('about')" class="footer-nav-link clickable">About</a><a onclick="window.ui.showPage('rules')" class="footer-nav-link clickable">Rules</a><a onclick="window.ui.showPage('log')" class="footer-nav-link clickable">Log</a></nav><div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center"><img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo"></div><p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p></footer></div>
+             <div class="max-w-5xl mx-auto px-6 md:px-10"><div class="mb-16 md:mb-24"><span class="page-section-label">System Management</span><h2 class="text-lg md:text-2xl font-black tracking-widest mb-10 md:mb-12 uppercase text-black">Simulation & Reset.</h2></div><div class="bg-gray-50 p-6 md:p-10 rounded-sm space-y-10 md:space-y-12 mb-20 md:mb-24 text-black"><div><span class="page-section-label">Tree Growth Verification</span><div class="flex flex-wrap gap-2 mt-3 md:mt-4 text-black"><button onclick="window.ui.setTestLevel(0)" class="sim-btn clickable">Reset</button><button onclick="window.ui.setTestLevel(15)" class="sim-btn clickable">LV1 (15)</button><button onclick="window.ui.setTestLevel(55)" class="sim-btn clickable">LV3 (55)</button><button onclick="window.ui.setTestLevel(100)" class="sim-btn clickable">LV5 (100)</button></div></div><div class="border-t border-black pt-16 mb-20"><h3 class="text-md md:text-lg font-bold uppercase text-black mb-6">Danger Zone</h3><div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6"><p class="text-xs text-gray-500 font-bold leading-relaxed">全てのデータをリセットします。</p><button onclick="window.ui.resetAllData()" class="csv-btn border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors clickable">ALL RESET</button></div></div></div><footer class="app-footer"><div class="relative mx-auto mb-6 w-5 h-5 flex justify-center items-center"><img class="dynamic-logo w-4 h-4 md:w-5 md:h-5 object-contain filter brightness-0" src="images/ACTION_TREE_LOGO_LV1.svg" alt="Logo"></div><p class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">© ESPERANZA DESIGN OFFICE. All Rights Reserved.</p></footer></div>
         </div>
     </main>
 
     <!-- Post Modal -->
     <div id="post-modal" class="modal-overlay" onclick="if(event.target === this) window.ui.closeModal()">
-        <div class="bg-white text-black w-full max-w-lg p-4 md:p-10 rounded-sm shadow-2xl overflow-y-auto max-h-[90dvh] relative">
-            <button onclick="window.ui.closeModal()" class="text-2xl text-black absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
-            <div class="mb-2 md:mb-6 pr-8">
-                <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Your Action.</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-1 leading-relaxed text-black">ACTIONを投稿して、100の木を育てましょう。</p>
-            </div>
-            <form id="action-form" class="space-y-3 md:space-y-5 text-black pb-4 md:pb-10" onsubmit="return window.handleFormSubmit(event)" novalidate>
-                <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</label><input type="text" id="post-name" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
-                <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</label><input type="text" id="post-client" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
-                <div><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</label><input type="text" id="post-project" maxlength="50" class="w-full border-b py-1 md:py-1.5 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable" required></div>
+        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm relative shadow-2xl">
+            <button onclick="window.ui.closeModal()" class="absolute top-4 right-4 text-2xl">&times;</button>
+            <h3 class="text-lg md:text-xl font-extrabold uppercase mb-6">Your Action.</h3>
+            <form id="action-form" onsubmit="return window.handleFormSubmit(event)" class="space-y-4">
+                <div><label class="page-section-label">Name / 名前</label><input type="text" id="post-name" class="w-full border-b py-2 focus:outline-none font-bold" required></div>
+                <div><label class="page-section-label">Client / クライアント</label><input type="text" id="post-client" class="w-full border-b py-2 focus:outline-none font-bold" required></div>
+                <div><label class="page-section-label">Project / 件名</label><input type="text" id="post-project" class="w-full border-b py-2 focus:outline-none font-bold" required></div>
                 <div>
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Status / ステータス</label>
-                    <div class="flex gap-8 mt-1 h-8 items-center">
-                        <label class="flex items-center cursor-pointer clickable"><input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked><div class="status-option"><span class="status-dot"></span>PROPOSAL / 提案</div></label>
-                        <label class="flex items-center cursor-pointer clickable"><input type="radio" name="post-status" value="order" class="status-radio hidden"><div class="status-option"><span class="status-dot"></span>ORDER / 受注</div></label>
+                    <label class="page-section-label">Status / ステータス</label>
+                    <div class="flex gap-8 mt-2">
+                        <label class="flex items-center clickable"><input type="radio" name="post-status" value="proposal" class="status-radio hidden" checked><div class="status-option"><span class="status-dot"></span>PROPOSAL</div></label>
+                        <label class="flex items-center clickable"><input type="radio" name="post-status" value="order" class="status-radio hidden"><div class="status-option"><span class="status-dot"></span>ORDER</div></label>
                     </div>
                 </div>
-                <div class="h-14 md:h-20 relative overflow-hidden flex flex-col justify-end">
-                    <div id="amount-container" class="invisible opacity-0 absolute inset-0 pt-1 md:pt-2 transition-all duration-300">
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">AMOUNT / 受注額</label>
-                        <input type="text" id="post-amount" inputmode="numeric" pattern="[0-9]*" class="w-full border-b py-1 md:py-2 focus:outline-none text-black font-bold text-xs md:text-sm rounded-none transition-colors clickable">
-                    </div>
+                <div id="amount-container" class="invisible h-0 overflow-hidden transition-all duration-300">
+                    <label class="page-section-label">Amount / 受注額</label><input type="number" id="post-amount" class="w-full border-b py-2 focus:outline-none font-bold">
                 </div>
-                <div><div class="flex justify-between items-baseline mb-0.5"><label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 text-black">ACTION NOTES / ノート</label><span id="char-count-display" class="text-[9px] font-bold text-gray-400">0 / 300</span></div><textarea id="post-notes" maxlength="300" oninput="window.ui.updateCharCount(this)" class="w-full border-b py-1 md:py-2 h-16 md:h-24 resize-none text-black font-bold text-xs rounded-none focus:outline-none transition-colors clickable"></textarea></div>
-                <div id="form-error-msg" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden text-center mt-2">未入力の項目があります</div>
-                <button type="submit" id="submit-action-btn" class="w-full vivid-cycle-btn py-3 md:py-5 font-bold uppercase mt-2 mb-2 md:mt-4 md:mb-4 shadow-md active:scale-[0.98] text-xs text-black rounded-none clickable">ACTION / 投稿する</button>
+                <div><label class="page-section-label">Notes / ノート</label><textarea id="post-notes" maxlength="300" class="w-full border-b py-2 h-20 resize-none focus:outline-none font-bold"></textarea></div>
+                <button type="submit" id="submit-action-btn" class="w-full bg-black text-white py-4 font-bold uppercase hover:opacity-80 transition-opacity">ACTION / 投稿する</button>
             </form>
         </div>
     </div>
 
     <!-- Details Modal -->
     <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.ui.closeDetailModal()">
-        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl text-black max-h-[90vh] overflow-y-auto relative">
-            <button onclick="window.ui.closeDetailModal()" class="text-2xl text-black absolute top-5 right-5 md:top-6 md:right-6 hover:opacity-50 transition-opacity text-black z-10 clickable">&times;</button>
-            <div class="mb-8 md:mb-10 text-black"><div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full" style="background: #000;"></div><h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Action Details.</h3></div>
-            <div class="space-y-5 md:space-y-6 text-black">
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Name / 名前</span><p id="detail-name" class="text-sm font-bold break-words text-black">Name</p></div>
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Client / クライアント</span><p id="detail-client" class="text-sm font-bold break-words text-black">Client</p></div>
-                <div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Project / 件名</span><p id="detail-project" class="text-sm font-bold break-words text-black">Project</p></div>
-                <div class="grid grid-cols-2 gap-4"><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Status / ステータス</span><p id="detail-status" class="text-sm font-bold break-words text-black">---</p></div><div><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-black">Amount / 受注額</span><p id="detail-amount" class="text-sm font-bold break-words text-black">---</p></div></div>
-                <div class="pt-4 border-t border-gray-100"><span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-2 text-black">Action Notes / ノート</span><p id="detail-notes" class="text-sm font-normal text-gray-600 leading-relaxed break-words whitespace-pre-wrap text-black"></p></div>
+        <div class="bg-white text-black w-full max-w-lg p-6 md:p-10 rounded-sm shadow-2xl relative">
+            <button onclick="window.ui.closeDetailModal()" class="absolute top-4 right-4 text-2xl">&times;</button>
+            <div class="mb-6"><div id="detail-accent-line" class="w-3 h-3 mb-4 rounded-full bg-black"></div><h3 class="text-xl font-extrabold uppercase">Action Details.</h3></div>
+            <div class="space-y-4">
+                <div><span class="page-section-label">Name</span><p id="detail-name" class="font-bold">Name</p></div>
+                <div><span class="page-section-label">Client</span><p id="detail-client" class="font-bold">Client</p></div>
+                <div><span class="page-section-label">Project</span><p id="detail-project" class="font-bold">Project</p></div>
+                <div class="flex gap-8">
+                    <div><span class="page-section-label">Status</span><p id="detail-status" class="font-bold">---</p></div>
+                    <div><span class="page-section-label">Amount</span><p id="detail-amount" class="font-bold">---</p></div>
+                </div>
+                <div class="pt-4 border-t"><span class="page-section-label">Notes</span><p id="detail-notes" class="text-sm">Notes</p></div>
             </div>
         </div>
     </div>
 
-    <!-- 1. UI Script -->
+    <!-- ★ Script Block (All Logic) ★ -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // UI Toggle
-            window.ui.toggleMenu = () => {
-                const nav = document.getElementById('nav-menu'), header = document.getElementById('main-header'), toggle = document.getElementById('menu-toggle');
-                const isOpen = nav.style.display === 'flex';
-                nav.style.display = isOpen ? 'none' : 'flex';
-                toggle.classList.toggle('open');
-                if(!isOpen) { if(header) header.classList.remove('is-dark'); if(window.getDynamicColor) { const hex = window.getDynamicColor(); const rgb = window.hexToRgb ? window.hexToRgb(hex) : {r:0,g:0,b:0}; nav.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`; } }
-                else { const isTop = !document.getElementById('page-top').classList.contains('hidden'); if(!isTop && header) header.classList.add('is-dark'); }
-            };
-            window.ui.showPage = (id) => {
-                document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
-                document.getElementById(`page-${id}`).classList.remove('hidden');
-                document.getElementById('nav-menu').style.display='none';
-                document.getElementById('menu-toggle').classList.remove('open');
-                const h = document.getElementById('main-header');
-                if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
-                else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
-                if (id === 'log' && window.refreshLog) window.refreshLog();
-            };
-            window.ui.openModal = () => { document.getElementById('post-modal').style.display='flex'; window.state.isModalOpen=true; document.getElementById('form-error-msg').classList.add('hidden'); };
-            window.ui.closeModal = () => { document.getElementById('post-modal').style.display='none'; window.state.isModalOpen=false; };
-            window.ui.closeDetailModal = () => { document.getElementById('detail-modal').style.display='none'; window.state.isModalOpen=false; };
-            window.ui.updateCharCount = (el) => { document.getElementById('char-count-display').innerText = `${el.value.length} / 300`; };
-            window.ui.showDetail = (data) => { const modal = document.getElementById('detail-modal'); if (!modal) return; document.getElementById('detail-name').textContent = data.name; document.getElementById('detail-status').textContent = data.status === 'order' ? 'ORDER / 受注' : 'PROPOSAL / 提案'; const amtDisplay = data.status === 'order' ? `¥${(parseInt(data.amount) || 0).toLocaleString()}` : ''; document.getElementById('detail-amount').textContent = amtDisplay; document.getElementById('detail-client').textContent = data.client || "---"; document.getElementById('detail-project').textContent = data.project || "---"; document.getElementById('detail-notes').textContent = data.notes || ""; document.getElementById('detail-accent-line').style.backgroundColor = data.colorHex; window.resetHoverState(); modal.style.display = 'flex'; window.state.isModalOpen = true; };
-            
-            // Sim Functions
-            window.ui.setTestLevel = (v) => { if(window.setTestLevelImpl) window.setTestLevelImpl(v); else { window.state.actions=v; window.updateTreeFromState(); } };
-            window.ui.setTestTime = (h) => { window.state.simulatedHour = h; if(window.updateBackgroundColor) window.updateBackgroundColor(); };
-            window.ui.resetTimeSim = () => { window.state.simulatedHour = null; if(window.updateBackgroundColor) window.updateBackgroundColor(); document.getElementById('custom-time-input').value=''; };
-            window.ui.applyCustomTime = () => { const v = parseFloat(document.getElementById('custom-time-input').value); if(!isNaN(v)) ui.setTestTime(v); };
-            window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("デモモード: リセットします"); window.location.reload(); } };
-            window.ui.downloadLogCSV = () => { if(window.downloadLogImpl) window.downloadLogImpl(); };
+        // Init
+        window.ui = {};
+        window.state = { actions:0, amount:0, isMobile: window.innerWidth<768, currentLevel:0, flowers:[], isModalOpen:false };
+        window.treeGroup = null; window.camera = null; window.renderer = null; 
+        
+        window.DESIGN_PALETTE = ["#0055FF", "#00F2FF", "#B2FF00", "#FF00FF", "#7A00FF", "#FF5E00", "#FFB7D5", "#FFFF00", "#00FF41", "#00BFFF", "#FF003C", "#4D00FF", "#40E0D0", "#FF1493"];
+        window.LOGO_FILES = ["images/ACTION_TREE_LOGO_LV1.svg", "images/ACTION_TREE_LOGO_LV2.svg", "images/ACTION_TREE_LOGO_LV3.svg", "images/ACTION_TREE_LOGO_LV4.svg", "images/ACTION_TREE_LOGO_LV5.svg", "images/ACTION_TREE_LOGO_LV6.svg"];
 
-            // Form Interactions
+        // --- Core Functions ---
+        window.updateTreeFromState = function() {
+            if(!window.treeGroup) return;
+            const toRemove = [];
+            window.treeGroup.children.forEach(obj => { if(obj.name === 'action_flower') toRemove.push(obj); });
+            toRemove.forEach(obj => window.treeGroup.remove(obj));
+
+            window.state.flowers.forEach(d => {
+                const data = d.userData || d;
+                const color = data.colorHex || window.DESIGN_PALETTE[0];
+                
+                // ★ Restore: Sphere(0.25) & Phong Material
+                const geo = new THREE.SphereGeometry(0.25, 16, 16);
+                const mat = new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.5, shininess: 100 });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.name = 'action_flower';
+
+                let x = parseFloat(data.baseX); let y = parseFloat(data.baseY); let z = parseFloat(data.baseZ);
+                if(isNaN(x) || isNaN(y) || isNaN(z)) {
+                    const rY = (Math.random()-0.2)*20 + 5; const rR = (rY+6)/22 * 10 * Math.random(); const phi = Math.random()*Math.PI*2;
+                    x = Math.cos(phi)*rR; y = rY; z = Math.sin(phi)*rR;
+                    data.baseX=x; data.baseY=y; data.baseZ=z; data.phaseX=Math.random()*Math.PI*2; data.floatSpeed=0.0004;
+                }
+                mesh.position.set(x, y, z);
+                mesh.userData = data;
+                window.treeGroup.add(mesh);
+            });
+            window.updateGrowthState();
+        };
+
+        window.updateGrowthState = function() {
+            const count = window.state.actions;
+            let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1;
+            window.state.currentLevel = lv;
+
+            const logoPath = window.LOGO_FILES[lv] || window.LOGO_FILES[0];
+            document.querySelectorAll('.dynamic-logo').forEach(img => { if(!img.src.includes(logoPath)) img.src = logoPath; });
+
+            let mult = 1.0 + lv*0.2; 
+            let camZ = (window.state.isMobile?35:25) + (lv*4);
+            if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:2});
+            if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2});
+            window.updateStatsUI();
+        };
+
+        window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const l = `LV${window.state.currentLevel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = l); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = l); };
+        
+        window.ui.showPage = (id) => {
+            document.querySelectorAll('#app-content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById('nav-menu').style.display='none';
+            document.getElementById('menu-toggle').classList.remove('open');
+            const h = document.getElementById('main-header');
+            if(id === 'top') { document.body.style.overflow='hidden'; h.classList.remove('is-dark'); }
+            else { document.body.style.overflow='auto'; h.classList.add('is-dark'); window.scrollTo(0,0); }
+            if(id === 'log') window.refreshLog();
+        };
+        window.ui.toggleMenu = () => { const n=document.getElementById('nav-menu'), t=document.getElementById('menu-toggle'); if(n.style.display==='flex'){n.style.display='none';t.classList.remove('open');document.body.style.overflow='auto'; const isTop=!document.getElementById('page-top').classList.contains('hidden'); if(isTop) document.getElementById('main-header').classList.remove('is-dark');}else{n.style.display='flex';t.classList.add('open');document.body.style.overflow='hidden'; document.getElementById('main-header').classList.remove('is-dark');} };
+        window.ui.openModal = () => document.getElementById('post-modal').style.display='flex';
+        window.ui.closeModal = () => document.getElementById('post-modal').style.display='none';
+        window.ui.closeDetailModal = () => document.getElementById('detail-modal').style.display='none';
+        window.ui.updateCharCount = (el) => document.getElementById('char-count-display').innerText = `${el.value.length} / 300`;
+        window.ui.showDetail = (d) => { document.getElementById('detail-modal').style.display='flex'; document.getElementById('detail-name').textContent=d.name; document.getElementById('detail-status').textContent=d.status; document.getElementById('detail-amount').textContent=d.amount; document.getElementById('detail-client').textContent=d.client; document.getElementById('detail-project').textContent=d.project; document.getElementById('detail-notes').textContent=d.notes; };
+
+        // CSV with Date
+        window.ui.downloadLogCSV = () => {
+            let csv = "Name,Status,Client,Project,Amount,Notes,Date\n";
+            window.state.flowers.forEach(f => {
+                const d = f.userData || f;
+                const date = d.timestamp ? new Date(d.timestamp).toLocaleString('ja-JP') : "";
+                csv += `"${d.name}","${d.status}","${d.client}","${d.project}",${d.amount},"${d.notes}","${date}"\n`;
+            });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); link.download = "ActionLog.csv"; link.click();
+        };
+
+        window.ui.setTestLevel = (v) => { window.state.actions=v; window.updateTreeFromState(); };
+        window.ui.resetAllData = () => { if(window.resetDataImpl) window.resetDataImpl(); else { alert("Reset (Demo)"); location.reload(); } };
+        window.refreshLog = () => { const l = document.getElementById('dashboard-action-list'); l.innerHTML=''; [...window.state.flowers].reverse().forEach(f => { const d=f.userData||f; l.innerHTML+=`<tr class="border-b text-xs"><td class="py-2 px-2 font-bold">${d.name}</td><td class="px-2 opacity-60">${d.project}</td><td class="px-2 text-right">¥${d.amount.toLocaleString()}</td></tr>`; }); };
+
+        window.handleFormSubmit = function(e) {
+            e.preventDefault();
+            const n=document.getElementById('post-name').value; if(!n) return;
+            const data = {
+                name: n, client: document.getElementById('post-client').value, project: document.getElementById('post-project').value,
+                status: document.querySelector('input[name="post-status"]:checked').value,
+                amount: parseInt(document.getElementById('post-amount').value) || 0,
+                notes: document.getElementById('post-notes').value, timestamp: Date.now(),
+                colorHex: window.DESIGN_PALETTE[Math.floor(Math.random()*window.DESIGN_PALETTE.length)]
+            };
+            const rY = (Math.random()-0.2)*20 + 5; const rR = (rY+6)/22 * 10 * Math.random(); const phi = Math.random()*Math.PI*2;
+            data.baseX = Math.cos(phi)*rR; data.baseY = rY; data.baseZ = Math.sin(phi)*rR; data.phaseX=Math.random(); data.floatSpeed=0.0004;
+
+            window.ui.closeModal();
+            // Local update (userData style)
+            window.state.flowers.push({ userData: data });
+            window.state.actions++;
+            if(data.status==='order') window.state.amount+=data.amount;
+            window.updateTreeFromState();
+            
+            if(window.submitToFirebase) window.submitToFirebase(data);
+            document.getElementById('action-form').reset();
+            return false;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Slider setup
+            const track = document.getElementById('stats-slider-track');
+            const content = document.getElementById('stats-content-source');
+            if(track && content) { for(let i=0; i<3; i++) track.appendChild(content.cloneNode(true)); }
+            setInterval(()=>{ document.querySelectorAll('.marquee-date-val').forEach(el=>el.textContent=new Date().toLocaleString()); },1000);
+            
+            // Status toggle
             document.getElementsByName('post-status').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const amt = document.getElementById('amount-container');
-                    const inp = document.getElementById('post-amount');
-                    if(e.target.value === 'order') { amt.classList.remove('invisible', 'opacity-0'); if(window.gsap) gsap.to(amt, {opacity:1, duration:0.3}); inp.setAttribute('required', 'true'); }
-                    else { if(window.gsap) gsap.to(amt, {opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); inp.removeAttribute('required'); inp.value=''; }
+                    if(e.target.value === 'order') { amt.classList.remove('invisible'); gsap.to(amt, {height:'auto', opacity:1, duration:0.3}); document.getElementById('post-amount').setAttribute('required','true'); }
+                    else { gsap.to(amt, {height:0, opacity:0, duration:0.3, onComplete:()=>amt.classList.add('invisible')}); document.getElementById('post-amount').removeAttribute('required'); }
                 });
             });
-            ['post-name', 'post-client', 'post-project', 'post-amount', 'post-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', function() { this.classList.remove('input-error-shake'); }); });
-            if(window.gsap) {
-                document.querySelectorAll('.vivid-cycle-btn').forEach(btn => { gsap.to(btn, { backgroundColor: "#fff", duration: 0 }); const tl = gsap.timeline({ repeat: -1 }); window.DESIGN_PALETTE.forEach(color => tl.to(btn, { backgroundColor: color, duration: 3, ease: "sine.inOut" })); });
-                document.querySelectorAll('.breath-animation').forEach(btn => { gsap.to(btn, { scale: 1.08, duration: 1.5, repeat: -1, yoyo: true, ease: "sine.inOut" }); });
-            }
-            
-            function updateMarquee() {
-                const now = new Date();
-                const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-                document.querySelectorAll('.marquee-date-val').forEach(el => el.textContent = dStr);
-                // Loop
-                const track = document.getElementById('stats-slider-track');
-                const content = document.getElementById('stats-content-source');
-                if(track && content && track.children.length < 5) {
-                    for(let i=0; i<4; i++) track.appendChild(content.cloneNode(true));
-                }
-            }
-            setInterval(updateMarquee, 1000); updateMarquee();
+            // 3D Scene
+            initThree();
+            if(window.initFirebase) window.initFirebase();
+            document.getElementById('app-loader').classList.add('loaded');
         });
-    </script>
-    
-    <!-- 2. Visual Script (Three.js) -->
-    <script>
-        let scene, particles, bgMesh, bgUniforms;
-
-        window.addEventListener('load', () => { try { initThree(); } catch(e) { console.error(e); } });
 
         function initThree() {
             const container = document.getElementById('canvas-container');
-            if(!container) return;
-            scene = new THREE.Scene(); 
-            const w = window.innerWidth; const h = window.innerHeight;
-            
-            // Assign to Global
-            window.camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 3000);
-            window.camera.position.set(0, 5, window.state.isMobile ? 35 : 22);
-            window.camera.lookAt(0, 8, 0);
-
-            window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            window.renderer.setSize(w, h); 
-            window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(window.renderer.domElement);
-            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, window.innerWidth<768?35:25); camera.lookAt(0, 8, 0);
+            const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
             window.treeGroup = new THREE.Group(); scene.add(window.treeGroup);
-            window.effectGroup = new THREE.Group(); scene.add(window.effectGroup);
-            
-            bgUniforms = { uTime: { value: 0 }, uColorA: { value: new THREE.Color("#000") }, uColorB: { value: new THREE.Color("#330066") } };
-            const bgMat = new THREE.ShaderMaterial({ uniforms: bgUniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0)); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h); vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { float time = uTime * 0.15; vec2 pos = vUv; float noiseVal = snoise(pos * 1.5 + vec2(time * 0.2, time * 0.8)); float noiseVal2 = snoise(pos * 3.0 - vec2(time * 0.5, time * 0.1)); float mixFactor = (noiseVal + noiseVal2) * 0.5; mixFactor += (vUv.y - 0.5) * 0.8; mixFactor = smoothstep(-0.4, 0.4, mixFactor); mixFactor = clamp(mixFactor, 0.0, 1.0); vec3 color = mix(uColorA, uColorB, mixFactor); float grain = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453); color += (grain - 0.5) * 0.03; gl_FragColor = vec4(color, 1.0); }`, depthWrite: false });
-            const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), bgMat); bgMesh.position.z = -50; scene.add(bgMesh);
+            window.camera = camera; window.renderer = renderer;
 
-            const pCount = 20000; const pPos = new Float32Array(pCount*3), pCol = new Float32Array(pCount*3);
-            for(let i=0; i<pCount; i++) {
-                const y=(Math.random()-0.3)*38, r=Math.random()*15, a=Math.random()*Math.PI*2;
-                pPos[i*3]=Math.cos(a)*r; pPos[i*3+1]=y; pPos[i*3+2]=Math.sin(a)*r;
-                const c=0.5+Math.random()*0.5; pCol[i*3]=c; pCol[i*3+1]=c; pCol[i*3+2]=c;
-            }
-            const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3)); pGeo.setAttribute('color', new THREE.BufferAttribute(pCol,3));
-            particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ size:0.12, vertexColors:true, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending }));
-            window.treeGroup.add(particles);
+            // ★ Restore Lights! (Crucial for Phong Material)
+            const amb = new THREE.AmbientLight(0xffffff, 0.5); scene.add(amb);
+            const dir = new THREE.DirectionalLight(0xffffff, 0.8); dir.position.set(5,10,7); scene.add(dir);
 
-            const budGeo = new THREE.SphereGeometry(0.08, 6, 6); const budMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-            window.state.instancedBuds = new THREE.InstancedMesh(budGeo, budMat, window.state.maxBuds); window.state.instancedBuds.count = 0; window.treeGroup.add(window.state.instancedBuds);
-            
-            addBudsInstanced(2000);
-            animate();
-            
-            window.updateBackgroundColor();
-            window.updateStatsUI();
-            
-            window.addEventListener('resize', () => { 
-                if(window.camera && window.renderer) {
-                    window.camera.aspect = window.innerWidth / window.innerHeight; window.camera.updateProjectionMatrix(); window.renderer.setSize(window.innerWidth, window.innerHeight);
-                    window.state.isMobile = window.innerWidth < 768; 
-                    window.updateBackgroundColor();
-                    window.updateGrowthState();
-                }
-            });
-            const canvasEl = document.querySelector('canvas');
-            if (canvasEl) { 
-                const rc = new THREE.Raycaster(); const m = new THREE.Vector2();
-                canvasEl.addEventListener('click', (e) => { 
-                    if (window.state.isModalOpen) return;
-                    m.x = (e.clientX / window.innerWidth) * 2 - 1; m.y = -(e.clientY / window.innerHeight) * 2 + 1;
-                    rc.setFromCamera(m, window.camera);
-                    const intersects = rc.intersectObjects(window.treeGroup.children.filter(obj => obj.name === 'action_flower')); 
-                    if (intersects.length > 0) {
-                        window.ui.showDetail(intersects[0].object.userData);
+            // Particles
+            const pGeo = new THREE.BufferGeometry();
+            const pPos = new Float32Array(20000*3);
+            for(let i=0; i<60000; i+=3) { pPos[i]=(Math.random()-0.5)*30; pPos[i+1]=Math.random()*30-5; pPos[i+2]=(Math.random()-0.5)*30; }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+            window.treeGroup.add(new THREE.Points(pGeo, new THREE.PointsMaterial({size:0.12, color:0x888888, transparent:true, opacity:0.5})));
+
+            const anim = () => {
+                requestAnimationFrame(anim);
+                window.treeGroup.rotation.y += 0.001;
+                const time = Date.now();
+                window.treeGroup.children.forEach(obj => {
+                    if(obj.name === 'action_flower' && obj.userData) {
+                        const d = obj.userData;
+                        const bx=parseFloat(d.baseX), by=parseFloat(d.baseY), bz=parseFloat(d.baseZ);
+                        if(!isNaN(bx)) {
+                            obj.position.x = bx + Math.sin(time*0.0004 + (d.phaseX||0))*0.3;
+                            obj.position.y = by + Math.sin(time*0.0003 + (d.phaseY||0))*0.3;
+                            obj.position.z = bz + Math.cos(time*0.0004 + (d.phaseZ||0))*0.3;
+                        }
                     }
-                }); 
-            }
-
-            // ★重要: 初期化完了時に強制描画を走らせる
-            if(window.updateTreeFromState) window.updateTreeFromState();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if(bgUniforms) bgUniforms.uTime.value += 0.01;
-            window.updateBackgroundColor();
-            if(window.treeGroup) window.treeGroup.rotation.y += 0.0005;
-            const time = Date.now();
-            window.treeGroup.children.forEach(obj => {
-                if(obj.name === 'action_flower' && obj.userData && obj.userData.baseX !== undefined) {
-                     const ud = obj.userData;
-                     obj.position.x = ud.baseX + Math.sin(time*ud.floatSpeed + ud.phaseX)*window.state.driftFactor*3.8;
-                     obj.position.y = ud.baseY + Math.sin(time*(ud.floatSpeed*0.7) + ud.phaseY)*window.state.driftFactor*3.2;
-                     obj.position.z = ud.baseZ + Math.cos(time*ud.floatSpeed*1.1 + ud.phaseZ)*window.state.driftFactor*3.8;
-                }
+                });
+                renderer.render(scene, camera);
+            };
+            anim();
+            
+            // Click
+            const rc = new THREE.Raycaster(), m = new THREE.Vector2();
+            container.addEventListener('click', e => {
+                 m.x=(e.clientX/window.innerWidth)*2-1; m.y=-(e.clientY/window.innerHeight)*2+1;
+                 rc.setFromCamera(m, camera);
+                 const hits = rc.intersectObjects(window.treeGroup.children.filter(o=>o.name==='action_flower'));
+                 if(hits.length) window.ui.showDetail(hits[0].object.userData);
             });
-            if(window.renderer && scene && window.camera) window.renderer.render(scene, window.camera);
+            window.addEventListener('resize', () => { camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); window.state.isMobile=window.innerWidth<768; window.updateGrowthState(); });
         }
-
-        window.hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null; };
-        window.rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        window.interpolateColor = (color1, color2, factor) => { const c1 = window.hexToRgb(color1); const c2 = window.hexToRgb(color2); if(!c1 || !c2) return color1; return window.rgbToHex(Math.round(c1.r + (c2.r - c1.r) * factor), Math.round(c1.g + (c2.g - c1.g) * factor), Math.round(c1.b + (c2.b - c1.b) * factor)); };
-        
-        window.getGradientColors = () => {
-            const h = window.state.simulatedHour !== null ? window.state.simulatedHour : new Date().getHours();
-            if(h<5) return window.TIME_PERIODS.NIGHT; if(h<12) return window.TIME_PERIODS.MORNING; if(h<17) return window.TIME_PERIODS.DAY; return window.TIME_PERIODS.EVENING;
-        };
-        window.getDynamicColor = () => { return window.getGradientColors().base; };
-        window.updateBackgroundColor = () => {
-            const colors = window.getGradientColors();
-            document.body.style.backgroundColor = colors.base;
-            if (scene && scene.fog) scene.fog.color.set(colors.base);
-            if (bgUniforms) { bgUniforms.uColorA.value.set(colors.base); bgUniforms.uColorB.value.set(colors.accent); }
-        };
-        window.resetHoverState = () => { document.body.style.cursor = 'default'; };
-        
-        // updateTreeFromStateは上で定義済み
-
-        window.updateGrowthState = () => { 
-            const count = window.state.actions; 
-            let lv = 0; if(count>=100) lv=5; else if(count>=70) lv=4; else if(count>=50) lv=3; else if(count>=30) lv=2; else if(count>=10) lv=1; 
-            window.state.currentLevel = lv; 
-            
-            // Camera & Scale
-            let mult = 1.0 + lv*0.2; 
-            let camZ = (window.state.isMobile?32:22) + (lv*(window.state.isMobile?6:4)); 
-            if(window.treeGroup) gsap.to(window.treeGroup.scale, {x:mult, y:mult, z:mult, duration:5, ease:"power3.out"}); 
-            if(window.camera) gsap.to(window.camera.position, {z:camZ, duration:2, ease:"power2.inOut"}); 
-            
-            // ★ロゴ切り替え (class=dynamic-logo を全て更新)
-            const logoIndex = lv; 
-            const newLogoPath = window.LOGO_FILES[logoIndex] || window.LOGO_FILES[0];
-            
-            const logos = document.querySelectorAll('.dynamic-logo');
-            logos.forEach(img => {
-                if (!img.src.includes(newLogoPath)) {
-                    img.src = newLogoPath;
-                }
-            });
-
-            window.updateStatsUI(); 
-        };
-
-        window.updateStatsUI = () => { document.querySelectorAll('.actions-val').forEach(el => el.textContent = window.state.actions.toLocaleString()); document.querySelectorAll('.amount-val').forEach(el => el.textContent = window.state.amount.toLocaleString()); const levelLabels = ["SOIL", "LEAF", "STEM", "WOOD", "FOREST", "WORLD"]; const currentLabel = levelLabels[window.state.currentLevel] || "WORLD"; const levelText = `LV${window.state.currentLevel} ${currentLabel}`; document.querySelectorAll('.level-val').forEach(el => el.textContent = levelText); document.querySelectorAll('.level-val-display').forEach(el => el.textContent = levelText); };
-        window.refreshLog = () => { const list = document.getElementById('dashboard-action-list'); if (!list) return; list.innerHTML = ''; const display = [...window.state.flowers].reverse(); const msg = document.getElementById('no-actions-msg'); if (display.length === 0) { if(msg) msg.classList.remove('hidden'); } else { if(msg) msg.classList.add('hidden'); display.forEach(f => { 
-            const d = f.userData || f; // フラット化対応
-            const row = document.createElement('tr'); row.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer text-black font-bold text-[10px]"; row.onclick = () => window.ui.showDetail(d); const amountDisplay = d.status === 'order' ? `¥${(parseInt(d.amount) || 0).toLocaleString()}` : '<span class="opacity-50">PROPOSAL</span>'; row.innerHTML = `<td class="py-4 px-2 flex items-center gap-3 truncate max-w-[100px] md:max-w-[120px]"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${d.colorHex}"></span>${d.name}</td><td class="py-4 px-2 opacity-40 uppercase truncate max-w-[150px]">${d.client || "---"}</td><td class="py-4 px-2 truncate max-w-[100px] md:max-w-[200px] text-black">${d.project || "---"}</td><td class="py-4 px-2 text-right font-black whitespace-nowrap text-black">${amountDisplay}</td>`; list.appendChild(row); }); } };
-
-        window.addFlowerWithConvergence = (n,c,p,a,not,s,isInstant, target=null) => {
-            const color = window.DESIGN_PALETTE[Math.floor(Math.random()*window.DESIGN_PALETTE.length)];
-            const tPos = target ? target.world : new THREE.Vector3(0,10,0);
-            
-            const startPos = new THREE.Vector3(0, -8, 25); if (window.state.isMobile) startPos.z = 35;
-            const projectile = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 }));
-            projectile.position.copy(startPos); window.effectGroup.add(projectile);
-            const trailGeo = new THREE.BufferGeometry(); const trailLen = 30; const trailPos = new Float32Array(trailLen * 3); trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3)); const trailMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending }); const trailLine = new THREE.Line(trailGeo, trailMat); trailLine.frustumCulled = false; window.effectGroup.add(trailLine);
-            const controlPos = new THREE.Vector3().addVectors(startPos, tPos).multiplyScalar(0.5); controlPos.y += 6.0;
-            const getBezierPoint = (t, p0, p1, p2) => { const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x; const y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y; const z = (1 - t) * (1 - t) * p0.z + 2 * (1 - t) * t * p1.z + t * t * p2.z; return new THREE.Vector3(x, y, z); };
-            const animObj = { t: 0 };
-            gsap.to(animObj, { t: 1, duration: 2.5, ease: "power1.inOut", onUpdate: () => {
-                const currentPos = getBezierPoint(animObj.t, startPos, controlPos, tPos); projectile.position.copy(currentPos);
-                if (animObj.t > 0.8) { projectile.scale.setScalar(1.0 - (animObj.t - 0.8) * 5); }
-                const positions = trailLine.geometry.attributes.position.array;
-                for (let i = 0; i < trailLen - 1; i++) { positions[i * 3] = positions[(i + 1) * 3]; positions[i * 3 + 1] = positions[(i + 1) * 3 + 1]; positions[i * 3 + 2] = positions[(i + 1) * 3 + 2]; }
-                positions[(trailLen - 1) * 3] = currentPos.x; positions[(trailLen - 1) * 3 + 1] = currentPos.y; positions[(trailLen - 1) * 3 + 2] = currentPos.z; trailLine.geometry.attributes.position.needsUpdate = true;
-            }, onComplete: () => {
-                window.effectGroup.remove(projectile); window.effectGroup.remove(trailLine);
-                createSparkleEffect(tPos, color); flashTreeParticles();
-                
-                // アニメーション完了後に再度更新をかける
-                if(window.updateTreeFromState) window.updateTreeFromState();
-            }});
-        };
-        function flashTreeParticles() { if (!particles) return; const baseSize = 0.12; const baseOpacity = 0.65; gsap.to(particles.material, { size: 0.18, opacity: 0.9, duration: 0.8, ease: "sine.out", overwrite: true, onComplete: () => { gsap.to(particles.material, { size: baseSize, opacity: baseOpacity, duration: 3.0, ease: "sine.inOut" }); } }); }
-        function createSparkleEffect(pos, colorHex) { const particleCount = 60; const geo = new THREE.BufferGeometry(); const positions = new Float32Array(particleCount * 3); const velocities = []; for(let i=0; i<particleCount; i++) { positions[i*3] = pos.x; positions[i*3+1] = pos.y; positions[i*3+2] = pos.z; const v = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4 + 0.1, (Math.random() - 0.5) * 0.4).normalize().multiplyScalar(0.02 + Math.random() * 0.04); velocities.push(v); } geo.setAttribute('position', new THREE.BufferAttribute(positions, 3)); const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.3, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); const sparkleSystem = new THREE.Points(geo, mat); window.effectGroup.add(sparkleSystem); const anim = { val: 0 }; gsap.to(anim, { val: 1, duration: 3.0, ease: "power2.out", onUpdate: () => { const posAttr = sparkleSystem.geometry.attributes.position; for(let i=0; i<particleCount; i++) { posAttr.array[i*3] += velocities[i].x; posAttr.array[i*3+1] += velocities[i].y; posAttr.array[i*3+2] += velocities[i].z; velocities[i].multiplyScalar(0.98); } posAttr.needsUpdate = true; sparkleSystem.material.opacity = (1 - anim.val); }, onComplete: () => { window.effectGroup.remove(sparkleSystem); geo.dispose(); mat.dispose(); } }); }
-        function addBudsInstanced(c) { if(!window.state.instancedBuds) return; const matrix = new THREE.Matrix4(), pos = new THREE.Vector3(), quat = new THREE.Quaternion(), sca = new THREE.Vector3(); for (let i = 0; i < c; i++) { if (window.state.budCount >= window.state.maxBuds) break; const y = (Math.random() - 0.4) * 24 * window.state.growthMultiplier + 4; const factor = (y + 8) / 24; const a = Math.random() * Math.PI * 2; const r = 0.8 + Math.random() * (factor * 7 * window.state.baseSpreadFactor * window.state.growthMultiplier); pos.set(Math.cos(a) * r, y, Math.sin(a) * r); const s = 0.4 + Math.random() * 0.4; sca.set(s, s, s); matrix.compose(pos, quat, sca); window.state.instancedBuds.setMatrixAt(window.state.budCount, matrix); window.state.budCount++; } window.state.instancedBuds.count = window.state.budCount; window.state.instancedBuds.instanceMatrix.needsUpdate = true; }
     </script>
     
-    <!-- Firebase Logic -->
+    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // 【重要】Firebase設定 (再度書き換えてください)
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         const firebaseConfig = {
             apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
             authDomain: "action-tree.firebaseapp.com",
@@ -831,72 +450,39 @@
             appId: "1:471274997168:web:b0479cfc2006b136ad0275"
         };
 
-        async function initFirebase() {
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") return;
-
+        window.initFirebase = async () => {
+            if(firebaseConfig.apiKey === "YOUR_API_KEY") return;
             try {
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
-                const collectionRef = collection(db, 'actions');
+                const colRef = collection(db, 'actions');
 
-                // Global Submit
-                window.submitToFirebase = async (data) => {
-                    await addDoc(collectionRef, data);
-                };
-                
-                // Reset
+                window.submitToFirebase = async (d) => await addDoc(colRef, d);
                 window.resetDataImpl = async () => {
-                    if(!confirm("DBデータを全削除しますか？")) return;
-                    const q = await getDocs(collectionRef);
-                    const batch = writeBatch(db);
-                    q.forEach(d => batch.delete(d.ref));
-                    await batch.commit();
-                    window.location.reload();
-                };
-                
-                // ★修正: CSV出力（日時追加）
-                window.downloadLogImpl = () => {
-                    if (window.state.flowers.length === 0) return;
-                    let csvContent = "\uFEFFName,Status,Client,Project,Amount,Notes,Date\n";
-                    window.state.flowers.forEach(f => {
-                        // データ構造の揺らぎを吸収
-                        const d = f.userData || f;
-                        const dateStr = d.timestamp ? new Date(d.timestamp).toLocaleString('ja-JP') : "";
-                        csvContent += `"${d.name}","${d.status}","${d.client}","${d.project}",${d.amount},"${d.notes}","${dateStr}"\n`;
-                    });
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `ActionTree_Log.csv`; link.click();
+                    if(!confirm("Delete all data?")) return;
+                    const q = await getDocs(colRef);
+                    const b = writeBatch(db);
+                    q.forEach(d=>b.delete(d.ref));
+                    await b.commit();
+                    location.reload();
                 };
 
                 await signInAnonymously(auth);
-                
-                // Listen & Sync
-                onSnapshot(query(collectionRef, orderBy('timestamp', 'asc')), (snap) => {
-                    window.state.flowers = []; 
-                    window.state.actions = 0; 
-                    window.state.amount = 0;
-                    
+                onSnapshot(query(colRef, orderBy('timestamp','asc')), snap => {
+                    window.state.flowers = []; window.state.actions=0; window.state.amount=0;
                     snap.forEach(doc => {
-                        const d = doc.data(); 
-                        d.id = doc.id;
-                        // フラットなデータとして保存
+                        const d = doc.data(); d.id = doc.id;
                         window.state.flowers.push({ userData: d });
                         window.state.actions++;
-                        if(d.status === 'order') window.state.amount += (d.amount || 0);
+                        if(d.status==='order') window.state.amount+=d.amount;
                     });
-                    
                     if(window.updateTreeFromState) window.updateTreeFromState();
                     if(window.updateStatsUI) window.updateStatsUI();
                     if(window.refreshLog) window.refreshLog();
                 });
-
-            } catch(e) {
-                console.error("Firebase Error:", e);
-            }
-        }
-        
-        initFirebase();
+            } catch(e) { console.error(e); }
+        };
     </script>
 </body>
 </html>
