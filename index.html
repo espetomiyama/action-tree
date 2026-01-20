@@ -849,23 +849,30 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // === FIREBASE CONFIGURATION (Canvas/Immersive Compatible) ===
         let firebaseConfig;
         let appId;
+        let auth;
+        let db;
 
+        // Canvas環境変数を利用するロジック
         try {
             if (typeof __firebase_config !== 'undefined') {
                 firebaseConfig = JSON.parse(__firebase_config);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'action-tree-platform';
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
             } else {
-                throw new Error("Local environment detected");
+                throw new Error("Local/Offline environment");
             }
         } catch (e) {
-            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-            // 【重要】ここをご自身のFirebase設定に書き換えてください！
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-            firebaseConfig = {
+            console.log("Environment: Local/Fallback (No Canvas Config detected)");
+            
+            // ==========================================================================================
+            //  ★ FIREBASE 設定エリア (ここを書き換えてください) ★
+            //  Firebaseコンソールで取得した設定を以下に貼り付けてください。
+            // ==========================================================================================
+            firebaseConfig = { 
                 apiKey: "AIzaSyAp0szuXZWL8YtgS3YDomuM3Q7r3Z365hk",
                 authDomain: "action-tree.firebaseapp.com",
                 projectId: "action-tree",
@@ -873,41 +880,50 @@
                 messagingSenderId: "471274997168",
                 appId: "1:471274997168:web:b0479cfc2006b136ad0275"
             };
-            appId = 'action-tree-platform';
+            // ==========================================================================================
+            
+            appId = 'my-action-tree-app';
         }
 
         const initApp = async () => {
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                setTimeout(() => {
-                    const loader = document.getElementById('app-loader');
-                    if(loader) {
-                        loader.innerHTML = '<div class="text-red-500 text-xs font-bold p-4 text-center">Firebase Config Missing.<br>Please update index.html line ~1060</div>';
-                        loader.onclick = () => loader.style.display = 'none';
-                    }
-                }, 1000);
+            // Configが正しくない場合のチェック
+            if (!firebaseConfig || firebaseConfig.apiKey === "YOUR_API_KEY_HERE" || firebaseConfig.apiKey === "DEMO_KEY") {
+                console.warn("Firebase Config is missing or dummy. App runs in simulation mode.");
+                // ローダーを消してシミュレーションモードへ移行
+                const loader = document.getElementById('app-loader');
+                if(loader) loader.style.display = 'none';
                 return;
             }
+
             try {
                 const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                // グローバルへの公開（ロジック側で使用）
                 window.firebase = { db, auth, appId, collection, addDoc, onSnapshot, getDocs, deleteDoc, writeBatch };
+
+                // 認証フロー (Canvas Custom Token優先)
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
+
+                // 認証状態の監視と完了通知
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { user, db, appId, collection, addDoc, onSnapshot } }));
                     }
                 });
+
             } catch (err) {
                 console.error("Firebase Init Error:", err);
                 const loader = document.getElementById('app-loader');
                 if(loader) loader.style.display = 'none';
             }
         };
+
         initApp();
     </script>
 
@@ -1309,7 +1325,7 @@
             let resultMessage = "";
 
             try {
-                if(window.firebase) {
+                if(window.firebase && window.firebase.db) {
                     const { db, appId, collection, getDocs, writeBatch } = window.firebase;
                     const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
                     
@@ -1792,6 +1808,7 @@
             window.isSyncStarted = true;
             
             const { db, appId, collection, onSnapshot, addDoc } = window.firebaseHandle;
+            // Canvas Path Rule: artifacts/{appId}/public/data/{collectionName}
             const q = collection(db, 'artifacts', appId, 'public', 'data', 'actions');
             
             // Connect Form
@@ -1833,13 +1850,12 @@
                             name: n, client: c,
                             project: p, amount: a,
                             notes: notes, status: status,
-                            colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)], timestamp: Date.now()
+                            colorHex: DESIGN_PALETTE[Math.floor(Math.random() * DESIGN_PALETTE.length)], 
+                            timestamp: Date.now()
                         });
                         window.closeModal();
                     } catch (err) { 
                         console.error(err); 
-                        // エラー時にアラートを表示して原因を通知
-                        //alert("投稿エラー:\nデータの保存に失敗しました。\n" + err.message + "\n\n※FirebaseのFirestore Databaseが作成されているか、ルールで書き込みが許可されているか確認してください。");
                     } finally { btn.disabled = false; btn.textContent = "ACTION / 投稿する"; }
                 };
             }
@@ -1848,6 +1864,7 @@
             onSnapshot(q, (snapshot) => {
                 state.flowers.forEach(f => treeGroup.remove(f));
                 state.flowers = []; state.actions = 0; state.amount = 0;
+                // クライアントサイドでソート（timestamp順）はここでは行わず、配列に入れてから制御
                 snapshot.forEach((doc) => {
                     const d = doc.data(); 
                     d.id = doc.id;
@@ -1856,15 +1873,12 @@
                 });
                 updateGrowthState(); window.updateStatsUI(); refreshLog();
             }, (err) => {
-                console.error(err);
-                // 読み込みエラー時もアラート（初回のみなど制御してもいいが、原因特定のため出す）
-                /*
-                if(!window.hasShownError) {
-                     alert("データ同期エラー:\n" + err.message + "\n\n※Firestoreの権限設定(Rules)を確認してください。");
-                     window.hasShownError = true;
-                }
-                */
+                console.error("Firestore Error:", err);
             });
+        }
+
+        function addFlowerFromData(d) {
+             addFlowerToTreeAt(d.name, d.client, d.project, d.amount, d.notes, d.status, getGuaranteedVisibleTarget().local.x, getGuaranteedVisibleTarget().local.y, getGuaranteedVisibleTarget().local.z, d.colorHex, false, d.id);
         }
 
         // Event: Firebase Ready (Capture handle)
@@ -1877,8 +1891,10 @@
 
         // Event: Window Load (Init Three)
         window.addEventListener('load', async () => {
-            const loader = document.getElementById('app-loader'); if(loader) loader.style.display = 'none';
-            
+            // Remove Loader immediately if it's simulation
+            const loader = document.getElementById('app-loader');
+            if(loader && !window.firebase) loader.style.display = 'none';
+
             initThree(); 
             animate(); 
             animateActionButton(); 
@@ -1891,8 +1907,33 @@
                 startDataSync();
             }
             
-            // Fallback: If firebase not used/ready (e.g. dev mode), manual form handling is already in initThree? No, needs setup.
-            // Setup Slider (UPDATED to TOTAL ACTIONS, TOTAL AMOUNT, TREE LEVEL, DATE)
+            // Fallback: If firebase not used/ready (e.g. local), enable manual form
+            setTimeout(() => {
+                const loader = document.getElementById('app-loader'); if(loader) loader.style.display = 'none';
+                if (!window.isSyncStarted) {
+                    const actionForm = document.getElementById('action-form');
+                    if (actionForm) {
+                        actionForm.onsubmit = (e) => {
+                            e.preventDefault();
+                            
+                            const status = document.querySelector('input[name="post-status"]:checked').value;
+                            const n = document.getElementById('post-name').value;
+                            const c = document.getElementById('post-client').value;
+                            const p = document.getElementById('post-project').value;
+                            const a = parseInt(document.getElementById('post-amount').value) || 0;
+                            const notes = document.getElementById('post-notes').value;
+
+                            // Local Simulation of Action
+                            addFlowerWithConvergence(n, c, p, a, notes, status);
+                            state.actions++; if(status === 'order') state.amount += a;
+                            window.updateStatsUI(); refreshLog();
+                            window.closeModal();
+                        };
+                    }
+                }
+            }, 3000);
+
+            // Slider Init
             const slider = document.getElementById('stats-slider');
             const item = `<div class="marquee-item text-white">
                 <div class="stats-group"><span class="stats-label">Total Actions</span><span class="stats-value actions-val text-white">0</span></div>
@@ -1921,31 +1962,6 @@
                     }
                 });
             });
-
-            // Fallback Form logic (if firebase never ready, e.g. local)
-            setTimeout(() => {
-                if (!window.isSyncStarted) {
-                    const actionForm = document.getElementById('action-form');
-                    if (actionForm) {
-                        actionForm.onsubmit = (e) => {
-                            e.preventDefault();
-                            
-                            const status = document.querySelector('input[name="post-status"]:checked').value;
-                            const n = document.getElementById('post-name').value;
-                            const c = document.getElementById('post-client').value;
-                            const p = document.getElementById('post-project').value;
-                            const a = parseInt(document.getElementById('post-amount').value) || 0;
-                            const notes = document.getElementById('post-notes').value;
-
-                            // Local Simulation of Action
-                            addFlowerWithConvergence(n, c, p, a, notes, status);
-                            state.actions++; if(status === 'order') state.amount += a;
-                            window.updateStatsUI(); refreshLog();
-                            window.closeModal();
-                        };
-                    }
-                }
-            }, 3000);
 
             await window.syncServerTime(); updateBackgroundColor(); window.updateStatsUI();
             
